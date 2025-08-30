@@ -19,7 +19,7 @@ import AddParkingDialog, { Parking } from "../components/AddParkingDialog";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function ParkingContent() {
-  const { selectedCountry, selectedRegion, sidebarCollapsed } = useAppContext();
+  const { sidebarCollapsed } = useAppContext();
   const [parkings, setParkings] = useState([
     { id: 1, parkingCode: "PK001", parkingName: "Central Business District Lot", latLong: "34.0522, -118.2437", street: "100 Downtown Plaza", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isDepot: false },
     { id: 2, parkingCode: "PK002", parkingName: "Airport Long-term Parking", latLong: "33.9425, -118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isDepot: true },

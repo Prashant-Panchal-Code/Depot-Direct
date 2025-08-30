@@ -19,7 +19,7 @@ import AddDepotDialog, { Depot } from "../components/AddDepotDialog";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function DepotContent() {
-  const { selectedCountry, selectedRegion, sidebarCollapsed } = useAppContext();
+  const { sidebarCollapsed } = useAppContext();
   const [depots, setDepots] = useState([
     { id: 1, depotCode: "DP001", depotName: "Main Distribution Center", latLong: "34.0522, -118.2437", street: "100 Industrial Blvd", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isParking: false },
     { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot", latLong: "33.7701, -118.1937", street: "500 Harbor Drive", postalCode: "90731", town: "San Pedro", active: true, priority: "High", isParking: true },

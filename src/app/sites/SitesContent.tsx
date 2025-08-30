@@ -19,7 +19,7 @@ import AddSiteDialog, { Site } from "../components/AddSiteDialog";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function SitesContent() {
-  const { selectedCountry, selectedRegion, sidebarCollapsed } = useAppContext();
+  const { sidebarCollapsed } = useAppContext();
   const [sites, setSites] = useState([
     { id: 1, siteCode: "WC001", siteName: "Downtown Gas Station", latLong: "34.0522, -118.2437", street: "123 Main Street", postalCode: "90210", town: "Los Angeles", active: true, priority: "High" },
     { id: 2, siteCode: "WC002", siteName: "Airport Fuel Hub", latLong: "34.0522, -118.2437", street: "456 Airport Blvd", postalCode: "90045", town: "Los Angeles", active: true, priority: "High" },
