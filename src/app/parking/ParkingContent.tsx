@@ -65,23 +65,7 @@ export default function ParkingContent() {
     }
   };
 
-  // Action Cell Renderer for Edit/Delete buttons
-  const ActionCellRenderer = (params: ICellRendererParams) => {
-    return (
-      <div className="flex items-center gap-2 h-full">
-        <Button size="sm" onClick={() => console.log("Edit", params.data)}>
-          Edit
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => console.log("Delete", params.data)}
-        >
-          Delete
-        </Button>
-      </div>
-    );
-  };
+
 
   // Status Cell Renderer for Active/Inactive
   const StatusCellRenderer = (params: ICellRendererParams) => {
@@ -190,15 +174,6 @@ export default function ParkingContent() {
       minWidth: 100,
       cellRenderer: IsDepotCellRenderer,
       cellStyle: { textAlign: 'center' },
-    },
-    {
-      headerName: "Actions",
-      cellRenderer: ActionCellRenderer,
-      flex: 1,
-      minWidth: 150,
-      sortable: false,
-      filter: false,
-      pinned: "right",
     },
   ];
 

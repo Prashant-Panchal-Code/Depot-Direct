@@ -98,10 +98,10 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
   return (
     <div className="h-full flex flex-col">
       {/* Main Content - 3 Column Layout using Full Width */}
-      <div className="flex-1 grid grid-cols-3 gap-8">
+      <div className="flex-1 grid grid-cols-3 gap-4">
         
         {/* Left Column - Basic Site Information */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Site Information</h3>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -237,8 +237,8 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
         </div>
 
         {/* Middle Column - Contact Information & Map */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
           
           <div>
             <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
@@ -270,7 +270,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
             <Label className="text-sm font-medium text-gray-700 mb-2 block">
               Location Map
             </Label>
-            <div className="bg-green-100 border border-green-200 rounded-lg h-[calc(100vh-24rem)] min-h-48 max-h-96 flex items-center justify-center">
+            <div className="bg-green-100 border border-green-200 rounded-lg h-[calc(100vh-26rem)] min-h-32 max-h-64 flex items-center justify-center">
               <div className="text-center">
                 <MapPin size={32} className="mx-auto mb-2 text-green-600" />
                 <p className="text-gray-600 text-sm">Interactive Map</p>
@@ -285,23 +285,23 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
         </div>
 
         {/* Right Column - Operating Hours (Compact Layout) */}
-        <div className="space-y-4 flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours (Delivery Openings)</h3>
+        <div className="space-y-3 flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Operating Hours (Delivery Openings)</h3>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
             {weekDays.map((day) => {
               const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
               return (
                 <div 
                   key={day} 
-                  className={`border rounded-lg p-3 ${
+                  className={`border rounded-lg p-2 ${
                     hours.closed 
                       ? 'bg-red-50 border-red-200' 
                       : ''
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-xs text-gray-900 min-w-[45px]">{day.slice(0, 3)}</span>
                     <div className="flex items-center space-x-1">
                       <Checkbox
                         id={`${day}-closed`}
@@ -315,14 +315,14 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                   </div>
                   
                   {!hours.closed && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-gray-600">Open</Label>
+                    <div className="flex gap-1">
+                      <div className="flex-1 min-w-0">
+                        <Label className="text-xs text-gray-600 block mb-1">Open</Label>
                         <Select
                           value={hours.open}
                           onValueChange={(value) => handleOperatingHoursChange(day, 'open', value)}
                         >
-                          <SelectTrigger className="h-7 text-xs w-full">
+                          <SelectTrigger className="h-6 text-xs w-full min-w-[70px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -334,13 +334,13 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label className="text-xs text-gray-600">Close</Label>
+                      <div className="flex-1 min-w-0">
+                        <Label className="text-xs text-gray-600 block mb-1">Close</Label>
                         <Select
                           value={hours.close}
                           onValueChange={(value) => handleOperatingHoursChange(day, 'close', value)}
                         >
-                          <SelectTrigger className="h-7 text-xs w-full">
+                          <SelectTrigger className="h-6 text-xs w-full min-w-[70px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -362,7 +362,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       </div>
 
       {/* Footer Actions */}
-      <div className="border-t border-gray-200 pt-4 mt-6 flex justify-end gap-2 flex-shrink-0">
+      <div className="border-t border-gray-200 pt-3 mt-4 flex justify-end gap-2 flex-shrink-0">
         <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
