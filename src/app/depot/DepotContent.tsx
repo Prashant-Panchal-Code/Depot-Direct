@@ -6,7 +6,7 @@ export default function DepotContent() {
   const { selectedCountry, selectedRegion } = useAppContext();
 
   return (
-    <main className="ml-64 pt-20 min-h-screen bg-gray-900 text-white overflow-y-auto">
+    <main className="ml-64 pt-20 min-h-screen bg-gray-50 text-gray-900 overflow-y-auto">
       <div className="p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">

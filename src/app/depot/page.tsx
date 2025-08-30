@@ -4,7 +4,7 @@ import DepotContent from './DepotContent';
 
 export default function Depot() {
   return (
-    <div className="bg-gray-900 text-white min-h-screen" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
+    <div className="bg-gray-50 text-gray-900 min-h-screen" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
       <Sidebar />
       <Header />
       <DepotContent />
