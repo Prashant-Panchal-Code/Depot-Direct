@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --primary-color: #1183d4;
+  --primary-color: #02589d;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -122,4 +122,29 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom primary color utilities */
+.bg-primary-custom {
+  background-color: #02589d;
+}
+
+.hover\:bg-primary-custom:hover {
+  background-color: #024080;
+}
+
+.text-primary-custom {
+  color: #02589d;
+}
+
+.border-primary-custom {
+  border-color: #02589d;
+}
+
+.focus\:ring-primary-custom:focus {
+  --tw-ring-color: #02589d;
+}
+
+.focus\:border-primary-custom:focus {
+  border-color: #02589d;
 }

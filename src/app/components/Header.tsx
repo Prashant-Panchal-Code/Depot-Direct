@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppContext } from '../contexts/AppContext';
+import { Button } from "@/components/ui/button";
 
 export default function Header() {
   const { selectedCountry, setSelectedCountry, selectedRegion, setSelectedRegion, sidebarCollapsed, setSidebarCollapsed } = useAppContext();
@@ -10,9 +11,10 @@ export default function Header() {
       <div className="flex justify-between items-center">
         {/* Left side - Logo and Toggle */}
         <div className="flex items-center gap-4">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
             aria-label="Toggle sidebar"
           >
             <svg
@@ -29,8 +31,8 @@ export default function Header() {
                 d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-blue-500">Depot Direct</h1>
+          </Button>
+          <h1 className="text-2xl font-bold text-primary-custom">Depot Direct</h1>
         </div>
 
         {/* Right side - Controls */}
@@ -39,7 +41,7 @@ export default function Header() {
             <select 
               value={selectedCountry}
               onChange={(e) => setSelectedCountry(e.target.value)}
-              className="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
             >
               <option value="USA">🇺🇸 USA</option>
               <option value="Canada">🇨🇦 Canada</option>
@@ -52,7 +54,7 @@ export default function Header() {
             <select 
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
             >
               <option value="West Coast">West Coast</option>
               <option value="East Coast">East Coast</option>
@@ -63,10 +65,10 @@ export default function Header() {
 
           <div className="w-px h-8 bg-gray-300"></div>
 
-          <button className="relative p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+          <Button variant="ghost" size="icon" className="relative rounded-full">
             <span className="text-xl">🔔</span>
             <span className="absolute top-0 right-0 block h-3 w-3 rounded-full bg-red-500 ring-2 ring-white"></span>
-          </button>
+          </Button>
         </div>
       </div>
     </header>

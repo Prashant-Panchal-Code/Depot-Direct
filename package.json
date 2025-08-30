@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@radix-ui/react-dialog": "^1.1.15",
     "ag-grid-react": "^34.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -3,21 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppContext } from '../contexts/AppContext';
+import { GasPump,PresentationChart ,CalendarDots, TruckTrailer, Warehouse, LetterCircleP, Users, Kanban, CheckSquareOffset   } from "@phosphor-icons/react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed } = useAppContext();
 
   const menuItems = [
-    { href: '/', icon: '📊', label: 'Dashboard' },
-    { href: '/schedule', icon: '📅', label: 'Schedule' },
-    { href: '/trucks', icon: '🚛', label: 'Trucks' },
-    { href: '/depot', icon: '🏭', label: 'Depot' },
-    { href: '/sites', icon: '📍', label: 'Sites' },
-    { href: '/parking', icon: '🅿️', label: 'Parking' },
-    { href: '/reports', icon: '📊', label: 'Reports' },
-    { href: '/data-management', icon: '💾', label: 'Data Management' },
-    { href: '/users', icon: '👥', label: 'Users' },
+    { href: '/', icon: <PresentationChart size={25} weight="duotone" />, label: 'Dashboard' },
+    { href: '/schedule', icon: <CalendarDots size={25} weight="duotone" />, label: 'Schedule' },
+    { href: '/trucks', icon: <TruckTrailer size={25} weight="duotone" />, label: 'Trucks' },
+    { href: '/depot', icon: <Warehouse size={25} weight="duotone" />, label: 'Depot' },
+    { href: '/sites', icon: <GasPump size={25} weight="duotone" />, label: 'Sites' },
+    { href: '/parking', icon: <LetterCircleP size={25} weight="duotone" />, label: 'Parking' },
+    { href: '/reports', icon: <CheckSquareOffset size={25}  weight="duotone" />, label: 'Reports' },
+    { href: '/data-management', icon: <Kanban size={25} weight="duotone" />, label: 'Data Management' },
+    { href: '/users', icon: <Users size={25} weight="duotone" />, label: 'Users' },
   ];
 
   return (
@@ -32,7 +33,7 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                   pathname === item.href
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-primary-custom text-white'
                     : 'hover:bg-gray-100 text-gray-700'
                 } ${sidebarCollapsed ? 'justify-center' : ''}`}
               >

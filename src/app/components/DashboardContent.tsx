@@ -2,41 +2,20 @@
 
 import { useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridReadyEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ColDef, ModuleRegistry, AllCommunityModule, ICellRendererParams } from 'ag-grid-community';
 import { themeQuartz } from 'ag-grid-community';
 import { useAppContext } from '../contexts/AppContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-// Modal component
-function Modal({ isOpen, onClose, title, children }: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  title: string; 
-  children: React.ReactNode; 
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-900 transition-colors text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
-          >
-            ×
-          </button>
-        </div>
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardContent() {
   const { sidebarCollapsed } = useAppContext();
@@ -45,12 +24,6 @@ export default function DashboardContent() {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
-
-  // Modal states
-  const [isDeliveriesModalOpen, setIsDeliveriesModalOpen] = useState(false);
-  const [isTrucksModalOpen, setIsTrucksModalOpen] = useState(false);
-  const [isLeftOnBoardModalOpen, setIsLeftOnBoardModalOpen] = useState(false);
-  const [isUrgentModalOpen, setIsUrgentModalOpen] = useState(false);
 
   // Extended data for modals
   const allDeliveries = [
@@ -97,7 +70,7 @@ export default function DashboardContent() {
       headerName: 'Status', 
       flex: 1,
       minWidth: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className={`px-2 py-1 rounded-full text-xs font-medium ${params.data.statusColor}`}>
           {params.value}
         </div>
@@ -114,7 +87,7 @@ export default function DashboardContent() {
       headerName: 'Status', 
       flex: 1,
       minWidth: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className={`px-2 py-1 rounded-full text-xs font-medium ${params.data.statusColor}`}>
           {params.value}
         </div>
@@ -132,7 +105,7 @@ export default function DashboardContent() {
       headerName: 'Volume Remaining', 
       flex: 2,
       minWidth: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-3">
           <div className="w-24 h-2.5 bg-gray-200 rounded-full">
             <div className="h-2.5 bg-orange-400 rounded-full" style={{ width: `${params.data.percentage}%` }}></div>
@@ -147,9 +120,9 @@ export default function DashboardContent() {
       flex: 1,
       minWidth: 100,
       cellRenderer: () => (
-        <button className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 text-white">
+        <Button size="sm">
           Re-route
-        </button>
+        </Button>
       )
     },
   ];
@@ -193,12 +166,31 @@ export default function DashboardContent() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-900">Upcoming Deliveries</h2>
-                <button 
-                  onClick={() => setIsDeliveriesModalOpen(true)}
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
-                >
-                  Show All
-                </button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      Show All
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[90vw] w-full">
+                    <DialogHeader>
+                      <DialogTitle>All Upcoming Deliveries</DialogTitle>
+                    </DialogHeader>
+                    <div style={{ height: 400, width: '100%' }}>
+                      <AgGridReact
+                        columnDefs={deliveriesColumnDefs}
+                        rowData={allDeliveries}
+                        domLayout="autoHeight"
+                        suppressRowClickSelection={true}
+                        suppressCellFocus={true}
+                        animateRows={true}
+                        pagination={true}
+                        paginationPageSize={10}
+                        theme={themeQuartz}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="overflow-x-auto">
                 <div style={{ height: 250, width: '100%' }}>
@@ -220,12 +212,33 @@ export default function DashboardContent() {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Truck Availability</h2>
-              <button 
-                onClick={() => setIsTrucksModalOpen(true)}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
-              >
-                Show All
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    Show All
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>All Truck Availability</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {allTrucks.map((truck, index) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-md border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-semibold text-gray-900">{truck.name}</p>
+                            <p className="text-sm text-gray-600">{truck.capacity} - {truck.driver}</p>
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${truck.statusColor.replace('bg-green-500/20 text-green-400', 'bg-green-100 text-green-700').replace('bg-blue-500/20 text-blue-400', 'bg-blue-100 text-blue-700').replace('bg-red-500/20 text-red-400', 'bg-red-100 text-red-700').replace('bg-yellow-500/20 text-yellow-400', 'bg-yellow-100 text-yellow-700')}`}>
+                          {truck.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             <div style={{ height: 200, width: '100%' }}>
               <AgGridReact
@@ -245,12 +258,31 @@ export default function DashboardContent() {
         <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Potential Left on Board</h2>
-            <button 
-              onClick={() => setIsLeftOnBoardModalOpen(true)}
-              className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
-            >
-              View All
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  View All
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[90vw] w-full">
+                <DialogHeader>
+                  <DialogTitle>All Potential Left on Board</DialogTitle>
+                </DialogHeader>
+                <div style={{ height: 400, width: '100%' }}>
+                  <AgGridReact
+                    columnDefs={leftOnBoardColumnDefs}
+                    rowData={allLeftOnBoard}
+                    domLayout="autoHeight"
+                    suppressRowClickSelection={true}
+                    suppressCellFocus={true}
+                    animateRows={true}
+                    pagination={true}
+                    paginationPageSize={10}
+                    theme={themeQuartz}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="overflow-x-auto">
             <div style={{ height: 150, width: '100%' }}>
@@ -274,12 +306,37 @@ export default function DashboardContent() {
               <h2 className="text-2xl font-bold text-gray-900">Urgent Deliveries</h2>
               <span className="text-red-500 text-xl">⚠️</span>
             </div>
-            <button 
-              onClick={() => setIsUrgentModalOpen(true)}
-              className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
-            >
-              Show All
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  Show All
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl">
+                <DialogHeader>
+                  <DialogTitle>All Urgent Deliveries</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {allUrgentDeliveries.map((delivery, index) => (
+                    <div key={index} className={`flex items-start justify-between p-4 ${delivery.bgColor.replace('bg-red-900/50', 'bg-red-50').replace('bg-yellow-900/50', 'bg-yellow-50')} rounded-md border-l-4 ${delivery.borderColor}`}>
+                      <div>
+                        <p className="font-semibold text-gray-900">{delivery.site}</p>
+                        <p className={`text-sm mt-1 ${delivery.textColor.replace('text-red-300', 'text-red-700').replace('text-yellow-300', 'text-yellow-700')}`}>Predicted Stockout: {delivery.stockout} | ETA: {delivery.eta}</p>
+                        <div className={`mt-2 flex items-center gap-2 text-sm ${delivery.textColor.replace('text-red-200', 'text-red-600').replace('text-yellow-200', 'text-yellow-600')}`}>
+                          <span className="text-base">⛽</span>
+                          <span>Tanks: {delivery.tanks}</span>
+                        </div>
+                      </div>
+                      <Button 
+                        className={`flex-shrink-0 ${delivery.priority === 'high' ? 'bg-red-600 hover:bg-red-500' : 'bg-yellow-600 hover:bg-yellow-500'}`}
+                      >
+                        {delivery.priority === 'high' ? 'Dispatch Now' : 'Schedule Delivery'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="space-y-4">
             <div className="flex items-start justify-between p-4 bg-red-50 rounded-md border-l-4 border-red-500">
@@ -291,9 +348,9 @@ export default function DashboardContent() {
                   <span>Tanks: T1 (Gasoline), T3 (Diesel)</span>
                 </div>
               </div>
-              <button className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-500 text-white flex-shrink-0">
+              <Button variant="destructive" className="flex-shrink-0">
                 Dispatch Now
-              </button>
+              </Button>
             </div>
             <div className="flex items-start justify-between p-4 bg-yellow-50 rounded-md border-l-4 border-yellow-500">
               <div>
@@ -304,9 +361,9 @@ export default function DashboardContent() {
                   <span>Tanks: T2 (Jet Fuel)</span>
                 </div>
               </div>
-              <button className="px-4 py-2 text-sm font-medium rounded-md bg-yellow-600 hover:bg-yellow-500 text-white flex-shrink-0">
+              <Button className="flex-shrink-0 bg-yellow-600 hover:bg-yellow-500">
                 Schedule Delivery
-              </button>
+              </Button>
             </div>
             <div className="flex items-start justify-between p-4 bg-yellow-50 rounded-md border-l-4 border-yellow-500">
               <div>
@@ -317,9 +374,9 @@ export default function DashboardContent() {
                   <span>Tanks: T4 (Heating Oil), T5 (Diesel)</span>
                 </div>
               </div>
-              <button className="px-4 py-2 text-sm font-medium rounded-md bg-yellow-600 hover:bg-yellow-500 text-white flex-shrink-0">
+              <Button className="flex-shrink-0 bg-yellow-600 hover:bg-yellow-500">
                 Schedule Delivery
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -340,93 +397,6 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
-
-      {/* Modals */}
-      <Modal 
-        isOpen={isDeliveriesModalOpen} 
-        onClose={() => setIsDeliveriesModalOpen(false)}
-        title="All Upcoming Deliveries"
-      >
-        <div style={{ height: 400, width: '100%' }}>
-          <AgGridReact
-            columnDefs={deliveriesColumnDefs}
-            rowData={allDeliveries}
-            domLayout="autoHeight"
-            suppressRowClickSelection={true}
-            suppressCellFocus={true}
-            animateRows={true}
-            pagination={true}
-            paginationPageSize={10}
-            theme={themeQuartz}
-          />
-        </div>
-      </Modal>
-
-      <Modal 
-        isOpen={isTrucksModalOpen} 
-        onClose={() => setIsTrucksModalOpen(false)}
-        title="All Truck Availability"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allTrucks.map((truck, index) => (
-            <div key={index} className="p-4 bg-gray-50 rounded-md border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="font-semibold text-gray-900">{truck.name}</p>
-                  <p className="text-sm text-gray-600">{truck.capacity} - {truck.driver}</p>
-                </div>
-              </div>
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${truck.statusColor.replace('bg-green-500/20 text-green-400', 'bg-green-100 text-green-700').replace('bg-blue-500/20 text-blue-400', 'bg-blue-100 text-blue-700').replace('bg-red-500/20 text-red-400', 'bg-red-100 text-red-700').replace('bg-yellow-500/20 text-yellow-400', 'bg-yellow-100 text-yellow-700')}`}>
-                {truck.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Modal>
-
-      <Modal 
-        isOpen={isLeftOnBoardModalOpen} 
-        onClose={() => setIsLeftOnBoardModalOpen(false)}
-        title="All Potential Left on Board"
-      >
-        <div style={{ height: 400, width: '100%' }}>
-          <AgGridReact
-            columnDefs={leftOnBoardColumnDefs}
-            rowData={allLeftOnBoard}
-            domLayout="autoHeight"
-            suppressRowClickSelection={true}
-            suppressCellFocus={true}
-            animateRows={true}
-            pagination={true}
-            paginationPageSize={10}
-            theme={themeQuartz}
-          />
-        </div>
-      </Modal>
-
-      <Modal 
-        isOpen={isUrgentModalOpen} 
-        onClose={() => setIsUrgentModalOpen(false)}
-        title="All Urgent Deliveries"
-      >
-        <div className="space-y-4">
-          {allUrgentDeliveries.map((delivery, index) => (
-            <div key={index} className={`flex items-start justify-between p-4 ${delivery.bgColor.replace('bg-red-900/50', 'bg-red-50').replace('bg-yellow-900/50', 'bg-yellow-50')} rounded-md border-l-4 ${delivery.borderColor}`}>
-              <div>
-                <p className="font-semibold text-gray-900">{delivery.site}</p>
-                <p className={`text-sm mt-1 ${delivery.textColor.replace('text-red-300', 'text-red-700').replace('text-yellow-300', 'text-yellow-700')}`}>Predicted Stockout: {delivery.stockout} | ETA: {delivery.eta}</p>
-                <div className={`mt-2 flex items-center gap-2 text-sm ${delivery.textColor.replace('text-red-200', 'text-red-600').replace('text-yellow-200', 'text-yellow-600')}`}>
-                  <span className="text-base">⛽</span>
-                  <span>Tanks: {delivery.tanks}</span>
-                </div>
-              </div>
-              <button className={`px-4 py-2 text-sm font-medium rounded-md ${delivery.buttonColor} text-white flex-shrink-0`}>
-                {delivery.priority === 'high' ? 'Dispatch Now' : 'Schedule Delivery'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </Modal>
     </main>
   );
 }
