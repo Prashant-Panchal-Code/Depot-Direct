@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PlusSquare } from "@phosphor-icons/react";
 
 export interface Depot {
   depotCode: string;
@@ -24,6 +25,7 @@ export interface Depot {
   town: string;
   active: boolean;
   priority: string;
+  isParking: boolean;
 }
 
 interface AddDepotDialogProps {
@@ -42,6 +44,7 @@ export default function AddDepotDialog({ onSave }: AddDepotDialogProps) {
     town: "",
     active: true,
     priority: "Medium",
+    isParking: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -57,6 +60,7 @@ export default function AddDepotDialog({ onSave }: AddDepotDialogProps) {
       town: "",
       active: true,
       priority: "Medium",
+      isParking: false,
     });
     setOpen(false);
   };
@@ -64,7 +68,7 @@ export default function AddDepotDialog({ onSave }: AddDepotDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add New Depot</Button>
+        <Button><PlusSquare size={30}  weight="fill" />Add New Depot</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -196,6 +200,20 @@ export default function AddDepotDialog({ onSave }: AddDepotDialogProps) {
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               Active
+            </label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isParking"
+              checked={formData.isParking}
+              onCheckedChange={(checked) => setFormData({ ...formData, isParking: checked as boolean })}
+            />
+            <label
+              htmlFor="isParking"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Is Parking
             </label>
           </div>
 

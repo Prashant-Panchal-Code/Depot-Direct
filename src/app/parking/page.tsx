@@ -1,14 +1,16 @@
-import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
 import ParkingContent from './ParkingContent';
 
 
-export default function Parking() {
+export default function ParkingPage() {
   return (
-    <div className="bg-gray-50 text-gray-900 min-h-screen" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
+    <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      <Header />
-      <ParkingContent />
+      <div className="flex flex-col flex-1">
+        <Header />
+        <ParkingContent />
+      </div>
     </div>
   );
 }

@@ -15,10 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { PlusSquare } from "@phosphor-icons/react";
 
-// Site interface for type safety
-export interface Site {
-  siteCode: string;
-  siteName: string;
+export interface Parking {
+  parkingCode: string;
+  parkingName: string;
   latitude: string;
   longitude: string;
   street: string;
@@ -26,17 +25,18 @@ export interface Site {
   town: string;
   active: boolean;
   priority: string;
+  isDepot: boolean;
 }
 
-interface AddSiteDialogProps {
-  onSave: (site: Site) => void;
+interface AddParkingDialogProps {
+  onSave: (parking: Parking) => void;
 }
 
-export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
+export default function AddParkingDialog({ onSave }: AddParkingDialogProps) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<Site>({
-    siteCode: "",
-    siteName: "",
+  const [formData, setFormData] = useState<Parking>({
+    parkingCode: "",
+    parkingName: "",
     latitude: "",
     longitude: "",
     street: "",
@@ -44,14 +44,15 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
     town: "",
     active: true,
     priority: "Medium",
+    isDepot: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
     setFormData({
-      siteCode: "",
-      siteName: "",
+      parkingCode: "",
+      parkingName: "",
       latitude: "",
       longitude: "",
       street: "",
@@ -59,6 +60,7 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
       town: "",
       active: true,
       priority: "Medium",
+      isDepot: false,
     });
     setOpen(false);
   };
@@ -66,38 +68,38 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><PlusSquare size={30}  weight="fill" />Add New Site</Button>
+        <Button> <PlusSquare size={30}  weight="fill" /> Add New Parking</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Site</DialogTitle>
+          <DialogTitle>Add New Parking</DialogTitle>
           <DialogDescription>
-            Enter the site information below to add a new fuel site to the system.
+            Enter the parking information below to add a new parking area to the system.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="siteCode" className="block text-sm font-medium text-gray-700 mb-1">
-              Site Code *
+            <label htmlFor="parkingCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Parking Code *
             </label>
             <Input
-              id="siteCode"
-              value={formData.siteCode}
-              onChange={(e) => setFormData({ ...formData, siteCode: e.target.value })}
-              placeholder="Enter site code"
+              id="parkingCode"
+              value={formData.parkingCode}
+              onChange={(e) => setFormData({ ...formData, parkingCode: e.target.value })}
+              placeholder="Enter parking code"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="siteName" className="block text-sm font-medium text-gray-700 mb-1">
-              Site Name *
+            <label htmlFor="parkingName" className="block text-sm font-medium text-gray-700 mb-1">
+              Parking Name *
             </label>
             <Input
-              id="siteName"
-              value={formData.siteName}
-              onChange={(e) => setFormData({ ...formData, siteName: e.target.value })}
-              placeholder="Enter site name"
+              id="parkingName"
+              value={formData.parkingName}
+              onChange={(e) => setFormData({ ...formData, parkingName: e.target.value })}
+              placeholder="Enter parking name"
               required
             />
           </div>
@@ -201,11 +203,25 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
             </label>
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isDepot"
+              checked={formData.isDepot}
+              onCheckedChange={(checked) => setFormData({ ...formData, isDepot: checked as boolean })}
+            />
+            <label
+              htmlFor="isDepot"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Is Depot
+            </label>
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Site</Button>
+            <Button type="submit">Add Parking</Button>
           </div>
         </form>
       </DialogContent>
