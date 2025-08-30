@@ -104,7 +104,16 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
         
         {/* Left Column - Basic Site Information */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Information</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Site Information</h3>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              formData.active 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {formData.active ? 'Active' : 'Inactive'}
+            </span>
+          </div>
           
           <div>
             <Label htmlFor="siteName" className="text-sm font-medium text-gray-700">
@@ -227,50 +236,45 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
               Site Active
             </Label>
           </div>
-
-          {/* Contact Information Section - Below Site Active */}
-          <div className="pt-4 border-t border-gray-200">
-            <h4 className="text-md font-semibold text-gray-900 mb-4">Contact Information</h4>
-            
-            <div>
-              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                Phone Number
-              </Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="mt-4">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className="mt-1"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Middle Column - Map & Additional Info */}
+        {/* Middle Column - Contact Information & Map */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Statistics</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
           
+          <div>
+            <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+              Phone Number
+            </Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              Email Address
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
           {/* Map Placeholder */}
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2 block">
               Location Map
             </Label>
-            <div className="bg-green-100 border border-green-200 rounded-lg h-64 flex items-center justify-center">
+            <div className="bg-green-100 border border-green-200 rounded-lg h-[calc(100vh-24rem)] min-h-48 max-h-96 flex items-center justify-center">
               <div className="text-center">
-                <MapPin size={48} className="mx-auto mb-2 text-green-600" />
+                <MapPin size={32} className="mx-auto mb-2 text-green-600" />
                 <p className="text-gray-600 text-sm">Interactive Map</p>
                 <p className="text-xs text-gray-500">
                   {formData.latitude && formData.longitude 
@@ -280,85 +284,31 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
               </div>
             </div>
           </div>
-
-          {/* Site Statistics */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Site Statistics</h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Tanks:</span>
-                <span className="font-medium">3</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Active Tanks:</span>
-                <span className="font-medium text-green-600">2</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Last Delivery:</span>
-                <span className="font-medium">2 days ago</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Next Delivery:</span>
-                <span className="font-medium text-blue-600">Tomorrow</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Capacity:</span>
-                <span className="font-medium">45,000L</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Current Stock:</span>
-                <span className="font-medium">32,100L</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Site Status */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Site Status</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-sm">Operational Status:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  formData.active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {formData.active ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-sm">Priority Level:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  formData.priority === 'High' 
-                    ? 'bg-red-100 text-red-800' 
-                    : formData.priority === 'Medium'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-green-100 text-green-800'
-                }`}>
-                  {formData.priority} Priority
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Right Column - Operating Hours (2-Column Grid) */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours</h3>
+        {/* Right Column - Operating Hours (Compact Layout) */}
+        <div className="space-y-4 flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours (Delivery Openings)</h3>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {weekDays.map((day) => {
               const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
               return (
-                <div key={day} className="bg-white border border-gray-200 rounded-lg p-3">
+                <div 
+                  key={day} 
+                  className={`border rounded-lg p-3 ${
+                    hours.closed 
+                      ? 'bg-red-50 border-red-200' 
+                      : ''
+                  }`}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
                     <div className="flex items-center space-x-1">
                       <Checkbox
                         id={`${day}-closed`}
                         checked={hours.closed}
-                        onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}
-                        className="h-3 w-3"
+                        onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}                       
                       />
                       <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
                         Closed
@@ -367,14 +317,14 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
                   </div>
                   
                   {!hours.closed && (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs text-gray-600">Open</Label>
                         <Select
                           value={hours.open}
                           onValueChange={(value) => handleOperatingHoursChange(day, 'open', value)}
                         >
-                          <SelectTrigger className="h-7 text-xs">
+                          <SelectTrigger className="h-7 text-xs w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -392,7 +342,7 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
                           value={hours.close}
                           onValueChange={(value) => handleOperatingHoursChange(day, 'close', value)}
                         >
-                          <SelectTrigger className="h-7 text-xs">
+                          <SelectTrigger className="h-7 text-xs w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -418,7 +368,7 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
         <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={onSave}>
+        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white" onClick={onSave}>
           Save Changes
         </Button>
       </div>

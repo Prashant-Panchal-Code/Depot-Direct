@@ -34,7 +34,7 @@ export default function DeliveriesTab({ site }: DeliveriesTabProps) {
       case "Confirmed":
         return "text-green-600 bg-green-100";
       case "Scheduled":
-        return "text-blue-600 bg-blue-100";
+        return "text-primary-custom bg-primary-custom/10";
       case "In Transit":
         return "text-orange-600 bg-orange-100";
       case "Delivered":
@@ -125,7 +125,7 @@ export default function DeliveriesTab({ site }: DeliveriesTabProps) {
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <h3 className="text-lg font-semibold text-gray-900">Planned Deliveries</h3>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white flex items-center gap-2">
           <Plus size={16} />
           Schedule Delivery
         </Button>
@@ -240,9 +240,9 @@ export default function DeliveriesTab({ site }: DeliveriesTabProps) {
 
       {/* Summary Cards - Full Width */}
       <div className="grid grid-cols-4 gap-4 mt-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary-custom/10 border border-primary-custom/20 rounded-lg p-4">
           <h4 className="text-sm font-semibold text-gray-900 mb-2">Total Deliveries</h4>
-          <p className="text-2xl font-bold text-blue-600">{filteredDeliveries.length}</p>
+          <p className="text-2xl font-bold text-primary-custom">{filteredDeliveries.length}</p>
           <p className="text-xs text-gray-600">This month</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">

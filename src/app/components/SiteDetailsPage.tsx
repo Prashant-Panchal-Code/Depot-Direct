@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Plus, ArrowLeft } from "@phosphor-icons/react";
 import { SiteDetails } from "./SiteDetailsModal";
+import { useAppContext } from "../contexts/AppContext";
 import BasicInfoTab from "./site-tabs/BasicInfoTab";
 import InventoryTab from "./site-tabs/InventoryTab";
 import DeliveriesTab from "./site-tabs/DeliveriesTab";
@@ -29,12 +30,27 @@ export default function SiteDetailsPage({
   onBack,
   onSave,
 }: SiteDetailsPageProps) {
+  const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
   const [activeTab, setActiveTab] = useState("basic-info");
   const [isEditing, setIsEditing] = useState(false);
+
+  // Collapse sidebar when component mounts, restore when unmounting
+  useEffect(() => {
+    setSidebarCollapsed(true);
+    
+    return () => {
+      setSidebarCollapsed(false);
+    };
+  }, [setSidebarCollapsed]);
 
   const handleSave = () => {
     onSave(site);
     setIsEditing(false);
+  };
+
+  const handleBack = () => {
+    setSidebarCollapsed(false); // Restore sidebar when going back
+    onBack();
   };
 
   const tabs = [
@@ -46,15 +62,21 @@ export default function SiteDetailsPage({
 
   return (
     <div className="h-screen bg-gray-50 overflow-hidden">
-      <div className="h-[calc(100vh-5rem)] flex flex-col max-w-7xl mx-auto px-4 py-6 mt-20">
+      <div 
+        className={`h-[calc(100vh-5rem)] flex flex-col py-6 mt-20 transition-all duration-300 ${
+          sidebarCollapsed 
+            ? 'ml-16 w-[calc(100vw-4rem)] px-6' 
+            : 'ml-64 w-[calc(100vw-16rem)] px-6'
+        }`}
+      >
         {/* Breadcrumb Navigation */}
         <div className="flex items-center justify-between mb-6 flex-shrink-0">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  onClick={onBack}
-                  className="cursor-pointer text-blue-600 hover:text-blue-700"
+                  onClick={handleBack}
+                  className="cursor-pointer text-primary-custom hover:text-primary-custom/80"
                 >
                   Sites
                 </BreadcrumbLink>
@@ -66,7 +88,7 @@ export default function SiteDetailsPage({
             </BreadcrumbList>
           </Breadcrumb>
           <Button 
-            onClick={onBack}
+            onClick={handleBack}
             variant="outline"
             size="sm"
             className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
@@ -87,7 +109,7 @@ export default function SiteDetailsPage({
                 onClick={() => setActiveTab(tab.id)}
                 className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
+                    ? "border-primary-custom text-primary-custom"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
@@ -104,7 +126,7 @@ export default function SiteDetailsPage({
               site={site}
               isEditing={isEditing}
               onSave={handleSave}
-              onBack={onBack}
+              onBack={handleBack}
             />
           )}
           

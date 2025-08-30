@@ -32,7 +32,7 @@ export default function SettingsTab({ site }: SettingsTabProps) {
   const getEventTypeColor = (eventType: string) => {
     switch (eventType) {
       case "Site Update":
-        return "text-blue-600 bg-blue-100";
+        return "text-primary-custom bg-primary-custom/10";
       case "Delivery":
         return "text-green-600 bg-green-100";
       case "Tank Adjustment":
@@ -202,7 +202,7 @@ export default function SettingsTab({ site }: SettingsTabProps) {
           </Select>
         </div>
         <div className="flex items-end">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+          <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white w-full">
             Apply Filters
           </Button>
         </div>

@@ -62,7 +62,7 @@ export default function Sidebar() {
             {!sidebarCollapsed && (
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900 truncate">Admin User</p>
-                <a className="text-sm text-gray-500 hover:text-blue-500" href="#">Sign Out</a>
+                <a className="text-sm text-gray-500 hover:text-primary-custom" href="#">Sign Out</a>
               </div>
             )}
           </div>

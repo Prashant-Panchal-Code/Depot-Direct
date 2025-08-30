@@ -122,7 +122,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
       {/* Header with Add New Tank Button */}
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <h3 className="text-lg font-semibold text-gray-900">Tank Management</h3>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white flex items-center gap-2">
           <Plus size={16} />
           Add New Tank
         </Button>

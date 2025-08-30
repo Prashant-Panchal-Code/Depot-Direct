@@ -593,7 +593,7 @@ export default function SiteDetailsModal({
                       <div className="text-gray-600">{new Date(delivery.eta).toLocaleString()}</div>
                       <div className="text-gray-600">{tank.productName}</div>
                       <div className="text-right">
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                        <Button variant="outline" size="sm">
                           View Details
                         </Button>
                       </div>

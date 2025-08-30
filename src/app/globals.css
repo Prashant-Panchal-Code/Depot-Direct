@@ -126,27 +126,73 @@ body {
 
 /* Custom primary color utilities */
 .bg-primary-custom {
-  background-color: #02589d;
+  background-color: #02589d !important;
 }
 
 .hover\:bg-primary-custom:hover {
-  background-color: #024080;
+  background-color: #024080 !important;
+}
+
+.hover\:bg-primary-custom\/90:hover {
+  background-color: rgba(2, 88, 157, 0.9) !important;
+}
+
+.hover\:bg-primary-custom\/80:hover {
+  background-color: rgba(2, 88, 157, 0.8) !important;
 }
 
 .text-primary-custom {
-  color: #02589d;
+  color: #02589d !important;
+}
+
+.hover\:text-primary-custom:hover {
+  color: #02589d !important;
+}
+
+.hover\:text-primary-custom\/80:hover {
+  color: rgba(2, 88, 157, 0.8) !important;
+}
+
+.hover\:text-white:hover {
+  color: white !important;
 }
 
 .border-primary-custom {
-  border-color: #02589d;
+  border-color: #02589d !important;
 }
 
 .focus\:ring-primary-custom:focus {
-  --tw-ring-color: #02589d;
+  --tw-ring-color: #02589d !important;
 }
 
 .focus\:border-primary-custom:focus {
-  border-color: #02589d;
+  border-color: #02589d !important;
+}
+
+/* Primary custom background with opacity variants */
+.bg-primary-custom\/10 {
+  background-color: rgba(2, 88, 157, 0.1);
+}
+
+.bg-primary-custom\/20 {
+  background-color: rgba(2, 88, 157, 0.2);
+}
+
+.border-primary-custom\/20 {
+  border-color: rgba(2, 88, 157, 0.2);
+}
+
+/* Ensure outline button hover works correctly */
+.outline-button-hover:hover {
+  background-color: #02589d !important;
+  color: white !important;
+  border-color: #02589d !important;
+}
+
+/* Override any conflicting hover styles for buttons with outline variant */
+button[class*="border-primary-custom"]:hover {
+  background-color: #02589d !important;
+  color: white !important;
 }
 
 /* Checkbox specific styling */
