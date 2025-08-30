@@ -19,6 +19,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckSquare, Circle, Plus, Rows, XCircle } from "@phosphor-icons/react";
 
 // Register AG Grid modules
@@ -84,13 +87,12 @@ function AddSiteDialog({ onSave }: { onSave: (site: Site) => void }) {
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Site Code *
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.siteCode}
                 onChange={(e) =>
                   setFormData({ ...formData, siteCode: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
                 required
               />
             </div>
@@ -98,13 +100,12 @@ function AddSiteDialog({ onSave }: { onSave: (site: Site) => void }) {
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Site Name *
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.siteName}
                 onChange={(e) =>
                   setFormData({ ...formData, siteName: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
                 required
               />
             </div>
@@ -112,98 +113,96 @@ function AddSiteDialog({ onSave }: { onSave: (site: Site) => void }) {
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Latitude
               </label>
-              <input
+              <Input
                 type="number"
                 step="any"
                 value={formData.latitude}
                 onChange={(e) =>
                   setFormData({ ...formData, latitude: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Longitude
               </label>
-              <input
+              <Input
                 type="number"
                 step="any"
                 value={formData.longitude}
                 onChange={(e) =>
                   setFormData({ ...formData, longitude: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Street Address
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.street}
                 onChange={(e) =>
                   setFormData({ ...formData, street: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Postal Code
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.postalCode}
                 onChange={(e) =>
                   setFormData({ ...formData, postalCode: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Town/City
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.town}
                 onChange={(e) =>
                   setFormData({ ...formData, town: e.target.value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Priority
               </label>
-              <select
+              <Select
                 value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: e.target.value })
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, priority: value })
                 }
-                className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-custom focus:border-primary-custom"
               >
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Checkbox
                 id="active"
+                
                 checked={formData.active}
-                onChange={(e) =>
-                  setFormData({ ...formData, active: e.target.checked })
+                onCheckedChange={(checked: boolean) =>
+                  setFormData({ ...formData, active: checked })
                 }
-                className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
               />
               <label
                 htmlFor="active"
-                className="ml-2 text-sm font-medium text-gray-900"
+                className="text-sm font-medium text-gray-900 cursor-pointer"
               >
                 Active
               </label>

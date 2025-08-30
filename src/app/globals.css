@@ -148,3 +148,10 @@ body {
 .focus\:border-primary-custom:focus {
   border-color: #02589d;
 }
+
+/* Checkbox specific styling */
+[data-state=checked][data-slot="checkbox"] {
+  background-color: #02589d !important;
+  border-color: #02589d !important;
+  color: white !important;
+}
