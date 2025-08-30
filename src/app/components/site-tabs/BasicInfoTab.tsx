@@ -97,272 +97,278 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Main Content - 3 Column Layout using Full Width */}
-      <div className="flex-1 grid grid-cols-3 gap-4">
-        
-        {/* Left Column - Basic Site Information */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Site Information</h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              formData.active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {formData.active ? 'Active' : 'Inactive'}
-            </span>
-          </div>
+      {/* Main Content - Scrollable Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-6">
           
-          <div>
-            <Label htmlFor="siteName" className="text-sm font-medium text-gray-700">
-              Site Name
-            </Label>
-            <Input
-              id="siteName"
-              value={formData.siteName}
-              className="mt-1 bg-gray-100"
-              disabled={true}
-            />
-          </div>
+          {/* Top Section - Site Information and Contact Information */}
+          <div className="grid grid-cols-2 gap-8">
+            
+            {/* Left Column - Basic Site Information */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Site Information</h3>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  formData.active 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {formData.active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              
+              <div>
+                <Label htmlFor="siteName" className="text-sm font-medium text-gray-700">
+                  Site Name
+                </Label>
+                <Input
+                  id="siteName"
+                  value={formData.siteName}
+                  className="mt-1 bg-gray-100"
+                  disabled={true}
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="siteCode" className="text-sm font-medium text-gray-700">
-              Site Code
-            </Label>
-            <Input
-              id="siteCode"
-              value={formData.siteCode}
-              className="mt-1 bg-gray-100"
-              disabled={true}
-            />
-          </div>
+              <div>
+                <Label htmlFor="siteCode" className="text-sm font-medium text-gray-700">
+                  Site Code
+                </Label>
+                <Input
+                  id="siteCode"
+                  value={formData.siteCode}
+                  className="mt-1 bg-gray-100"
+                  disabled={true}
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
-                Latitude
-              </Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                value={formData.latitude}
-                onChange={(e) => handleInputChange('latitude', e.target.value)}
-                placeholder="e.g. 40.7128"
-                className="mt-1"
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
+                    Latitude
+                  </Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={formData.latitude}
+                    onChange={(e) => handleInputChange('latitude', e.target.value)}
+                    placeholder="e.g. 40.7128"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="longitude" className="text-sm font-medium text-gray-700">
+                    Longitude
+                  </Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={formData.longitude}
+                    onChange={(e) => handleInputChange('longitude', e.target.value)}
+                    placeholder="e.g. -74.0060"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="street" className="text-sm font-medium text-gray-700">
+                  Street Address
+                </Label>
+                <Input
+                  id="street"
+                  value={formData.street}
+                  onChange={(e) => handleInputChange('street', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="town" className="text-sm font-medium text-gray-700">
+                    Town/City
+                  </Label>
+                  <Input
+                    id="town"
+                    value={formData.town}
+                    onChange={(e) => handleInputChange('town', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="postalCode" className="text-sm font-medium text-gray-700">
+                    Postal Code
+                  </Label>
+                  <Input
+                    id="postalCode"
+                    value={formData.postalCode}
+                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
+                  Priority Level
+                </Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => handleInputChange('priority', value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="High">High Priority</SelectItem>
+                    <SelectItem value="Medium">Medium Priority</SelectItem>
+                    <SelectItem value="Low">Low Priority</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="active"
+                  checked={formData.active}
+                  onCheckedChange={(checked) => handleInputChange('active', !!checked)}
+                />
+                <Label htmlFor="active" className="text-sm font-medium text-gray-700">
+                  Site Active
+                </Label>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="longitude" className="text-sm font-medium text-gray-700">
-                Longitude
-              </Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                value={formData.longitude}
-                onChange={(e) => handleInputChange('longitude', e.target.value)}
-                placeholder="e.g. -74.0060"
-                className="mt-1"
-              />
-            </div>
-          </div>
 
-          <div>
-            <Label htmlFor="street" className="text-sm font-medium text-gray-700">
-              Street Address
-            </Label>
-            <Input
-              id="street"
-              value={formData.street}
-              onChange={(e) => handleInputChange('street', e.target.value)}
-              className="mt-1"
-            />
-          </div>
+            {/* Right Column - Contact Information */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
+              
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="town" className="text-sm font-medium text-gray-700">
-                Town/City
-              </Label>
-              <Input
-                id="town"
-                value={formData.town}
-                onChange={(e) => handleInputChange('town', e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="postalCode" className="text-sm font-medium text-gray-700">
-                Postal Code
-              </Label>
-              <Input
-                id="postalCode"
-                value={formData.postalCode}
-                onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                className="mt-1"
-              />
-            </div>
-          </div>
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
-              Priority Level
-            </Label>
-            <Select
-              value={formData.priority}
-              onValueChange={(value) => handleInputChange('priority', value)}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High Priority</SelectItem>
-                <SelectItem value="Medium">Medium Priority</SelectItem>
-                <SelectItem value="Low">Low Priority</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="active"
-              checked={formData.active}
-              onCheckedChange={(checked) => handleInputChange('active', !!checked)}
-            />
-            <Label htmlFor="active" className="text-sm font-medium text-gray-700">
-              Site Active
-            </Label>
-          </div>
-        </div>
-
-        {/* Middle Column - Contact Information & Map */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
-          
-          <div>
-            <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-              Phone Number
-            </Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-              Email Address
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          {/* Map Placeholder */}
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">
-              Location Map
-            </Label>
-            <div className="bg-green-100 border border-green-200 rounded-lg h-[calc(100vh-26rem)] min-h-32 max-h-64 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin size={32} className="mx-auto mb-2 text-green-600" />
-                <p className="text-gray-600 text-sm">Interactive Map</p>
-                <p className="text-xs text-gray-500">
-                  {formData.latitude && formData.longitude 
-                    ? `${formData.latitude}, ${formData.longitude}` 
-                    : 'No coordinates set'}
-                </p>
+              {/* Map Placeholder */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Location Map
+                </Label>
+                <div className="bg-green-100 border border-green-200 rounded-lg h-64 flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin size={32} className="mx-auto mb-2 text-green-600" />
+                    <p className="text-gray-600 text-sm">Interactive Map</p>
+                    <p className="text-xs text-gray-500">
+                      {formData.latitude && formData.longitude 
+                        ? `${formData.latitude}, ${formData.longitude}` 
+                        : 'No coordinates set'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Column - Operating Hours (Compact Layout) */}
-        <div className="space-y-3 flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Operating Hours (Delivery Openings)</h3>
-          
-          <div className="grid grid-cols-1 gap-2">
-            {weekDays.map((day) => {
-              const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
-              return (
-                <div 
-                  key={day} 
-                  className={`border rounded-lg p-2 ${
-                    hours.closed 
-                      ? 'bg-red-50 border-red-200' 
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-xs text-gray-900 min-w-[45px]">{day.slice(0, 3)}</span>
-                    <div className="flex items-center space-x-1">
-                      <Checkbox
-                        id={`${day}-closed`}
-                        checked={hours.closed}
-                        onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}                       
-                      />
-                      <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
-                        Closed
-                      </Label>
+          {/* Bottom Section - Operating Hours */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">Operating Hours (Delivery Openings)</h3>
+            
+            <div className="grid grid-cols-4 gap-3">
+              {weekDays.map((day) => {
+                const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
+                return (
+                  <div 
+                    key={day} 
+                    className={`border rounded-lg p-3 ${
+                      hours.closed 
+                        ? 'bg-red-50 border-red-200' 
+                        : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
+                      <div className="flex items-center space-x-1">
+                        <Checkbox
+                          id={`${day}-closed`}
+                          checked={hours.closed}
+                          onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}                       
+                        />
+                        <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
+                          Closed
+                        </Label>
+                      </div>
                     </div>
+                    
+                    {!hours.closed && (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs text-gray-600">Open</Label>
+                          <Select
+                            value={hours.open}
+                            onValueChange={(value) => handleOperatingHoursChange(day, 'open', value)}
+                          >
+                            <SelectTrigger className="h-7 text-xs w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {timeOptions.map((time) => (
+                                <SelectItem key={time} value={time} className="text-xs">
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-600">Close</Label>
+                          <Select
+                            value={hours.close}
+                            onValueChange={(value) => handleOperatingHoursChange(day, 'close', value)}
+                          >
+                            <SelectTrigger className="h-7 text-xs w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {timeOptions.map((time) => (
+                                <SelectItem key={time} value={time} className="text-xs">
+                                  {time}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {!hours.closed && (
-                    <div className="flex gap-1">
-                      <div className="flex-1 min-w-0">
-                        <Label className="text-xs text-gray-600 block mb-1">Open</Label>
-                        <Select
-                          value={hours.open}
-                          onValueChange={(value) => handleOperatingHoursChange(day, 'open', value)}
-                        >
-                          <SelectTrigger className="h-6 text-xs w-full min-w-[70px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time} className="text-xs">
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Label className="text-xs text-gray-600 block mb-1">Close</Label>
-                        <Select
-                          value={hours.close}
-                          onValueChange={(value) => handleOperatingHoursChange(day, 'close', value)}
-                        >
-                          <SelectTrigger className="h-6 text-xs w-full min-w-[70px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time} className="text-xs">
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="border-t border-gray-200 pt-3 mt-4 flex justify-end gap-2 flex-shrink-0">
+      {/* Footer Actions - Always Visible */}
+      <div className="border-t border-gray-200 pt-3 mt-4 flex justify-end gap-2 flex-shrink-0 bg-gray-50">
         <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
