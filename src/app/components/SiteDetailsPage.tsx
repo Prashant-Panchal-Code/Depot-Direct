@@ -77,7 +77,7 @@ export default function SiteDetailsPage({
             onClick={handleBack}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
+            className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-800 shadow-sm"
           >
             <ArrowLeft size={16} />
             Back to Sites
