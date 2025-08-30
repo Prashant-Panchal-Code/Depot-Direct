@@ -11,12 +11,10 @@ import { useState } from "react";
 
 interface BasicInfoTabProps {
   site: SiteDetails;
-  isEditing: boolean;
   onSave: () => void;
-  onBack: () => void;
 }
 
-export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicInfoTabProps) {
+export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
   const weekDays = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];

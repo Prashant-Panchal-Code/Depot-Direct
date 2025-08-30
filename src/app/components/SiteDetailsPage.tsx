@@ -10,7 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Plus, ArrowLeft } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { SiteDetails } from "./SiteDetailsModal";
 import { useAppContext } from "../contexts/AppContext";
 import BasicInfoTab from "./site-tabs/BasicInfoTab";
@@ -32,7 +32,6 @@ export default function SiteDetailsPage({
 }: SiteDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
   const [activeTab, setActiveTab] = useState("basic-info");
-  const [isEditing, setIsEditing] = useState(false);
 
   // Collapse sidebar when component mounts, restore when unmounting
   useEffect(() => {
@@ -45,7 +44,6 @@ export default function SiteDetailsPage({
 
   const handleSave = () => {
     onSave(site);
-    setIsEditing(false);
   };
 
   const handleBack = () => {
@@ -124,17 +122,15 @@ export default function SiteDetailsPage({
           {activeTab === "basic-info" && (
             <BasicInfoTab
               site={site}
-              isEditing={isEditing}
               onSave={handleSave}
-              onBack={handleBack}
             />
           )}
           
           {activeTab === "inventory" && <InventoryTab site={site} />}
           
-          {activeTab === "deliveries" && <DeliveriesTab site={site} />}
+          {activeTab === "deliveries" && <DeliveriesTab />}
           
-          {activeTab === "settings" && <SettingsTab site={site} />}
+          {activeTab === "settings" && <SettingsTab />}
         </div>
       </div>
     </div>

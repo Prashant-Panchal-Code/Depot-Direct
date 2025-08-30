@@ -5,12 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarBlank, Download, Gear } from "@phosphor-icons/react";
-import { SiteDetails } from "../SiteDetailsModal";
+import { Download, Gear } from "@phosphor-icons/react";
+// import { SiteDetails } from "../SiteDetailsModal"; // Unused import removed
 
-interface SettingsTabProps {
-  site: SiteDetails;
-}
 
 interface HistoryEvent {
   id: number;
@@ -22,7 +19,7 @@ interface HistoryEvent {
   module: string;
 }
 
-export default function SettingsTab({ site }: SettingsTabProps) {
+export default function SettingsTab() {
   const [selectedEventType, setSelectedEventType] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");

@@ -13,8 +13,8 @@ import {
 import { themeQuartz } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Circle, Rows, XCircle } from "@phosphor-icons/react";
-import AddSiteDialog, { Site } from "../components/AddSiteDialog";
-import SiteDetailsModal, { SiteDetails } from "../components/SiteDetailsModal";
+import AddSiteDialog, { Site, NewSite } from "../components/AddSiteDialog";
+import { SiteDetails } from "../components/SiteDetailsModal";
 import SiteDetailsPage from "../components/SiteDetailsPage";
 
 // Register AG Grid modules
@@ -25,29 +25,29 @@ export default function SitesContent() {
   const [selectedSite, setSelectedSite] = useState<SiteDetails | null>(null);
   const [showSiteDetails, setShowSiteDetails] = useState(false);
   const [sites, setSites] = useState([
-    { id: 1, siteCode: "WC001", siteName: "Downtown Gas Station", latLong: "34.0522, -118.2437", street: "123 Main Street", postalCode: "90210", town: "Los Angeles", active: true, priority: "High" },
-    { id: 2, siteCode: "WC002", siteName: "Airport Fuel Hub", latLong: "34.0522, -118.2437", street: "456 Airport Blvd", postalCode: "90045", town: "Los Angeles", active: true, priority: "High" },
-    { id: 3, siteCode: "WC003", siteName: "Industrial District Station", latLong: "34.0194, -118.4108", street: "789 Industrial Way", postalCode: "90401", town: "Santa Monica", active: true, priority: "Medium" },
-    { id: 4, siteCode: "WC004", siteName: "Harbor Point Depot", latLong: "33.7701, -118.1937", street: "321 Harbor Drive", postalCode: "90731", town: "San Pedro", active: false, priority: "Low" },
-    { id: 5, siteCode: "WC005", siteName: "Suburban Shopping Center", latLong: "34.1478, -118.1445", street: "654 Shopping Center Dr", postalCode: "91101", town: "Pasadena", active: true, priority: "Medium" },
-    { id: 6, siteCode: "WC006", siteName: "Coastal Highway Station", latLong: "34.0059, -118.4989", street: "789 Pacific Coast Hwy", postalCode: "90401", town: "Santa Monica", active: true, priority: "High" },
-    { id: 7, siteCode: "WC007", siteName: "Metro Center Fuel", latLong: "34.0522, -118.2437", street: "456 Metro Blvd", postalCode: "90012", town: "Los Angeles", active: true, priority: "Medium" },
-    { id: 8, siteCode: "WC008", siteName: "Valley Express Station", latLong: "34.1684, -118.3731", street: "123 Valley View Dr", postalCode: "91367", town: "Woodland Hills", active: false, priority: "Low" },
-    { id: 9, siteCode: "WC009", siteName: "Beverly Hills Premium", latLong: "34.0736, -118.4004", street: "321 Rodeo Drive", postalCode: "90210", town: "Beverly Hills", active: true, priority: "High" },
-    { id: 10, siteCode: "WC010", siteName: "Venice Beach Station", latLong: "33.9850, -118.4695", street: "789 Ocean Front Walk", postalCode: "90291", town: "Venice", active: true, priority: "Medium" },
-    { id: 11, siteCode: "WC011", siteName: "Hollywood Boulevard Fuel", latLong: "34.1022, -118.3406", street: "456 Hollywood Blvd", postalCode: "90028", town: "Hollywood", active: true, priority: "High" },
-    { id: 12, siteCode: "WC012", siteName: "Culver City Station", latLong: "34.0211, -118.3965", street: "123 Washington Blvd", postalCode: "90232", town: "Culver City", active: false, priority: "Low" },
-    { id: 13, siteCode: "WC013", siteName: "Marina Del Rey Fuel", latLong: "33.9803, -118.4517", street: "321 Admiralty Way", postalCode: "90292", town: "Marina Del Rey", active: true, priority: "Medium" },
-    { id: 14, siteCode: "WC014", siteName: "El Segundo Airport Station", latLong: "33.9425, -118.4081", street: "789 Sepulveda Blvd", postalCode: "90245", town: "El Segundo", active: true, priority: "High" },
-    { id: 15, siteCode: "WC015", siteName: "Manhattan Beach Express", latLong: "33.8847, -118.4109", street: "456 Manhattan Beach Blvd", postalCode: "90266", town: "Manhattan Beach", active: true, priority: "Medium" },
-    { id: 16, siteCode: "WC016", siteName: "Redondo Beach Station", latLong: "33.8492, -118.3887", street: "123 Pacific Coast Hwy", postalCode: "90277", town: "Redondo Beach", active: false, priority: "Low" },
-    { id: 17, siteCode: "WC017", siteName: "Torrance Industrial", latLong: "33.8358, -118.3406", street: "321 Torrance Blvd", postalCode: "90501", town: "Torrance", active: true, priority: "High" },
-    { id: 18, siteCode: "WC018", siteName: "Long Beach Harbor", latLong: "33.7701, -118.1937", street: "789 Harbor Scenic Dr", postalCode: "90802", town: "Long Beach", active: true, priority: "High" },
-    { id: 19, siteCode: "WC019", siteName: "Huntington Beach Pier", latLong: "33.6553, -117.9988", street: "456 Main Street", postalCode: "92648", town: "Huntington Beach", active: true, priority: "Medium" },
-    { id: 20, siteCode: "WC020", siteName: "Newport Beach Station", latLong: "33.6189, -117.9298", street: "123 Balboa Blvd", postalCode: "92661", town: "Newport Beach", active: false, priority: "Low" },
-    { id: 21, siteCode: "WC021", siteName: "Laguna Beach Scenic", latLong: "33.5427, -117.7854", street: "321 Coast Hwy", postalCode: "92651", town: "Laguna Beach", active: true, priority: "Medium" },
-    { id: 22, siteCode: "WC022", siteName: "Anaheim Convention Center", latLong: "33.8073, -117.9185", street: "789 Katella Ave", postalCode: "92802", town: "Anaheim", active: true, priority: "High" },
-    { id: 23, siteCode: "WC023", siteName: "Fullerton University Station", latLong: "33.8839, -117.8850", street: "456 State College Blvd", postalCode: "92831", town: "Fullerton", active: true, priority: "Medium" },
+    { id: 1, siteCode: "WC001", siteName: "Downtown Gas Station", latitude: "34.0522", longitude: "-118.2437", street: "123 Main Street", postalCode: "90210", town: "Los Angeles", active: true, priority: "High" },
+    { id: 2, siteCode: "WC002", siteName: "Airport Fuel Hub", latitude: "34.0522", longitude: "-118.2437", street: "456 Airport Blvd", postalCode: "90045", town: "Los Angeles", active: true, priority: "High" },
+    { id: 3, siteCode: "WC003", siteName: "Industrial District Station", latitude: "34.0194", longitude: "-118.4108", street: "789 Industrial Way", postalCode: "90401", town: "Santa Monica", active: true, priority: "Medium" },
+    { id: 4, siteCode: "WC004", siteName: "Harbor Point Depot", latitude: "33.7701", longitude: "-118.1937", street: "321 Harbor Drive", postalCode: "90731", town: "San Pedro", active: false, priority: "Low" },
+    { id: 5, siteCode: "WC005", siteName: "Suburban Shopping Center", latitude: "34.1478", longitude: "-118.1445", street: "654 Shopping Center Dr", postalCode: "91101", town: "Pasadena", active: true, priority: "Medium" },
+    { id: 6, siteCode: "WC006", siteName: "Coastal Highway Station", latitude: "34.0059", longitude: "-118.4989", street: "789 Pacific Coast Hwy", postalCode: "90401", town: "Santa Monica", active: true, priority: "High" },
+    { id: 7, siteCode: "WC007", siteName: "Metro Center Fuel", latitude: "34.0522", longitude: "-118.2437", street: "456 Metro Blvd", postalCode: "90012", town: "Los Angeles", active: true, priority: "Medium" },
+    { id: 8, siteCode: "WC008", siteName: "Valley Express Station", latitude: "34.1684", longitude: "-118.3731", street: "123 Valley View Dr", postalCode: "91367", town: "Woodland Hills", active: false, priority: "Low" },
+    { id: 9, siteCode: "WC009", siteName: "Beverly Hills Premium", latitude: "34.0736", longitude: "-118.4004", street: "321 Rodeo Drive", postalCode: "90210", town: "Beverly Hills", active: true, priority: "High" },
+    { id: 10, siteCode: "WC010", siteName: "Venice Beach Station", latitude: "33.9850", longitude: "-118.4695", street: "789 Ocean Front Walk", postalCode: "90291", town: "Venice", active: true, priority: "Medium" },
+    { id: 11, siteCode: "WC011", siteName: "Hollywood Boulevard Fuel", latitude: "34.1022", longitude: "-118.3406", street: "456 Hollywood Blvd", postalCode: "90028", town: "Hollywood", active: true, priority: "High" },
+    { id: 12, siteCode: "WC012", siteName: "Culver City Station", latitude: "34.0211", longitude: "-118.3965", street: "123 Washington Blvd", postalCode: "90232", town: "Culver City", active: false, priority: "Low" },
+    { id: 13, siteCode: "WC013", siteName: "Marina Del Rey Fuel", latitude: "33.9803", longitude: "-118.4517", street: "321 Admiralty Way", postalCode: "90292", town: "Marina Del Rey", active: true, priority: "Medium" },
+    { id: 14, siteCode: "WC014", siteName: "El Segundo Airport Station", latitude: "33.9425", longitude: "-118.4081", street: "789 Sepulveda Blvd", postalCode: "90245", town: "El Segundo", active: true, priority: "High" },
+    { id: 15, siteCode: "WC015", siteName: "Manhattan Beach Express", latitude: "33.8847", longitude: "-118.4109", street: "456 Manhattan Beach Blvd", postalCode: "90266", town: "Manhattan Beach", active: true, priority: "Medium" },
+    { id: 16, siteCode: "WC016", siteName: "Redondo Beach Station", latitude: "33.8492", longitude: "-118.3887", street: "123 Pacific Coast Hwy", postalCode: "90277", town: "Redondo Beach", active: false, priority: "Low" },
+    { id: 17, siteCode: "WC017", siteName: "Torrance Industrial", latitude: "33.8358", longitude: "-118.3406", street: "321 Torrance Blvd", postalCode: "90501", town: "Torrance", active: true, priority: "High" },
+    { id: 18, siteCode: "WC018", siteName: "Long Beach Harbor", latitude: "33.7701", longitude: "-118.1937", street: "789 Harbor Scenic Dr", postalCode: "90802", town: "Long Beach", active: true, priority: "High" },
+    { id: 19, siteCode: "WC019", siteName: "Huntington Beach Pier", latitude: "33.6553", longitude: "-117.9988", street: "456 Main Street", postalCode: "92648", town: "Huntington Beach", active: true, priority: "Medium" },
+    { id: 20, siteCode: "WC020", siteName: "Newport Beach Station", latitude: "33.6189", longitude: "-117.9298", street: "123 Balboa Blvd", postalCode: "92661", town: "Newport Beach", active: false, priority: "Low" },
+    { id: 21, siteCode: "WC021", siteName: "Laguna Beach Scenic", latitude: "33.5427", longitude: "-117.7854", street: "321 Coast Hwy", postalCode: "92651", town: "Laguna Beach", active: true, priority: "Medium" },
+    { id: 22, siteCode: "WC022", siteName: "Anaheim Convention Center", latitude: "33.8073", longitude: "-117.9185", street: "789 Katella Ave", postalCode: "92802", town: "Anaheim", active: true, priority: "High" },
+    { id: 23, siteCode: "WC023", siteName: "Fullerton University Station", latitude: "33.8839", longitude: "-117.8850", street: "456 State College Blvd", postalCode: "92831", town: "Fullerton", active: true, priority: "Medium" },
     { id: 24, siteCode: "WC024", siteName: "Buena Park Express", latLong: "33.8675, -117.9981", street: "123 Beach Blvd", postalCode: "90620", town: "Buena Park", active: false, priority: "Low" },
     { id: 25, siteCode: "WC025", siteName: "Cypress Industrial", latLong: "33.8169, -118.0373", street: "321 Lincoln Ave", postalCode: "90630", town: "Cypress", active: true, priority: "High" },
     { id: 26, siteCode: "WC026", siteName: "Garden Grove Station", latLong: "33.7739, -117.9414", street: "789 Harbor Blvd", postalCode: "92840", town: "Garden Grove", active: true, priority: "Medium" },
@@ -77,18 +77,19 @@ export default function SitesContent() {
     { id: 50, siteCode: "WC050", siteName: "Chula Vista Station", latLong: "32.6401, -117.0842", street: "789 Broadway", postalCode: "91910", town: "Chula Vista", active: true, priority: "Medium" },
   ]);
 
-  const handleAddSite = (newSite: Site) => {
-    const site = {
+  const handleAddSite = (newSite: NewSite) => {
+    const site: Site = {
       ...newSite,
       id: sites.length + 1,
-      latLong: `${newSite.latitude}, ${newSite.longitude}`,
     };
     setSites([...sites, site]);
   };
 
-  const handleRowDoubleClick = (data: any) => {
+  const handleRowDoubleClick = (data: Site) => {
     const siteDetails: SiteDetails = {
       ...data,
+      id: data.id ?? 0,
+      latLong: `${data.latitude}, ${data.longitude}`,
       // Add mock additional details that would typically come from a database
       contactPerson: `Manager ${data.siteCode}`,
       phone: `+1 (555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -104,8 +105,22 @@ export default function SitesContent() {
   };
 
   const handleSaveSite = (updatedSite: SiteDetails) => {
+    // Convert SiteDetails back to Site format for the sites array
+    const updatedSiteData: Site = {
+      id: updatedSite.id!,  // Non-null assertion since we know it exists when saving
+      siteCode: updatedSite.siteCode,
+      siteName: updatedSite.siteName,
+      latitude: updatedSite.latLong?.split(',')[0]?.trim() || "",
+      longitude: updatedSite.latLong?.split(',')[1]?.trim() || "",
+      street: updatedSite.street,
+      postalCode: updatedSite.postalCode,
+      town: updatedSite.town,
+      active: updatedSite.active,
+      priority: updatedSite.priority,
+    };
+    
     setSites(sites.map(site => 
-      site.id === updatedSite.id ? updatedSite : site
+      site.id === updatedSite.id ? updatedSiteData : site
     ));
   };
 
@@ -186,12 +201,12 @@ export default function SitesContent() {
     },
     {
       headerName: "Lat/Long",
-      field: "latLong",
       flex: 1,
       minWidth: 150,
       sortable: false,
       filter: false,
       cellStyle: { textAlign: 'center' },
+      valueGetter: (params) => `${params.data?.latitude}, ${params.data?.longitude}`,
     },
     {
       field: "street",

@@ -6,11 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "@phosphor-icons/react";
-import { SiteDetails } from "../SiteDetailsModal";
+// import { SiteDetails } from "../SiteDetailsModal"; // Unused import removed
 
-interface DeliveriesTabProps {
-  site: SiteDetails;
-}
+
+
+// Interface removed since no props are needed
+// interface DeliveriesTabProps {
+//   site: SiteDetails;
+// }
 
 interface Delivery {
   id: number;
@@ -26,7 +29,7 @@ interface Delivery {
   notes: string;
 }
 
-export default function DeliveriesTab({ site }: DeliveriesTabProps) {
+export default function DeliveriesTab() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const getStatusColor = (status: string) => {

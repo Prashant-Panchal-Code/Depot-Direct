@@ -17,6 +17,20 @@ import { PlusSquare } from "@phosphor-icons/react";
 
 // Site interface for type safety
 export interface Site {
+  id: number; // Required for existing sites
+  siteCode: string;
+  siteName: string;
+  latitude: string;
+  longitude: string;
+  street: string;
+  postalCode: string;
+  town: string;
+  active: boolean;
+  priority: string;
+}
+
+// Interface for new sites being created
+export interface NewSite {
   siteCode: string;
   siteName: string;
   latitude: string;
@@ -29,12 +43,12 @@ export interface Site {
 }
 
 interface AddSiteDialogProps {
-  onSave: (site: Site) => void;
+  onSave: (site: NewSite) => void;
 }
 
 export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<Site>({
+  const [formData, setFormData] = useState<NewSite>({
     siteCode: "",
     siteName: "",
     latitude: "",

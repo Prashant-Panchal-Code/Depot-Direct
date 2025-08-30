@@ -12,19 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   MapPin,
-  Clock,
-  Phone,
-  Envelope,
-  User,
-  Gauge,
-  Drop,
-  TrendUp,
-  Package,
-  Calendar,
-  Warning,
-  CheckCircle,
-  XCircle,
-  PencilSimple,
   Plus,
   MagnifyingGlass,
   FunnelSimple,
@@ -98,23 +85,20 @@ export default function SiteDetailsModal({
 }: SiteDetailsModalProps) {
   const [activeTab, setActiveTab] = useState("basic-info");
   const [isEditing, setIsEditing] = useState(false);
-  const [editedSite, setEditedSite] = useState<SiteDetails | null>(site);
+  // const [editedSite, setEditedSite] = useState<SiteDetails | null>(site); // Unused variable removed
   const [expandedTanks, setExpandedTanks] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
 
   if (!site) return null;
 
   const handleSave = () => {
-    if (editedSite) {
-      onSave(editedSite);
+    if (site) {
+      onSave(site);
       setIsEditing(false);
     }
   };
 
-  const handleCancel = () => {
-    setEditedSite(site);
-    setIsEditing(false);
-  };
+  // handleCancel function removed as it's not used
 
   const toggleTankExpansion = (tankId: number) => {
     setExpandedTanks(prev => ({
@@ -140,18 +124,7 @@ export default function SiteDetailsModal({
     }
   };
 
-  const getDeliveryStatusColor = (status: string) => {
-    switch (status) {
-      case "Scheduled":
-        return "text-blue-800 bg-blue-100";
-      case "In Transit":
-        return "text-yellow-800 bg-yellow-100";
-      case "Delayed":
-        return "text-red-800 bg-red-100";
-      default:
-        return "text-gray-800 bg-gray-100";
-    }
-  };
+  // getDeliveryStatusColor function removed as it's not used
 
   const getEventTypeColor = (eventType: string) => {
     switch (eventType) {
@@ -426,7 +399,7 @@ export default function SiteDetailsModal({
                     <div>CLOSE</div>
                   </div>
                   {weekDays.map((day) => {
-                    const hours = (siteWithDefaults.operatingHours as any)?.[day] || {
+                    const hours = (siteWithDefaults.operatingHours as Record<string, { open: string; close: string; closed: boolean }>)?.[day] || {
                       open: "08:00 AM",
                       close: "10:00 PM",
                       closed: false,
@@ -460,7 +433,7 @@ export default function SiteDetailsModal({
                   <h3 className="text-lg font-semibold text-gray-900">Tank Details</h3>
                 </div>
                 <div className="divide-y divide-gray-200">
-                  {siteWithDefaults.tanks?.map((tank, index) => (
+                  {siteWithDefaults.tanks?.map((tank) => (
                     <div key={tank.id} className="bg-gray-50">
                       <button
                         onClick={() => toggleTankExpansion(tank.id)}
