@@ -11,218 +11,12 @@ import {
   ICellRendererParams,
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CheckSquare, Circle, Plus, Rows, XCircle } from "@phosphor-icons/react";
+import { CheckSquare, Circle, Rows, XCircle } from "@phosphor-icons/react";
+import AddSiteDialog, { Site } from "../components/AddSiteDialog";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-// Site interface for type safety
-interface Site {
-  siteCode: string;
-  siteName: string;
-  latitude: string;
-  longitude: string;
-  street: string;
-  postalCode: string;
-  town: string;
-  active: boolean;
-  priority: string;
-}
-
-// Add Site Dialog component
-function AddSiteDialog({ onSave }: { onSave: (site: Site) => void }) {
-  const [formData, setFormData] = useState({
-    siteCode: "",
-    siteName: "",
-    latitude: "",
-    longitude: "",
-    street: "",
-    postalCode: "",
-    town: "",
-    active: true,
-    priority: "Medium",
-  });
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    setFormData({
-      siteCode: "",
-      siteName: "",
-      latitude: "",
-      longitude: "",
-      street: "",
-      postalCode: "",
-      town: "",
-      active: true,
-      priority: "Medium",
-    });
-    setIsOpen(false);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button><Plus weight="fill" /> Add New Site</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Site</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Site Code *
-              </label>
-              <Input
-                type="text"
-                value={formData.siteCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, siteCode: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Site Name *
-              </label>
-              <Input
-                type="text"
-                value={formData.siteName}
-                onChange={(e) =>
-                  setFormData({ ...formData, siteName: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Latitude
-              </label>
-              <Input
-                type="number"
-                step="any"
-                value={formData.latitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, latitude: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Longitude
-              </label>
-              <Input
-                type="number"
-                step="any"
-                value={formData.longitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, longitude: e.target.value })
-                }
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Street Address
-              </label>
-              <Input
-                type="text"
-                value={formData.street}
-                onChange={(e) =>
-                  setFormData({ ...formData, street: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Postal Code
-              </label>
-              <Input
-                type="text"
-                value={formData.postalCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, postalCode: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Town/City
-              </label>
-              <Input
-                type="text"
-                value={formData.town}
-                onChange={(e) =>
-                  setFormData({ ...formData, town: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Priority
-              </label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, priority: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="active"
-                
-                checked={formData.active}
-                onCheckedChange={(checked: boolean) =>
-                  setFormData({ ...formData, active: checked })
-                }
-              />
-              <label
-                htmlFor="active"
-                className="text-sm font-medium text-gray-900 cursor-pointer"
-              >
-                Active
-              </label>
-            </div>
-          </div>
-          <div className="flex justify-end gap-4 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Add Site</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function SitesContent() {
   const { selectedCountry, selectedRegion, sidebarCollapsed } = useAppContext();
@@ -231,8 +25,7 @@ export default function SitesContent() {
       id: 1,
       siteCode: "WC001",
       siteName: "Downtown Gas Station",
-      latitude: "34.0522",
-      longitude: "-118.2437",
+      latLong: "34.0522, -118.2437",
       street: "123 Main Street",
       postalCode: "90210",
       town: "Los Angeles",
@@ -243,8 +36,7 @@ export default function SitesContent() {
       id: 2,
       siteCode: "WC002",
       siteName: "Airport Fuel Hub",
-      latitude: "34.0522",
-      longitude: "-118.2437",
+      latLong: "34.0522, -118.2437",
       street: "456 Airport Blvd",
       postalCode: "90045",
       town: "Los Angeles",
@@ -255,8 +47,7 @@ export default function SitesContent() {
       id: 3,
       siteCode: "WC003",
       siteName: "Industrial District Station",
-      latitude: "34.0194",
-      longitude: "-118.4108",
+      latLong: "34.0194, -118.4108",
       street: "789 Industrial Way",
       postalCode: "90401",
       town: "Santa Monica",
@@ -267,8 +58,7 @@ export default function SitesContent() {
       id: 4,
       siteCode: "WC004",
       siteName: "Harbor Point Depot",
-      latitude: "33.7701",
-      longitude: "-118.1937",
+      latLong: "33.7701, -118.1937",
       street: "321 Harbor Drive",
       postalCode: "90731",
       town: "San Pedro",
@@ -279,8 +69,7 @@ export default function SitesContent() {
       id: 5,
       siteCode: "WC005",
       siteName: "Suburban Shopping Center",
-      latitude: "34.1478",
-      longitude: "-118.1445",
+      latLong: "34.1478, -118.1445",
       street: "654 Shopping Center Dr",
       postalCode: "91101",
       town: "Pasadena",
@@ -293,6 +82,7 @@ export default function SitesContent() {
     const site = {
       ...newSite,
       id: sites.length + 1,
+      latLong: `${newSite.latitude}, ${newSite.longitude}`,
     };
     setSites([...sites, site]);
   };
@@ -355,19 +145,7 @@ export default function SitesContent() {
     );
   };
 
-  // Lat/Long Cell Renderer
-  const LatLongCellRenderer = (params: ICellRendererParams) => {
-    const { latitude, longitude } = params.data;
-    if (latitude && longitude) {
-      return (
-        <div className="text-sm">
-          <div>{latitude}</div>
-          <div>{longitude}</div>
-        </div>
-      );
-    }
-    return <span className="text-gray-500">Not set</span>;
-  };
+ 
 
   // Column Definitions
   const columnDefs: ColDef[] = [
@@ -386,11 +164,12 @@ export default function SitesContent() {
     },
     {
       headerName: "Lat/Long",
-      cellRenderer: LatLongCellRenderer,
+      field: "latLong",
       flex: 1,
-      minWidth: 120,
+      minWidth: 150,
       sortable: false,
       filter: false,
+      cellStyle: { textAlign: 'center' },
     },
     {
       field: "street",
