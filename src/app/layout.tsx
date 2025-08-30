@@ -3,6 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./contexts/AppContext";
 
+// AG Grid imports
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+
+// Register all Community features
+ModuleRegistry.registerModules([AllCommunityModule]);
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

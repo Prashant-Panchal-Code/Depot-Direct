@@ -1,6 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { ColDef, GridReadyEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { themeQuartz } from 'ag-grid-community';
+import { useAppContext } from '../contexts/AppContext';
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 // Modal component
 function Modal({ isOpen, onClose, title, children }: { 
@@ -32,6 +39,7 @@ function Modal({ isOpen, onClose, title, children }: {
 }
 
 export default function DashboardContent() {
+  const { sidebarCollapsed } = useAppContext();
   const [selectedDate, setSelectedDate] = useState(() => {
     // Get today's date in YYYY-MM-DD format
     const today = new Date();
@@ -77,8 +85,79 @@ export default function DashboardContent() {
     { site: "Site W - Mall", stockout: "4 hours", eta: "3 hours", tanks: "T6 (Gasoline)", priority: "high", bgColor: "bg-red-900/50", borderColor: "border-red-500", textColor: "text-red-300", buttonColor: "bg-red-600 hover:bg-red-500" },
   ];
 
+  // Column definitions for AG Grid tables
+  const deliveriesColumnDefs: ColDef[] = [
+    { field: 'time', headerName: 'Time', flex: 1, sortable: true, minWidth: 90 },
+    { field: 'eta', headerName: 'ETA', flex: 1, sortable: true, minWidth: 90 },
+    { field: 'site', headerName: 'Site', flex: 2, sortable: true, minWidth: 120 },
+    { field: 'product', headerName: 'Product', flex: 2, sortable: true, minWidth: 120 },
+    { field: 'truck', headerName: 'Truck', flex: 1, sortable: true, minWidth: 100 },
+    { 
+      field: 'status', 
+      headerName: 'Status', 
+      flex: 1,
+      minWidth: 120,
+      cellRenderer: (params: any) => (
+        <div className={`px-2 py-1 rounded-full text-xs font-medium ${params.data.statusColor}`}>
+          {params.value}
+        </div>
+      )
+    },
+  ];
+
+  const trucksColumnDefs: ColDef[] = [
+    { field: 'name', headerName: 'Truck', flex: 1, sortable: true, minWidth: 120 },
+    { field: 'capacity', headerName: 'Capacity', flex: 1, sortable: true, minWidth: 110 },
+    { field: 'driver', headerName: 'Driver', flex: 2, sortable: true, minWidth: 130 },
+    { 
+      field: 'status', 
+      headerName: 'Status', 
+      flex: 1,
+      minWidth: 120,
+      cellRenderer: (params: any) => (
+        <div className={`px-2 py-1 rounded-full text-xs font-medium ${params.data.statusColor}`}>
+          {params.value}
+        </div>
+      )
+    },
+  ];
+
+  const leftOnBoardColumnDefs: ColDef[] = [
+    { field: 'truck', headerName: 'Truck', flex: 1, sortable: true, minWidth: 100 },
+    { field: 'driver', headerName: 'Driver', flex: 2, sortable: true, minWidth: 130 },
+    { field: 'lastSite', headerName: 'Last Site', flex: 1, sortable: true, minWidth: 120 },
+    { field: 'product', headerName: 'Product', flex: 1, sortable: true, minWidth: 120 },
+    { 
+      field: 'volume', 
+      headerName: 'Volume Remaining', 
+      flex: 2,
+      minWidth: 150,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center gap-3">
+          <div className="w-24 h-2.5 bg-gray-200 rounded-full">
+            <div className="h-2.5 bg-orange-400 rounded-full" style={{ width: `${params.data.percentage}%` }}></div>
+          </div>
+          <span className="text-orange-600 text-sm font-medium">{params.value}</span>
+        </div>
+      )
+    },
+    { 
+      field: 'actions', 
+      headerName: 'Actions', 
+      flex: 1,
+      minWidth: 100,
+      cellRenderer: () => (
+        <button className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 text-white">
+          Re-route
+        </button>
+      )
+    },
+  ];
+
   return (
-    <main className="ml-64 pt-20 min-h-screen bg-gray-50 text-gray-900 overflow-y-auto">
+    <main className={`pt-24 min-h-screen bg-gray-50 text-gray-900 overflow-y-auto transition-all duration-300 ${
+      sidebarCollapsed ? 'ml-16' : 'ml-64'
+    }`}>
       <div className="p-8">
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
@@ -122,56 +201,17 @@ export default function DashboardContent() {
                 </button>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="py-3 pr-4 text-gray-700">Time</th>
-                      <th className="py-3 px-4 text-gray-700">ETA</th>
-                      <th className="py-3 px-4 text-gray-700">Site</th>
-                      <th className="py-3 px-4 text-gray-700">Product</th>
-                      <th className="py-3 px-4 text-gray-700">Truck</th>
-                      <th className="py-3 pl-4 text-gray-700">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    <tr>
-                      <td className="py-4 pr-4 text-gray-600">8:00 AM</td>
-                      <td className="py-4 px-4 text-gray-600">8:15 AM</td>
-                      <td className="py-4 px-4 font-medium text-gray-900">Site A</td>
-                      <td className="py-4 px-4 text-gray-600">Gasoline</td>
-                      <td className="py-4 px-4 text-gray-600">Truck 1</td>
-                      <td className="py-4 pl-4">
-                        <span className="px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-700">
-                          Scheduled
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 pr-4 text-gray-600">10:00 AM</td>
-                      <td className="py-4 px-4 text-gray-600">10:30 AM</td>
-                      <td className="py-4 px-4 font-medium text-gray-900">Site B</td>
-                      <td className="py-4 px-4 text-gray-600">Diesel</td>
-                      <td className="py-4 px-4 text-gray-600">Truck 2</td>
-                      <td className="py-4 pl-4">
-                        <span className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700">
-                          En Route
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 pr-4 text-gray-600">12:00 PM</td>
-                      <td className="py-4 px-4 text-gray-600">12:05 PM</td>
-                      <td className="py-4 px-4 font-medium text-gray-900">Site C</td>
-                      <td className="py-4 px-4 text-gray-600">Heating Oil</td>
-                      <td className="py-4 px-4 text-gray-600">Truck 3</td>
-                      <td className="py-4 pl-4">
-                        <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700">
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div style={{ height: 250, width: '100%' }}>
+                  <AgGridReact
+                    columnDefs={deliveriesColumnDefs}
+                    rowData={allDeliveries.slice(0, 3)}
+                    domLayout="autoHeight"
+                    suppressRowClickSelection={true}
+                    suppressCellFocus={true}
+                    animateRows={true}
+                    theme={themeQuartz}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -187,34 +227,16 @@ export default function DashboardContent() {
                 Show All
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md border border-gray-200">
-                <div>
-                  <p className="font-semibold text-gray-900">Truck 1</p>
-                  <p className="text-sm text-gray-600">10,000L - Ethan Carter</p>
-                </div>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700">
-                  Available
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md border border-gray-200">
-                <div>
-                  <p className="font-semibold text-gray-900">Truck 2</p>
-                  <p className="text-sm text-gray-600">12,000L - Olivia Bennett</p>
-                </div>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700">
-                  In Transit
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md border border-gray-200">
-                <div>
-                  <p className="font-semibold text-gray-900">Truck 3</p>
-                  <p className="text-sm text-gray-600">8,000L - Noah Thompson</p>
-                </div>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-700">
-                  Maintenance
-                </span>
-              </div>
+            <div style={{ height: 200, width: '100%' }}>
+              <AgGridReact
+                columnDefs={trucksColumnDefs}
+                rowData={allTrucks.slice(0, 3)}
+                domLayout="autoHeight"
+                suppressRowClickSelection={true}
+                suppressCellFocus={true}
+                animateRows={true}
+                theme={themeQuartz}
+              />
             </div>
           </div>
         </div>
@@ -231,58 +253,17 @@ export default function DashboardContent() {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="py-3 pr-4 text-gray-700">Truck</th>
-                  <th className="py-3 px-4 text-gray-700">Driver</th>
-                  <th className="py-3 px-4 text-gray-700">Last Site</th>
-                  <th className="py-3 px-4 text-gray-700">Product</th>
-                  <th className="py-3 px-4 text-gray-700">Volume Remaining</th>
-                  <th className="py-3 pl-4 text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="py-4 pr-4 font-medium text-gray-900">Truck 5</td>
-                  <td className="py-4 px-4 text-gray-600">James Rodriguez</td>
-                  <td className="py-4 px-4 text-gray-600">Site D</td>
-                  <td className="py-4 px-4 text-gray-600">Gasoline</td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-24 h-2.5 bg-gray-200 rounded-full">
-                        <div className="h-2.5 bg-orange-400 rounded-full" style={{ width: '30%' }}></div>
-                      </div>
-                      <span className="text-orange-600 text-sm font-medium">1,200 L</span>
-                    </div>
-                  </td>
-                  <td className="py-4 pl-4">
-                    <button className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 text-white">
-                      Re-route
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-4 pr-4 font-medium text-gray-900">Truck 8</td>
-                  <td className="py-4 px-4 text-gray-600">Sophia Martinez</td>
-                  <td className="py-4 px-4 text-gray-600">Site F</td>
-                  <td className="py-4 px-4 text-gray-600">Diesel</td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-24 h-2.5 bg-gray-200 rounded-full">
-                        <div className="h-2.5 bg-orange-400 rounded-full" style={{ width: '20%' }}></div>
-                      </div>
-                      <span className="text-orange-600 text-sm font-medium">800 L</span>
-                    </div>
-                  </td>
-                  <td className="py-4 pl-4">
-                    <button className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 text-white">
-                      Re-route
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div style={{ height: 150, width: '100%' }}>
+              <AgGridReact
+                columnDefs={leftOnBoardColumnDefs}
+                rowData={allLeftOnBoard.slice(0, 2)}
+                domLayout="autoHeight"
+                suppressRowClickSelection={true}
+                suppressCellFocus={true}
+                animateRows={true}
+                theme={themeQuartz}
+              />
+            </div>
           </div>
         </div>
 
@@ -366,35 +347,18 @@ export default function DashboardContent() {
         onClose={() => setIsDeliveriesModalOpen(false)}
         title="All Upcoming Deliveries"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-3 pr-4 text-gray-900">Time</th>
-                <th className="py-3 px-4 text-gray-900">ETA</th>
-                <th className="py-3 px-4 text-gray-900">Site</th>
-                <th className="py-3 px-4 text-gray-900">Product</th>
-                <th className="py-3 px-4 text-gray-900">Truck</th>
-                <th className="py-3 pl-4 text-gray-900">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {allDeliveries.map((delivery, index) => (
-                <tr key={index}>
-                  <td className="py-4 pr-4 text-gray-600">{delivery.time}</td>
-                  <td className="py-4 px-4 text-gray-600">{delivery.eta}</td>
-                  <td className="py-4 px-4 font-medium text-gray-900">{delivery.site}</td>
-                  <td className="py-4 px-4 text-gray-600">{delivery.product}</td>
-                  <td className="py-4 px-4 text-gray-600">{delivery.truck}</td>
-                  <td className="py-4 pl-4">
-                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${delivery.statusColor.replace('bg-yellow-500/20 text-yellow-400', 'bg-yellow-100 text-yellow-700').replace('bg-blue-500/20 text-blue-400', 'bg-blue-100 text-blue-700').replace('bg-green-500/20 text-green-400', 'bg-green-100 text-green-700').replace('bg-red-500/20 text-red-400', 'bg-red-100 text-red-700')}`}>
-                      {delivery.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ height: 400, width: '100%' }}>
+          <AgGridReact
+            columnDefs={deliveriesColumnDefs}
+            rowData={allDeliveries}
+            domLayout="autoHeight"
+            suppressRowClickSelection={true}
+            suppressCellFocus={true}
+            animateRows={true}
+            pagination={true}
+            paginationPageSize={10}
+            theme={themeQuartz}
+          />
         </div>
       </Modal>
 
@@ -425,42 +389,18 @@ export default function DashboardContent() {
         onClose={() => setIsLeftOnBoardModalOpen(false)}
         title="All Potential Left on Board"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-3 pr-4 text-gray-900">Truck</th>
-                <th className="py-3 px-4 text-gray-900">Driver</th>
-                <th className="py-3 px-4 text-gray-900">Last Site</th>
-                <th className="py-3 px-4 text-gray-900">Product</th>
-                <th className="py-3 px-4 text-gray-900">Volume Remaining</th>
-                <th className="py-3 pl-4 text-gray-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {allLeftOnBoard.map((item, index) => (
-                <tr key={index}>
-                  <td className="py-4 pr-4 font-medium text-gray-900">{item.truck}</td>
-                  <td className="py-4 px-4 text-gray-600">{item.driver}</td>
-                  <td className="py-4 px-4 text-gray-600">{item.lastSite}</td>
-                  <td className="py-4 px-4 text-gray-600">{item.product}</td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-24 h-2.5 bg-gray-200 rounded-full">
-                        <div className="h-2.5 bg-orange-400 rounded-full" style={{ width: `${item.percentage}%` }}></div>
-                      </div>
-                      <span className="text-orange-600 text-sm font-medium">{item.volume}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 pl-4">
-                    <button className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-500 text-white">
-                      Re-route
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ height: 400, width: '100%' }}>
+          <AgGridReact
+            columnDefs={leftOnBoardColumnDefs}
+            rowData={allLeftOnBoard}
+            domLayout="autoHeight"
+            suppressRowClickSelection={true}
+            suppressCellFocus={true}
+            animateRows={true}
+            pagination={true}
+            paginationPageSize={10}
+            theme={themeQuartz}
+          />
         </div>
       </Modal>
 

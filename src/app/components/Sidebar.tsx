@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAppContext } from '../contexts/AppContext';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { sidebarCollapsed } = useAppContext();
 
   const menuItems = [
     { href: '/', icon: '📊', label: 'Dashboard' },
@@ -19,33 +21,58 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 p-6 flex flex-col justify-between z-10 shadow-sm">
+    <aside className={`fixed left-0 top-20 h-[calc(100vh-5rem)] bg-white border-r border-gray-200 flex flex-col justify-between z-10 shadow-sm transition-all duration-300 ${
+      sidebarCollapsed ? 'w-16 px-2' : 'w-64 px-6'
+    } py-6`}>
       <div className="flex flex-col gap-8">
-        <h1 className="text-2xl font-bold text-blue-500">Depot Direct</h1>
-        <nav className="flex flex-col gap-4">
+        <nav className="flex flex-col gap-2">
           {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 rounded-md transition-colors ${
-                pathname === item.href
-                  ? 'bg-blue-500 text-white'
-                  : 'hover:bg-gray-100 text-gray-700'
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
+            <div key={item.href} className="group relative">
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                  pathname === item.href
+                    ? 'bg-blue-500 text-white'
+                    : 'hover:bg-gray-100 text-gray-700'
+                } ${sidebarCollapsed ? 'justify-center' : ''}`}
+              >
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+              </Link>
+              
+              {/* Tooltip for collapsed state */}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  {item.label}
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                </div>
+              )}
+            </div>
           ))}
         </nav>
       </div>
-      <div className="flex items-center gap-3 p-4 border-t border-gray-200">
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-sm font-semibold text-gray-700">AU</span>
-        </div>
-        <div>
-          <p className="font-semibold text-gray-900">Admin User</p>
-          <a className="text-sm text-gray-500 hover:text-blue-500" href="#">Sign Out</a>
+      
+      <div className={`border-t border-gray-200 pt-4 ${sidebarCollapsed ? 'px-1' : 'px-4'}`}>
+        <div className="group relative">
+          <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-semibold text-gray-700">AU</span>
+            </div>
+            {!sidebarCollapsed && (
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900 truncate">Admin User</p>
+                <a className="text-sm text-gray-500 hover:text-blue-500" href="#">Sign Out</a>
+              </div>
+            )}
+          </div>
+          
+          {/* Tooltip for collapsed user section */}
+          {sidebarCollapsed && (
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+              Admin User
+              <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+            </div>
+          )}
         </div>
       </div>
     </aside>

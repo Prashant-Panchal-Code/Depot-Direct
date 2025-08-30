@@ -7,6 +7,8 @@ interface AppContextType {
   setSelectedCountry: (country: string) => void;
   selectedRegion: string;
   setSelectedRegion: (region: string) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -14,6 +16,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedCountry, setSelectedCountry] = useState('USA');
   const [selectedRegion, setSelectedRegion] = useState('West Coast');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <AppContext.Provider value={{
@@ -21,6 +24,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedCountry,
       selectedRegion,
       setSelectedRegion,
+      sidebarCollapsed,
+      setSidebarCollapsed,
     }}>
       {children}
     </AppContext.Provider>
