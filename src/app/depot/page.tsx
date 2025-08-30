@@ -1,13 +1,15 @@
-import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Sidebar from '../components/Sidebar';
 import DepotContent from './DepotContent';
 
-export default function Depot() {
+export default function DepotPage() {
   return (
-    <div className="bg-gray-50 text-gray-900 min-h-screen" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>
+    <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      <Header />
-      <DepotContent />
+      <div className="flex flex-col flex-1">
+        <Header />
+        <DepotContent />
+      </div>
     </div>
   );
 }
