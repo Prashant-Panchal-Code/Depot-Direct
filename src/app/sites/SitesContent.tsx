@@ -14,12 +14,16 @@ import { themeQuartz } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, Circle, Rows, XCircle } from "@phosphor-icons/react";
 import AddSiteDialog, { Site } from "../components/AddSiteDialog";
+import SiteDetailsModal, { SiteDetails } from "../components/SiteDetailsModal";
+import SiteDetailsPage from "../components/SiteDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function SitesContent() {
   const { sidebarCollapsed } = useAppContext();
+  const [selectedSite, setSelectedSite] = useState<SiteDetails | null>(null);
+  const [showSiteDetails, setShowSiteDetails] = useState(false);
   const [sites, setSites] = useState([
     { id: 1, siteCode: "WC001", siteName: "Downtown Gas Station", latLong: "34.0522, -118.2437", street: "123 Main Street", postalCode: "90210", town: "Los Angeles", active: true, priority: "High" },
     { id: 2, siteCode: "WC002", siteName: "Airport Fuel Hub", latLong: "34.0522, -118.2437", street: "456 Airport Blvd", postalCode: "90045", town: "Los Angeles", active: true, priority: "High" },
@@ -80,6 +84,29 @@ export default function SitesContent() {
       latLong: `${newSite.latitude}, ${newSite.longitude}`,
     };
     setSites([...sites, site]);
+  };
+
+  const handleRowDoubleClick = (data: any) => {
+    const siteDetails: SiteDetails = {
+      ...data,
+      // Add mock additional details that would typically come from a database
+      contactPerson: `Manager ${data.siteCode}`,
+      phone: `+1 (555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+      email: `manager.${data.siteCode.toLowerCase()}@company.com`,
+    };
+    setSelectedSite(siteDetails);
+    setShowSiteDetails(true);
+  };
+
+  const handleBackToSites = () => {
+    setShowSiteDetails(false);
+    setSelectedSite(null);
+  };
+
+  const handleSaveSite = (updatedSite: SiteDetails) => {
+    setSites(sites.map(site => 
+      site.id === updatedSite.id ? updatedSite : site
+    ));
   };
 
   const getPriorityColor = (priority: string) => {
@@ -220,79 +247,90 @@ export default function SitesContent() {
   };
 
   return (
-    <main
-      className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
-        sidebarCollapsed ? "ml-16" : "ml-64"
-      }`}
-    >
-      <div className="p-4 h-full flex flex-col">
-        {/* Header with Stats and Add Button */}
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          {/* Stats Cards - Same height as button */}
-          <div className="flex gap-3">
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><Rows size={25} color="#02589d" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-gray-900">
-                  {sites.length}
-                </span>
-                <span className="text-xs text-gray-600">Total</span>
+    <>
+      {showSiteDetails && selectedSite ? (
+        <SiteDetailsPage
+          site={selectedSite}
+          onBack={handleBackToSites}
+          onSave={handleSaveSite}
+        />
+      ) : (
+        <main
+          className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
+            sidebarCollapsed ? "ml-16" : "ml-64"
+          }`}
+        >
+          <div className="p-4 h-full flex flex-col">
+            {/* Header with Stats and Add Button */}
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
+              {/* Stats Cards - Same height as button */}
+              <div className="flex gap-3">
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><Rows size={25} color="#02589d" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-gray-900">
+                      {sites.length}
+                    </span>
+                    <span className="text-xs text-gray-600">Total</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><CheckSquare size={25} weight="duotone" color="green" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-green-600">
+                      {sites.filter((s) => s.active).length}
+                    </span>
+                    <span className="text-xs text-gray-600">Active</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><Circle size={25} color="red" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-red-600">
+                      {sites.filter((s) => s.priority === "High").length}
+                    </span>
+                    <span className="text-xs text-gray-600">High</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><XCircle size={25} color="red" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-red-600">
+                      {sites.filter((s) => !s.active).length}
+                    </span>
+                    <span className="text-xs text-gray-600">Inactive</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Add New Site Button */}
+              <AddSiteDialog onSave={handleAddSite} />
             </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><CheckSquare size={25} weight="duotone" color="green" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-green-600">
-                  {sites.filter((s) => s.active).length}
-                </span>
-                <span className="text-xs text-gray-600">Active</span>
-              </div>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><Circle size={25} color="red" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-red-600">
-                  {sites.filter((s) => s.priority === "High").length}
-                </span>
-                <span className="text-xs text-gray-600">High</span>
-              </div>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><XCircle size={25} color="red" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-red-600">
-                  {sites.filter((s) => !s.active).length}
-                </span>
-                <span className="text-xs text-gray-600">Inactive</span>
+
+            {/* Sites Table - Takes remaining space */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
+              <div style={{ height: "100%", width: "100%" }}>
+                <AgGridReact
+                  rowData={sites}
+                  columnDefs={columnDefs}
+                  defaultColDef={defaultColDef}
+                  animateRows={true}
+                  pagination={true}
+                  paginationPageSize={20}
+                  rowHeight={55}
+                  headerHeight={45}
+                  suppressMenuHide={true}
+                  theme={themeQuartz}
+                  onRowDoubleClicked={(event) => handleRowDoubleClick(event.data)}
+                  onGridReady={(params: GridReadyEvent) => {
+                    params.api.sizeColumnsToFit();
+                  }}
+                />
               </div>
             </div>
           </div>
-
-          {/* Add New Site Button */}
-          <AddSiteDialog onSave={handleAddSite} />
-        </div>
-
-        {/* Sites Table - Takes remaining space */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
-          <div style={{ height: "100%", width: "100%" }}>
-            <AgGridReact
-              rowData={sites}
-              columnDefs={columnDefs}
-              defaultColDef={defaultColDef}
-              animateRows={true}
-              pagination={true}
-              paginationPageSize={20}
-              rowHeight={55}
-              headerHeight={45}
-              suppressMenuHide={true}
-              theme={themeQuartz}
-              onGridReady={(params: GridReadyEvent) => {
-                params.api.sizeColumnsToFit();
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </main>
+        </main>
+      )}
+    </>
   );
 }
