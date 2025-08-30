@@ -17,6 +17,7 @@ import InventoryTab from "./site-tabs/InventoryTab";
 import DeliveriesTab from "./site-tabs/DeliveriesTab";
 import SettingsTab from "./site-tabs/SettingsTab";
 
+
 interface SiteDetailsPageProps {
   site: SiteDetails;
   onBack: () => void;
@@ -75,21 +76,7 @@ export default function SiteDetailsPage({
           </Button>
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Site Details</h1>
-            <p className="text-gray-600 mt-1">
-              View and manage details for this site
-            </p>
-          </div>
-          {activeTab === "inventory" && (
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus size={16} className="mr-2" />
-              Add New Tank
-            </Button>
-          )}
-        </div>
+ 
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 mb-6 flex-shrink-0">

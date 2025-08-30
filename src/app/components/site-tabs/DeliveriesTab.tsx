@@ -3,130 +3,272 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MagnifyingGlass, FunnelSimple, SortAscending } from "@phosphor-icons/react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
 
 interface DeliveriesTabProps {
   site: SiteDetails;
 }
 
+interface Delivery {
+  id: number;
+  tankNumber: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  eta: string;
+  supplier: string;
+  status: string;
+  driverName: string;
+  truckPlate: string;
+  notes: string;
+}
+
 export default function DeliveriesTab({ site }: DeliveriesTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Confirmed":
+        return "text-green-600 bg-green-100";
+      case "Scheduled":
+        return "text-blue-600 bg-blue-100";
+      case "In Transit":
+        return "text-orange-600 bg-orange-100";
+      case "Delivered":
+        return "text-gray-600 bg-gray-100";
+      default:
+        return "text-gray-600 bg-gray-100";
+    }
+  };
+
   // Mock data for demonstration
-  const mockTanks = [
+  const mockDeliveries = [
     {
       id: 1,
       tankNumber: "1",
-      status: "Normal",
-      capacity: 10000,
-      deadstock: 500,
-      currentVolume: 7500,
-      averageDailySales: 350,
-      productCode: "UNL87",
-      productName: "Unleaded 87",
-      plannedDeliveries: [
-        {
-          id: 1,
-          quantity: 5000,
-          eta: "2024-07-20T10:00:00",
-          supplier: "Shell Refinery",
-          status: "Scheduled",
-        },
-      ],
+      productName: "Premium Unleaded 95",
+      productCode: "P95",
+      quantity: 5000,
+      eta: "2024-07-20T08:00:00",
+      supplier: "Shell Distribution",
+      status: "Confirmed",
+      driverName: "John Smith",
+      truckPlate: "ABC-123",
+      notes: "Standard delivery - Tank 1"
     },
     {
       id: 2,
       tankNumber: "2",
-      status: "Low Stock",
-      capacity: 8000,
-      deadstock: 400,
-      currentVolume: 2000,
-      averageDailySales: 280,
-      productCode: "DSL",
       productName: "Diesel",
-      plannedDeliveries: [
-        {
-          id: 2,
-          quantity: 3000,
-          eta: "2024-07-21T02:00:00",
-          supplier: "BP Distribution",
-          status: "In Transit",
-        },
-      ],
+      productCode: "DSL",
+      quantity: 10000,
+      eta: "2024-07-20T14:00:00",
+      supplier: "BP Distribution",
+      status: "Scheduled",
+      driverName: "Mike Johnson",
+      truckPlate: "DEF-456",
+      notes: "Urgent delivery - Low stock"
     },
     {
       id: 3,
-      tankNumber: "3",
-      status: "Critically Low",
-      capacity: 12000,
-      deadstock: 600,
-      currentVolume: 1200,
-      averageDailySales: 420,
-      productCode: "UNL91",
-      productName: "Premium Unleaded 91",
-      plannedDeliveries: [],
+      tankNumber: "2",
+      productName: "Diesel",
+      productCode: "DSL",
+      quantity: 3000,
+      eta: "2024-07-21T02:00:00",
+      supplier: "BP Distribution",
+      status: "In Transit",
+      driverName: "Robert Brown",
+      truckPlate: "GHI-789",
+      notes: "Follow-up delivery"
+    },
+    {
+      id: 4,
+      tankNumber: "4",
+      productName: "Premium Unleaded 98",
+      productCode: "P98",
+      quantity: 8000,
+      eta: "2024-07-22T10:00:00",
+      supplier: "Mobil Distribution",
+      status: "Scheduled",
+      driverName: "Sarah Wilson",
+      truckPlate: "JKL-012",
+      notes: "Regular weekly delivery"
+    },
+    {
+      id: 5,
+      tankNumber: "1",
+      productName: "Premium Unleaded 95",
+      productCode: "P95",
+      quantity: 6000,
+      eta: "2024-07-23T09:00:00",
+      supplier: "Shell Distribution",
+      status: "Confirmed",
+      driverName: "David Lee",
+      truckPlate: "MNO-345",
+      notes: "Peak weekend stock preparation"
     },
   ];
 
-  const tanks = site.tanks || mockTanks;
+  const deliveries: Delivery[] = mockDeliveries;
+  const filteredDeliveries: Delivery[] = deliveries.filter((delivery: Delivery) =>
+    delivery.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    delivery.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    delivery.driverName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Planned Deliveries</h2>
-          <p className="text-gray-600 mt-1">View and manage upcoming deliveries for this site.</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus size={16} className="mr-2" />
+    <div className="h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-6 flex-shrink-0">
+        <h3 className="text-lg font-semibold text-gray-900">Planned Deliveries</h3>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+          <Plus size={16} />
           Schedule Delivery
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-md">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search deliveries..."
+      {/* Filters and Search - Full Width */}
+      <div className="grid grid-cols-4 gap-4 mb-6 flex-shrink-0">
+        <div>
+          <Label className="text-sm font-medium text-gray-700">Search Deliveries</Label>
+          <Input 
+            placeholder="Search by product, supplier, driver..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="mt-1"
           />
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
-          <FunnelSimple size={16} />
-          Filter
-        </Button>
-        <Button variant="outline" className="flex items-center gap-2">
-          <SortAscending size={16} />
-          Sort
-        </Button>
+        <div>
+          <Label className="text-sm font-medium text-gray-700">Status Filter</Label>
+          <Select defaultValue="all">
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="in-transit">In Transit</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-gray-700">Product Filter</Label>
+          <Select defaultValue="all">
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              <SelectItem value="P95">Premium Unleaded 95</SelectItem>
+              <SelectItem value="DSL">Diesel</SelectItem>
+              <SelectItem value="UNL91">Premium Unleaded 91</SelectItem>
+              <SelectItem value="P98">Premium Unleaded 98</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-sm font-medium text-gray-700">Date Range</Label>
+          <Input 
+            type="date" 
+            className="mt-1"
+          />
+        </div>
       </div>
 
-      {/* Deliveries Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-4 bg-gray-50 px-6 py-4 text-sm font-medium text-gray-700 border-b border-gray-200">
-          <div>DELIVERY QUANTITY</div>
+      {/* Deliveries Table - Full Width */}
+      <div className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {/* Table Header */}
+        <div className="grid grid-cols-8 bg-gray-50 px-6 py-3 text-sm font-medium text-gray-700 border-b border-gray-200">
+          <div>TANK</div>
+          <div>PRODUCT</div>
+          <div>QUANTITY (L)</div>
+          <div>SUPPLIER</div>
+          <div>DRIVER</div>
           <div>ETA</div>
-          <div>PRODUCT NAME</div>
-          <div></div>
+          <div>STATUS</div>
+          <div>ACTIONS</div>
         </div>
-        {tanks.flatMap(tank => 
-          tank.plannedDeliveries.map(delivery => (
-            <div key={delivery.id} className="grid grid-cols-4 px-6 py-4 border-b border-gray-100 last:border-b-0 items-center">
-              <div className="text-gray-900">{delivery.quantity.toLocaleString()} gallons</div>
-              <div className="text-gray-600">{new Date(delivery.eta).toLocaleString()}</div>
-              <div className="text-gray-600">{tank.productName}</div>
-              <div className="text-right">
-                <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                  View Details
+
+        {/* Table Content */}
+        <div className="overflow-y-auto max-h-96">
+          {filteredDeliveries.map((delivery: Delivery) => (
+            <div key={delivery.id} className="grid grid-cols-8 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 text-sm">
+              <div className="font-medium text-gray-900">
+                Tank {delivery.tankNumber}
+              </div>
+              <div className="text-gray-600">
+                <div className="font-medium">{delivery.productCode}</div>
+                <div className="text-xs text-gray-500">{delivery.productName}</div>
+              </div>
+              <div className="font-medium text-gray-900">
+                {delivery.quantity.toLocaleString()}
+              </div>
+              <div className="text-gray-600">
+                {delivery.supplier}
+              </div>
+              <div className="text-gray-600">
+                <div className="font-medium">{delivery.driverName}</div>
+                <div className="text-xs text-gray-500">{delivery.truckPlate}</div>
+              </div>
+              <div className="text-gray-600">
+                <div className="font-medium">{new Date(delivery.eta).toLocaleDateString()}</div>
+                <div className="text-xs text-gray-500">{new Date(delivery.eta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              <div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(delivery.status)}`}>
+                  {delivery.status}
+                </span>
+              </div>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                  Edit
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                  Details
                 </Button>
               </div>
             </div>
-          ))
-        )}
+          ))}
+        </div>
+      </div>
+
+      {/* Summary Cards - Full Width */}
+      <div className="grid grid-cols-4 gap-4 mt-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Total Deliveries</h4>
+          <p className="text-2xl font-bold text-blue-600">{filteredDeliveries.length}</p>
+          <p className="text-xs text-gray-600">This month</p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Total Volume</h4>
+          <p className="text-2xl font-bold text-green-600">
+            {filteredDeliveries.reduce((sum: number, d: Delivery) => sum + d.quantity, 0).toLocaleString()}L
+          </p>
+          <p className="text-xs text-gray-600">Planned volume</p>
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">In Transit</h4>
+          <p className="text-2xl font-bold text-orange-600">
+            {filteredDeliveries.filter((d: Delivery) => d.status === "In Transit").length}
+          </p>
+          <p className="text-xs text-gray-600">Active deliveries</p>
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Next Delivery</h4>
+          <p className="text-sm font-bold text-purple-600">
+            {filteredDeliveries.length > 0 
+              ? new Date(Math.min(...filteredDeliveries.map((d: Delivery) => new Date(d.eta).getTime()))).toLocaleDateString()
+              : "No deliveries"
+            }
+          </p>
+          <p className="text-xs text-gray-600">Earliest ETA</p>
+        </div>
       </div>
     </div>
   );

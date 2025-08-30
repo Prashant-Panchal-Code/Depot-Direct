@@ -3,8 +3,11 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
+import { useState } from "react";
 
 interface BasicInfoTabProps {
   site: SiteDetails;
@@ -18,6 +21,18 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
 
+  // Time options for the select dropdowns
+  const timeOptions = [
+    "12:00 AM", "12:30 AM", "01:00 AM", "01:30 AM", "02:00 AM", "02:30 AM",
+    "03:00 AM", "03:30 AM", "04:00 AM", "04:30 AM", "05:00 AM", "05:30 AM",
+    "06:00 AM", "06:30 AM", "07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM",
+    "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+    "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM",
+    "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM",
+    "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM",
+    "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"
+  ];
+
   const mockOperatingHours = {
     Monday: { open: "08:00 AM", close: "10:00 PM", closed: false },
     Tuesday: { open: "08:00 AM", close: "10:00 PM", closed: false },
@@ -28,105 +43,369 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
     Sunday: { open: "09:00 AM", close: "09:00 PM", closed: false },
   };
 
-  const siteWithDefaults = {
-    ...site,
-    contactPerson: site.contactPerson || "Manager " + site.siteCode,
+  // Form state for all editable fields
+  const [formData, setFormData] = useState({
+    siteName: site.siteName,
+    siteCode: site.siteCode || "",
+    latitude: site.latLong?.split(',')[0]?.trim() || "",
+    longitude: site.latLong?.split(',')[1]?.trim() || "",
+    street: site.street,
+    postalCode: site.postalCode || "",
+    town: site.town || site.street?.split(',')[1]?.trim() || "",
+    active: site.active !== undefined ? site.active : true,
+    priority: site.priority || "Medium",
     phone: site.phone || "(555) 123-4567",
-    email: site.email || `contact@${site.siteName.toLowerCase().replace(/\s+/g, '')}.com`,
+    email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
     operatingHours: site.operatingHours || mockOperatingHours,
+  });
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleOperatingHoursChange = (day: string, field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      operatingHours: {
+        ...prev.operatingHours,
+        [day]: {
+          ...prev.operatingHours[day as keyof typeof prev.operatingHours],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original site values
+    setFormData({
+      siteName: site.siteName,
+      siteCode: site.siteCode || "",
+      latitude: site.latLong?.split(',')[0]?.trim() || "",
+      longitude: site.latLong?.split(',')[1]?.trim() || "",
+      street: site.street,
+      postalCode: site.postalCode || "",
+      town: site.town || site.street?.split(',')[1]?.trim() || "",
+      active: site.active !== undefined ? site.active : true,
+      priority: site.priority || "Medium",
+      phone: site.phone || "(555) 123-4567",
+      email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
+      operatingHours: site.operatingHours || mockOperatingHours,
+    });
   };
 
   return (
-    <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column */}
-        <div className="space-y-6">
+    <div className="h-full flex flex-col">
+      {/* Main Content - 3 Column Layout using Full Width */}
+      <div className="flex-1 grid grid-cols-3 gap-8">
+        
+        {/* Left Column - Basic Site Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Information</h3>
+          
           <div>
-            <Label htmlFor="siteName" className="text-sm font-medium text-gray-700 mb-2 block">
+            <Label htmlFor="siteName" className="text-sm font-medium text-gray-700">
               Site Name
             </Label>
             <Input
               id="siteName"
-              value={siteWithDefaults.siteName}
-              className="bg-gray-50 border-gray-300"
-              disabled={!isEditing}
+              value={formData.siteName}
+              className="mt-1 bg-gray-100"
+              disabled={true}
             />
           </div>
 
           <div>
-            <Label htmlFor="address" className="text-sm font-medium text-gray-700 mb-2 block">
-              Address
+            <Label htmlFor="siteCode" className="text-sm font-medium text-gray-700">
+              Site Code
             </Label>
             <Input
-              id="address"
-              value={siteWithDefaults.street}
-              className="bg-gray-50 border-gray-300"
-              disabled={!isEditing}
+              id="siteCode"
+              value={formData.siteCode}
+              className="mt-1 bg-gray-100"
+              disabled={true}
             />
           </div>
 
-          {/* Map Placeholder */}
-          <div className="bg-green-100 border border-green-200 rounded-lg h-64 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin size={48} className="mx-auto mb-2 text-green-600" />
-              <p className="text-gray-600 text-sm">Interactive Map</p>
-              <p className="text-xs text-gray-500">{siteWithDefaults.latLong}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
+                Latitude
+              </Label>
+              <Input
+                id="latitude"
+                type="number"
+                step="any"
+                value={formData.latitude}
+                onChange={(e) => handleInputChange('latitude', e.target.value)}
+                placeholder="e.g. 40.7128"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="longitude" className="text-sm font-medium text-gray-700">
+                Longitude
+              </Label>
+              <Input
+                id="longitude"
+                type="number"
+                step="any"
+                value={formData.longitude}
+                onChange={(e) => handleInputChange('longitude', e.target.value)}
+                placeholder="e.g. -74.0060"
+                className="mt-1"
+              />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-2 block">
-              Phone
+            <Label htmlFor="street" className="text-sm font-medium text-gray-700">
+              Street Address
             </Label>
             <Input
-              id="phone"
-              value={siteWithDefaults.phone}
-              className="bg-gray-50 border-gray-300"
-              disabled={!isEditing}
+              id="street"
+              value={formData.street}
+              onChange={(e) => handleInputChange('street', e.target.value)}
+              className="mt-1"
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="town" className="text-sm font-medium text-gray-700">
+                Town/City
+              </Label>
+              <Input
+                id="town"
+                value={formData.town}
+                onChange={(e) => handleInputChange('town', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="postalCode" className="text-sm font-medium text-gray-700">
+                Postal Code
+              </Label>
+              <Input
+                id="postalCode"
+                value={formData.postalCode}
+                onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
-              Email
+            <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
+              Priority Level
             </Label>
-            <Input
-              id="email"
-              value={siteWithDefaults.email}
-              className="bg-gray-50 border-gray-300"
-              disabled={!isEditing}
+            <Select
+              value={formData.priority}
+              onValueChange={(value) => handleInputChange('priority', value)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">High Priority</SelectItem>
+                <SelectItem value="Medium">Medium Priority</SelectItem>
+                <SelectItem value="Low">Low Priority</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="active"
+              checked={formData.active}
+              onCheckedChange={(checked) => handleInputChange('active', !!checked)}
             />
+            <Label htmlFor="active" className="text-sm font-medium text-gray-700">
+              Site Active
+            </Label>
+          </div>
+
+          {/* Contact Information Section - Below Site Active */}
+          <div className="pt-4 border-t border-gray-200">
+            <h4 className="text-md font-semibold text-gray-900 mb-4">Contact Information</h4>
+            
+            <div>
+              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Phone Number
+              </Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="mt-4">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="mt-1"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Right Column - Operating Hours */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours</h3>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-3 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 border-b border-gray-200">
-              <div>DAY</div>
-              <div>OPEN</div>
-              <div>CLOSE</div>
+        {/* Middle Column - Map & Additional Info */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Statistics</h3>
+          
+          {/* Map Placeholder */}
+          <div>
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">
+              Location Map
+            </Label>
+            <div className="bg-green-100 border border-green-200 rounded-lg h-64 flex items-center justify-center">
+              <div className="text-center">
+                <MapPin size={48} className="mx-auto mb-2 text-green-600" />
+                <p className="text-gray-600 text-sm">Interactive Map</p>
+                <p className="text-xs text-gray-500">
+                  {formData.latitude && formData.longitude 
+                    ? `${formData.latitude}, ${formData.longitude}` 
+                    : 'No coordinates set'}
+                </p>
+              </div>
             </div>
+          </div>
+
+          {/* Site Statistics */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Site Statistics</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Tanks:</span>
+                <span className="font-medium">3</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Active Tanks:</span>
+                <span className="font-medium text-green-600">2</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Last Delivery:</span>
+                <span className="font-medium">2 days ago</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Next Delivery:</span>
+                <span className="font-medium text-blue-600">Tomorrow</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Capacity:</span>
+                <span className="font-medium">45,000L</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Current Stock:</span>
+                <span className="font-medium">32,100L</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Site Status */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Site Status</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-sm">Operational Status:</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  formData.active 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {formData.active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-sm">Priority Level:</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  formData.priority === 'High' 
+                    ? 'bg-red-100 text-red-800' 
+                    : formData.priority === 'Medium'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {formData.priority} Priority
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Operating Hours (2-Column Grid) */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours</h3>
+          
+          <div className="grid grid-cols-2 gap-3">
             {weekDays.map((day) => {
-              const hours = (siteWithDefaults.operatingHours as any)?.[day] || {
-                open: "08:00 AM",
-                close: "10:00 PM",
-                closed: false,
-              };
+              const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
               return (
-                <div key={day} className="grid grid-cols-3 px-4 py-3 border-b border-gray-200 last:border-b-0">
-                  <div className="font-medium text-gray-900">{day}</div>
-                  <div className="text-gray-600 flex items-center">
-                    {hours.closed ? (
-                      <span className="text-red-600">Closed</span>
-                    ) : (
-                      hours.open
-                    )}
+                <div key={day} className="bg-white border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
+                    <div className="flex items-center space-x-1">
+                      <Checkbox
+                        id={`${day}-closed`}
+                        checked={hours.closed}
+                        onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}
+                        className="h-3 w-3"
+                      />
+                      <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
+                        Closed
+                      </Label>
+                    </div>
                   </div>
-                  <div className="text-gray-600">
-                    {!hours.closed && hours.close}
-                  </div>
+                  
+                  {!hours.closed && (
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-xs text-gray-600">Open</Label>
+                        <Select
+                          value={hours.open}
+                          onValueChange={(value) => handleOperatingHoursChange(day, 'open', value)}
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((time) => (
+                              <SelectItem key={time} value={time} className="text-xs">
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-600">Close</Label>
+                        <Select
+                          value={hours.close}
+                          onValueChange={(value) => handleOperatingHoursChange(day, 'close', value)}
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeOptions.map((time) => (
+                              <SelectItem key={time} value={time} className="text-xs">
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -135,14 +414,14 @@ export default function BasicInfoTab({ site, isEditing, onSave, onBack }: BasicI
       </div>
 
       {/* Footer Actions */}
-      <div className="border-t border-gray-200 pt-6 mt-6 flex justify-end gap-2 flex-shrink-0">
-        <Button variant="outline" onClick={onBack}>
+      <div className="border-t border-gray-200 pt-4 mt-6 flex justify-end gap-2 flex-shrink-0">
+        <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
         <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={onSave}>
           Save Changes
         </Button>
       </div>
-    </>
+    </div>
   );
 }
