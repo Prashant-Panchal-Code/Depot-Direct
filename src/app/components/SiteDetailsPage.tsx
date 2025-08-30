@@ -61,14 +61,31 @@ export default function SiteDetailsPage({
   return (
     <div className="h-screen bg-gray-50 overflow-hidden">
       <div 
-        className={`h-[calc(100vh-5rem)] flex flex-col py-6 mt-20 transition-all duration-300 ${
+        className={`h-[calc(100vh-5rem)] flex flex-col py-4 mt-20 transition-all duration-300 ${
           sidebarCollapsed 
-            ? 'ml-16 w-[calc(100vw-4rem)] px-6' 
-            : 'ml-64 w-[calc(100vw-16rem)] px-6'
+            ? 'ml-16 w-[calc(100vw-4rem)] px-4' 
+            : 'ml-64 w-[calc(100vw-16rem)] px-4'
         }`}
       >
+        {/* Site Header with Name and Code */}
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{site.siteName}-<span className="text-2xl text-gray-600">{site.siteCode}</span></h2>
+
+          </div>
+          <Button 
+            onClick={handleBack}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
+          >
+            <ArrowLeft size={16} />
+            Back to Sites
+          </Button>
+        </div>
+
         {/* Breadcrumb Navigation */}
-        <div className="flex items-center justify-between mb-6 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -85,27 +102,18 @@ export default function SiteDetailsPage({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <Button 
-            onClick={handleBack}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
-          >
-            <ArrowLeft size={16} />
-            Back to Sites
-          </Button>
         </div>
 
  
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6 flex-shrink-0">
-          <div className="flex space-x-8">
+        <div className="border-b border-gray-200 mb-4 flex-shrink-0">
+          <div className="flex space-x-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
                     ? "border-primary-custom text-primary-custom"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
