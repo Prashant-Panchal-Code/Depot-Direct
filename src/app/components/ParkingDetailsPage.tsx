@@ -22,9 +22,7 @@ interface ParkingWithId extends Parking {
   latLong: string;
 }
 
-export interface ParkingDetails extends ParkingWithId {
-  // Add any additional properties specific to parking details
-}
+export type ParkingDetails = ParkingWithId;
 
 interface ParkingDetailsPageProps {
   parking: ParkingDetails;

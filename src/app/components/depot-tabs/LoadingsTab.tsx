@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { DepotDetails, Loading } from "../DepotDetailsPage";
+import { Loading } from "../DepotDetailsPage";
 import { 
   Plus, 
   Truck,
@@ -24,11 +24,10 @@ import {
 } from "@phosphor-icons/react";
 
 interface LoadingsTabProps {
-  depot: DepotDetails;
   onSave: () => void;
 }
 
-export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
+export default function LoadingsTab({ onSave }: LoadingsTabProps) {
   const [activeView, setActiveView] = useState<"recent" | "planned">("recent");
   
   // Mock loadings data

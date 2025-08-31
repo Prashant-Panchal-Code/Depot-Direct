@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { DepotDetails, Product } from "../DepotDetailsPage";
+import { Product } from "../DepotDetailsPage";
 import { 
   Plus, 
   PencilSimple, 
@@ -25,11 +25,10 @@ import {
 } from "@phosphor-icons/react";
 
 interface ProductsTabProps {
-  depot: DepotDetails;
   onSave: () => void;
 }
 
-export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
+export default function ProductsTab({ onSave }: ProductsTabProps) {
   // Mock products data
   const [products, setProducts] = useState<Product[]>([
     {

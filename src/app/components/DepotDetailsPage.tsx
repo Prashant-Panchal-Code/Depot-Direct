@@ -207,10 +207,10 @@ export default function DepotDetailsPage({
             <BasicInfoTab depot={depot} onSave={handleSave} />
           )}
           {activeTab === "products" && (
-            <ProductsTab depot={depot} onSave={handleSave} />
+            <ProductsTab onSave={handleSave} />
           )}
           {activeTab === "loadings" && (
-            <LoadingsTab depot={depot} onSave={handleSave} />
+            <LoadingsTab onSave={handleSave} />
           )}
           {activeTab === "notes" && (
             <NotesTab 
@@ -225,7 +225,7 @@ export default function DepotDetailsPage({
             />
           )}
           {activeTab === "settings" && (
-            <SettingsTab depot={depot} onSave={handleSave} />
+            <SettingsTab />
           )}
         </div>
       </div>
