@@ -27,10 +27,14 @@ export interface Tank {
   capacity: number;
   deadstock: number;
   currentVolume: number;
+  currentVolumeDate?: string;
   averageDailySales: number;
   productCode: string;
   productName: string;
   plannedDeliveries: PlannedDelivery[];
+  stockHistory?: { date: string; volume: number; sales: number }[];
+  weeklySales?: { week: string; sales: number }[];
+  dailySales?: { day: string; avgSales: number }[];
 }
 
 export interface PlannedDelivery {
