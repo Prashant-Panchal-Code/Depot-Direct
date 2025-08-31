@@ -68,6 +68,22 @@ export interface SiteDetails {
   };
   tanks?: Tank[];
   history?: HistoryEvent[];
+  // New fields for depot and delivery management
+  depotId?: number | null;
+  deliveryStopped?: boolean;
+  pumpedRequired?: boolean;
+  // Notes for the site
+  notes?: {
+    id: number;
+    createdDate: string;
+    createdBy: string;
+    comment: string;
+    priority: "Low" | "Medium" | "High";
+    category: "General" | "Maintenance" | "Safety" | "Delivery" | "Operations";
+    status: "Open" | "In Review" | "Closed";
+    closedDate?: string;
+    closedBy?: string;
+  }[];
 }
 
 interface SiteDetailsModalProps {

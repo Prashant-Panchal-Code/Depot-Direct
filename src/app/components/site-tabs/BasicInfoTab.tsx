@@ -19,6 +19,20 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
 
+  // Depot list for the dropdown
+  const depots = [
+    { id: 1, depotCode: "DP001", depotName: "Main Distribution Center" },
+    { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot" },
+    { id: 3, depotCode: "DP003", depotName: "Airport Fuel Terminal" },
+    { id: 4, depotCode: "DP004", depotName: "Orange County Hub" },
+    { id: 5, depotCode: "DP005", depotName: "Valley Distribution" },
+    { id: 6, depotCode: "DP006", depotName: "Coastal Storage Facility" },
+    { id: 7, depotCode: "DP007", depotName: "Industrial Park Depot" },
+    { id: 8, depotCode: "DP008", depotName: "South Bay Terminal" },
+    { id: 9, depotCode: "DP009", depotName: "Long Beach Facility" },
+    { id: 10, depotCode: "DP010", depotName: "Irvine Tech Depot" },
+  ];
+
   // Time options for the select dropdowns
   const timeOptions = [
     "12:00 AM", "12:30 AM", "01:00 AM", "01:30 AM", "02:00 AM", "02:30 AM",
@@ -55,9 +69,12 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
     phone: site.phone || "(555) 123-4567",
     email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
     operatingHours: site.operatingHours || mockOperatingHours,
+    depotId: (site as any).depotId || null, // Add depot field
+    deliveryStopped: false, // Add delivery stopped checkbox (default false)
+    pumpedRequired: false, // Add pumped required checkbox (default false)
   });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | number | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -92,6 +109,9 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       phone: site.phone || "(555) 123-4567",
       email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
       operatingHours: site.operatingHours || mockOperatingHours,
+      depotId: (site as any).depotId || null, // Add depot field
+      deliveryStopped: false, // Add delivery stopped checkbox (default false)
+      pumpedRequired: false, // Add pumped required checkbox (default false)
     });
   };
 
@@ -185,34 +205,82 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
-                  Priority Level
-                </Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) => handleInputChange('priority', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="High">High Priority</SelectItem>
-                    <SelectItem value="Medium">Medium Priority</SelectItem>
-                    <SelectItem value="Low">Low Priority</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
+                    Priority Level
+                  </Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value) => handleInputChange('priority', value)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="High">High Priority</SelectItem>
+                      <SelectItem value="Medium">Medium Priority</SelectItem>
+                      <SelectItem value="Low">Low Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="depot" className="text-sm font-medium text-gray-700">
+                    Preferred Depot
+                  </Label>
+                  <Select
+                    value={formData.depotId ? formData.depotId.toString() : "none"}
+                    onValueChange={(value) => handleInputChange('depotId', value === "none" ? null : parseInt(value))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select a depot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Depot Assigned</SelectItem>
+                      {depots.map((depot) => (
+                        <SelectItem key={depot.id} value={depot.id.toString()}>
+                          {depot.depotName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => handleInputChange('active', !!checked)}
-                />
-                <Label htmlFor="active" className="text-sm font-medium text-gray-700">
-                  Site Active
-                </Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="active"
+                    checked={formData.active}
+                    onCheckedChange={(checked) => handleInputChange('active', !!checked)}
+                  />
+                  <Label htmlFor="active" className="text-sm font-medium text-gray-700">
+                    Site Active
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="deliveryStopped"
+                    checked={formData.deliveryStopped}
+                    onCheckedChange={(checked) => handleInputChange('deliveryStopped', !!checked)}
+                  />
+                  <Label htmlFor="deliveryStopped" className="text-sm font-medium text-gray-700">
+                    Delivery Stopped
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="pumpedRequired"
+                    checked={formData.pumpedRequired}
+                    onCheckedChange={(checked) => handleInputChange('pumpedRequired', !!checked)}
+                  />
+                  <Label htmlFor="pumpedRequired" className="text-sm font-medium text-gray-700">
+                    Pumped Required
+                  </Label>
+                </div>
               </div>
             </div>
 

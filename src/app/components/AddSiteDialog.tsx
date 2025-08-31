@@ -27,6 +27,7 @@ export interface Site {
   town: string;
   active: boolean;
   priority: string;
+  depotId: number | null;
 }
 
 // Interface for new sites being created
@@ -40,6 +41,7 @@ export interface NewSite {
   town: string;
   active: boolean;
   priority: string;
+  depotId: number | null;
 }
 
 interface AddSiteDialogProps {
@@ -48,6 +50,20 @@ interface AddSiteDialogProps {
 
 export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
   const [open, setOpen] = useState(false);
+
+  // Depot list for the dropdown
+  const depots = [
+    { id: 1, depotCode: "DP001", depotName: "Main Distribution Center" },
+    { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot" },
+    { id: 3, depotCode: "DP003", depotName: "Airport Fuel Terminal" },
+    { id: 4, depotCode: "DP004", depotName: "Orange County Hub" },
+    { id: 5, depotCode: "DP005", depotName: "Valley Distribution" },
+    { id: 6, depotCode: "DP006", depotName: "Coastal Storage Facility" },
+    { id: 7, depotCode: "DP007", depotName: "Industrial Park Depot" },
+    { id: 8, depotCode: "DP008", depotName: "South Bay Terminal" },
+    { id: 9, depotCode: "DP009", depotName: "Long Beach Facility" },
+    { id: 10, depotCode: "DP010", depotName: "Irvine Tech Depot" },
+  ];
   const [formData, setFormData] = useState<NewSite>({
     siteCode: "",
     siteName: "",
@@ -58,6 +74,7 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
     town: "",
     active: true,
     priority: "Medium",
+    depotId: null,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -73,6 +90,7 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
       town: "",
       active: true,
       priority: "Medium",
+      depotId: null,
     });
     setOpen(false);
   };
@@ -182,23 +200,47 @@ export default function AddSiteDialog({ onSave }: AddSiteDialogProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Priority
-            </label>
-            <Select
-              value={formData.priority}
-              onValueChange={(value: string) => setFormData({ ...formData, priority: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Priority
+              </label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value: string) => setFormData({ ...formData, priority: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preferred Depot
+              </label>
+              <Select
+                value={formData.depotId ? formData.depotId.toString() : "none"}
+                onValueChange={(value: string) => setFormData({ ...formData, depotId: value === "none" ? null : parseInt(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a depot" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Depot Assigned</SelectItem>
+                  {depots.map((depot) => (
+                    <SelectItem key={depot.id} value={depot.id.toString()}>
+                      {depot.depotName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">

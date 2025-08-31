@@ -17,6 +17,7 @@ import BasicInfoTab from "./site-tabs/BasicInfoTab";
 import InventoryTab from "./site-tabs/InventoryTab";
 import DeliveriesTab from "./site-tabs/DeliveriesTab";
 import SettingsTab from "./site-tabs/SettingsTab";
+import NotesTab, { Note } from "./site-tabs/NotesTab";
 
 
 interface SiteDetailsPageProps {
@@ -32,6 +33,42 @@ export default function SiteDetailsPage({
 }: SiteDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
   const [activeTab, setActiveTab] = useState("basic-info");
+
+  // Notes state lifted up to manage count properly
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: 1,
+      createdDate: "2024-01-15 14:30",
+      createdBy: "John Smith",
+      comment: "Site inspection completed. All tanks operational.",
+      priority: "Medium" as const,
+      category: "Maintenance" as const,
+      status: "Closed" as const,
+      closedDate: "2024-01-16 10:30",
+      closedBy: "John Smith",
+      closingComment: "All issues resolved and documented"
+    },
+    {
+      id: 2,
+      createdDate: "2024-01-12 09:15",
+      createdBy: "Sarah Johnson",
+      comment: "Delivery access road needs repair. Coordinating with maintenance team.",
+      priority: "High" as const,
+      category: "Maintenance" as const,
+      status: "In Review" as const
+    },
+    {
+      id: 3,
+      createdDate: "2024-01-08 16:45",
+      createdBy: "Mike Davis",
+      comment: "New safety protocols implemented successfully.",
+      priority: "Medium" as const,
+      category: "Safety" as const,
+      status: "Open" as const
+    }
+  ]);
+
+  const openNotesCount = notes.filter(note => note.status !== "Closed").length;
 
   // Collapse sidebar when component mounts, restore when unmounting
   useEffect(() => {
@@ -55,6 +92,7 @@ export default function SiteDetailsPage({
     { id: "basic-info", label: "Basic Info" },
     { id: "inventory", label: "Inventory" },
     { id: "deliveries", label: "Deliveries" },
+    { id: "notes", label: `Notes${openNotesCount > 0 ? ` (${openNotesCount})` : ''}` },
     { id: "settings", label: "Settings" },
   ];
 
@@ -137,6 +175,14 @@ export default function SiteDetailsPage({
           {activeTab === "inventory" && <InventoryTab site={site} />}
           
           {activeTab === "deliveries" && <DeliveriesTab />}
+          
+          {activeTab === "notes" && (
+            <NotesTab 
+              site={site} 
+              notes={notes}
+              setNotes={setNotes}
+            />
+          )}
           
           {activeTab === "settings" && <SettingsTab />}
         </div>
