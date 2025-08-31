@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -13,7 +12,7 @@ import {
   ICellRendererParams,
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
-import { Plus, Trash, NotePencil, Calendar, User } from "@phosphor-icons/react";
+import { Plus, NotePencil } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
 import {
   Dialog,
@@ -58,10 +57,14 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     closingComment: ""
   });
 
-  const [newNote, setNewNote] = useState({
+  const [newNote, setNewNote] = useState<{
+    comment: string;
+    priority: Note["priority"];
+    category: Note["category"];
+  }>({
     comment: "",
-    priority: "Medium" as const,
-    category: "General" as const
+    priority: "Medium",
+    category: "General"
   });
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -88,12 +91,6 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     setNotes([note, ...notes]);
     setNewNote({ comment: "", priority: "Medium", category: "General" });
     setOpen(false);
-  };
-
-  const handleDeleteNote = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this note?")) {
-      setNotes(notes.filter(note => note.id !== id));
-    }
   };
 
   const handleEditNote = (note: Note) => {
@@ -371,7 +368,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
                 <select
                   id="category"
                   value={newNote.category}
-                  onChange={(e) => setNewNote({ ...newNote, category: e.target.value as any })}
+                  onChange={(e) => setNewNote({ ...newNote, category: e.target.value as Note["category"] })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="General">General</option>
@@ -389,7 +386,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
                 <select
                   id="priority"
                   value={newNote.priority}
-                  onChange={(e) => setNewNote({ ...newNote, priority: e.target.value as any })}
+                  onChange={(e) => setNewNote({ ...newNote, priority: e.target.value as Note["priority"] })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="Low">Low</option>
@@ -469,7 +466,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
               <select
                 id="status"
                 value={editForm.status}
-                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Note["status"] })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="Open">Open</option>

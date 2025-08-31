@@ -69,7 +69,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
     phone: site.phone || "(555) 123-4567",
     email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
     operatingHours: site.operatingHours || mockOperatingHours,
-    depotId: (site as any).depotId || null, // Add depot field
+    depotId: site.depotId || null, // Add depot field
     deliveryStopped: false, // Add delivery stopped checkbox (default false)
     pumpedRequired: false, // Add pumped required checkbox (default false)
   });
@@ -109,7 +109,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       phone: site.phone || "(555) 123-4567",
       email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
       operatingHours: site.operatingHours || mockOperatingHours,
-      depotId: (site as any).depotId || null, // Add depot field
+      depotId: site.depotId || null, // Add depot field
       deliveryStopped: false, // Add delivery stopped checkbox (default false)
       pumpedRequired: false, // Add pumped required checkbox (default false)
     });

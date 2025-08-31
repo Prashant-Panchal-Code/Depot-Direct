@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CaretDown, CaretUp, Plus } from "@phosphor-icons/react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CaretDown, CaretUp,  PlusSquare } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
 
 interface InventoryTabProps {
@@ -14,12 +15,26 @@ interface InventoryTabProps {
 
 export default function InventoryTab({ site }: InventoryTabProps) {
   const [expandedTanks, setExpandedTanks] = useState<{ [key: number]: boolean }>({});
+  const [isAddTankDialogOpen, setIsAddTankDialogOpen] = useState(false);
+  const [newTankName, setNewTankName] = useState("");
 
   const toggleTankExpansion = (tankId: number) => {
     setExpandedTanks(prev => ({
       ...prev,
       [tankId]: !prev[tankId]
     }));
+  };
+
+  const handleAddTank = () => {
+    // TODO: Add tank creation logic here
+    console.log("Adding new tank:", newTankName);
+    setNewTankName("");
+    setIsAddTankDialogOpen(false);
+  };
+
+  const handleDialogClose = () => {
+    setNewTankName("");
+    setIsAddTankDialogOpen(false);
   };
 
   const getTankStatusColor = (status: string) => {
@@ -252,10 +267,45 @@ export default function InventoryTab({ site }: InventoryTabProps) {
       {/* Header with Add New Tank Button */}
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <h3 className="text-lg font-semibold text-gray-900">Tank Management</h3>
-        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white flex items-center gap-2">
-          <Plus size={16} />
-          Add New Tank
-        </Button>
+        <Dialog open={isAddTankDialogOpen} onOpenChange={setIsAddTankDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white flex items-center gap-2">
+            <PlusSquare size={30}  weight="fill" />
+              Add New Tank
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Tank</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="tankName" className="text-sm font-medium text-gray-700">
+                  Tank Name
+                </Label>
+                <Input
+                  id="tankName"
+                  value={newTankName}
+                  onChange={(e) => setNewTankName(e.target.value)}
+                  placeholder="Enter tank name (e.g., Tank 1, Tank A, etc.)"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={handleDialogClose}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddTank}
+                disabled={!newTankName.trim()}
+                className="bg-primary-custom hover:bg-primary-custom/90 text-white"
+              >
+                Add Tank
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Tank Grid - Single Column using Full Width */}
