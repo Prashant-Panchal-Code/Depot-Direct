@@ -12,7 +12,7 @@ export default function Sidebar() {
   const menuItems = [
     { href: '/', icon: <PresentationChart size={25} weight="duotone" />, label: 'Dashboard' },
     { href: '/schedule', icon: <CalendarDots size={25} weight="duotone" />, label: 'Schedule' },
-    { href: '/trucks', icon: <TruckTrailer size={25} weight="duotone" />, label: 'Trucks' },
+    { href: '/vehicles', icon: <TruckTrailer size={25} weight="duotone" />, label: 'Vehicles' },
     { href: '/depot', icon: <Warehouse size={25} weight="duotone" />, label: 'Depot' },
     { href: '/sites', icon: <GasPump size={25} weight="duotone" />, label: 'Sites' },
     { href: '/parking', icon: <LetterCircleP size={25} weight="duotone" />, label: 'Parking' },
