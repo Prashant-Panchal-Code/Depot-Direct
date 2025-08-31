@@ -41,6 +41,9 @@ export interface Product {
   currentTemperature: number;
   density: number;
   loadingRate: number; // Ltr/min
+  depotOfftakeLimit?: boolean;
+  monthlyMaxLimit?: number; // Liters
+  monthlyMinLimit?: number; // Liters
 }
 
 export interface Loading {
@@ -168,7 +171,7 @@ export default function DepotDetailsPage({
                   onClick={handleBack}
                   className="cursor-pointer text-primary-custom hover:text-primary-custom/80"
                 >
-                  Depot
+                  Depots
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

@@ -200,7 +200,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
   ];
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="w-full space-y-6">
       {/* Header with Tabs */}
       <div className="flex items-center justify-between">
         <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
@@ -208,7 +208,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
             variant={activeView === "recent" ? "default" : "ghost"}
             size="sm"
             onClick={() => setActiveView("recent")}
-            className={activeView === "recent" ? "bg-white shadow-sm" : ""}
+            className={activeView === "recent" ? "bg-white shadow-sm text-gray-900 hover:bg-white" : "text-gray-600 hover:text-gray-900"}
           >
             Recent Loadings ({recentLoadings.length})
           </Button>
@@ -216,7 +216,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
             variant={activeView === "planned" ? "default" : "ghost"}
             size="sm"
             onClick={() => setActiveView("planned")}
-            className={activeView === "planned" ? "bg-white shadow-sm" : ""}
+            className={activeView === "planned" ? "bg-white shadow-sm text-gray-900 hover:bg-white" : "text-gray-600 hover:text-gray-900"}
           >
             Planned Loadings ({plannedLoadings.length})
           </Button>
@@ -224,7 +224,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-primary-custom hover:bg-primary-custom/90">
               <Plus size={16} className="mr-2" />
               Schedule Loading
             </Button>
@@ -318,7 +318,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddLoading}>
+              <Button className="bg-primary-custom hover:bg-primary-custom/90" onClick={handleAddLoading}>
                 Schedule Loading
               </Button>
             </div>
@@ -432,7 +432,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
                 <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No planned loadings</h3>
                 <p className="text-gray-500 mb-4">Schedule your first loading to get started.</p>
-                <Button onClick={() => setShowAddDialog(true)}>
+                <Button className="bg-primary-custom hover:bg-primary-custom/90" onClick={() => setShowAddDialog(true)}>
                   <Plus size={16} className="mr-2" />
                   Schedule Loading
                 </Button>
@@ -444,7 +444,7 @@ export default function LoadingsTab({ depot, onSave }: LoadingsTabProps) {
 
       <div className="flex justify-end gap-4">
         <Button variant="outline">Cancel</Button>
-        <Button onClick={onSave}>Save Changes</Button>
+        <Button className="bg-primary-custom hover:bg-primary-custom/90" onClick={onSave}>Save Changes</Button>
       </div>
     </div>
   );

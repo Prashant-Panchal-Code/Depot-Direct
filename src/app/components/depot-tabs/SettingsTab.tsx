@@ -88,7 +88,7 @@ export default function SettingsTab({ depot, onSave }: SettingsTabProps) {
   };
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="w-full space-y-8">
       {/* Security Settings */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -457,7 +457,7 @@ export default function SettingsTab({ depot, onSave }: SettingsTabProps) {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
         <Button variant="outline">Reset to Defaults</Button>
-        <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSaveSettings} className="bg-primary-custom hover:bg-primary-custom/90">
           <FloppyDisk size={16} className="mr-2" />
           Save Settings
         </Button>

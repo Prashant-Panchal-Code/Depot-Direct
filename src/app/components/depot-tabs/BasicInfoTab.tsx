@@ -467,7 +467,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button onClick={onSave} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={onSave} className="bg-primary-custom hover:bg-primary-custom/90">
             Save Changes
           </Button>
         </div>
