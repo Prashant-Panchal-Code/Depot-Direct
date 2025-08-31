@@ -8,14 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { DepotDetails } from "../DepotDetailsPage";
 import {
-  Shield,
-  Bell,
-  Database,
-  Gear,
-  Warning,
-  CheckCircle,
-  FloppyDisk
+  FloppyDisk,
+  Download
 } from "@phosphor-icons/react";
+
+interface DepotHistoryEvent {
+  id: number;
+  date: string;
+  time: string;
+  user: string;
+  eventType: string;
+  details: string;
+  module: string;
+}
 
 interface SettingsTabProps {
   depot: DepotDetails;
@@ -23,433 +28,284 @@ interface SettingsTabProps {
 }
 
 export default function SettingsTab({ depot, onSave }: SettingsTabProps) {
-  const [settings, setSettings] = useState({
-    // Security Settings
-    accessControl: {
-      requireBadgeAccess: true,
-      enableSecurityCameras: true,
-      automaticLockdown: false,
-      emergencyShutoff: true
+  // History filtering and pagination state
+  const [selectedEventType, setSelectedEventType] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Mock depot history data
+  const mockDepotHistory: DepotHistoryEvent[] = [
+    {
+      id: 1,
+      date: "2024-07-20",
+      time: "14:30",
+      user: "John Admin",
+      eventType: "Depot Update",
+      details: "Updated depot operating hours for loading operations",
+      module: "Depot Management"
     },
-    
-    // Operational Settings
-    operations: {
-      maxSimultaneousLoadings: 3,
-      autoSchedulingEnabled: true,
-      loadingTimeout: 30,
-      qualityCheckRequired: true,
-      temperatureMonitoring: true,
-      inventoryTracking: true
+    {
+      id: 2,
+      date: "2024-07-20",
+      time: "09:15",
+      user: "Sarah Manager",
+      eventType: "Loading Completed",
+      details: "Truck FL-001-ABC completed loading 15,000L Ultra Low Sulfur Diesel",
+      module: "Loading Operations"
     },
-    
-    // Notification Settings
-    notifications: {
-      emailAlerts: true,
-      smsAlerts: false,
-      lowInventoryThreshold: 10,
-      temperatureAlerts: true,
-      maintenanceReminders: true,
-      loadingCompletion: true
+    {
+      id: 3,
+      date: "2024-07-19",
+      time: "16:45",
+      user: "Mike Supervisor",
+      eventType: "Product Added",
+      details: "Added new product: Premium Gasoline 98 with 1,800 L/min loading rate",
+      module: "Product Management"
     },
-    
-    // Integration Settings
-    integrations: {
-      emsIntegration: true,
-      accountingSystem: "SAP",
-      weatherDataFeed: true,
-      gpsTracking: true,
-      customApiEndpoint: ""
+    {
+      id: 4,
+      date: "2024-07-19",
+      time: "11:20",
+      user: "System",
+      eventType: "System Alert",
+      details: "Loading bay 3 exceeded temperature threshold during operation",
+      module: "Alert System"
     },
-    
-    // Compliance Settings
-    compliance: {
-      environmentalReporting: true,
-      safetyAudits: true,
-      regulatoryCompliance: "EPA",
-      documentRetention: 7, // years
-      auditTrail: true
+    {
+      id: 5,
+      date: "2024-07-18",
+      time: "13:00",
+      user: "Robert Operator",
+      eventType: "Loading Scheduled",
+      details: "Scheduled loading for truck FL-005-MNO - 30,000L Heavy Fuel Oil 180",
+      module: "Loading Operations"
+    },
+    {
+      id: 6,
+      date: "2024-07-18",
+      time: "08:30",
+      user: "Admin System",
+      eventType: "Security Update",
+      details: "Updated access control settings and badge requirements",
+      module: "Security Management"
+    },
+    {
+      id: 7,
+      date: "2024-07-17",
+      time: "15:20",
+      user: "Lisa Coordinator",
+      eventType: "Compliance Check",
+      details: "Completed monthly environmental compliance audit",
+      module: "Compliance Management"
+    },
+    {
+      id: 8,
+      date: "2024-07-17",
+      time: "10:45",
+      user: "David Technician",
+      eventType: "Maintenance",
+      details: "Performed routine maintenance on loading bay 2 equipment",
+      module: "Maintenance"
+    },
+    {
+      id: 9,
+      date: "2024-07-16",
+      time: "14:15",
+      user: "System",
+      eventType: "Integration Update",
+      details: "Successfully synchronized with EMS integration system",
+      module: "System Integration"
+    },
+    {
+      id: 10,
+      date: "2024-07-16",
+      time: "09:00",
+      user: "Mark Manager",
+      eventType: "Depot Settings",
+      details: "Modified notification settings for temperature alerts",
+      module: "Settings Management"
     }
+  ];
+
+  const getEventTypeColor = (eventType: string) => {
+    switch (eventType) {
+      case "Depot Update":
+        return "text-primary-custom bg-primary-custom/10";
+      case "Loading Completed":
+        return "text-green-600 bg-green-100";
+      case "Loading Scheduled":
+        return "text-blue-600 bg-blue-100";
+      case "Product Added":
+        return "text-purple-600 bg-purple-100";
+      case "System Alert":
+        return "text-red-600 bg-red-100";
+      case "Security Update":
+        return "text-orange-600 bg-orange-100";
+      case "Compliance Check":
+        return "text-teal-600 bg-teal-100";
+      case "Maintenance":
+        return "text-yellow-600 bg-yellow-100";
+      case "Integration Update":
+        return "text-indigo-600 bg-indigo-100";
+      case "Depot Settings":
+        return "text-gray-600 bg-gray-100";
+      default:
+        return "text-gray-600 bg-gray-100";
+    }
+  };
+
+  // Filter and paginate history
+  const filteredHistory = mockDepotHistory.filter((event: DepotHistoryEvent) => {
+    const eventDate = new Date(event.date);
+    const fromDate = dateFrom ? new Date(dateFrom) : null;
+    const toDate = dateTo ? new Date(dateTo) : null;
+    
+    const typeMatch = selectedEventType === "all" || event.eventType === selectedEventType;
+    const dateMatch = (!fromDate || eventDate >= fromDate) && (!toDate || eventDate <= toDate);
+    
+    return typeMatch && dateMatch;
   });
 
-  const handleSettingChange = (category: string, setting: string, value: boolean | string | number) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category as keyof typeof prev],
-        [setting]: value
-      }
-    }));
-  };
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedHistory = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
 
   const handleSaveSettings = () => {
     // In a real app, this would save to the backend
-    console.log("Saving depot settings:", settings);
+    console.log("Saving depot settings");
     onSave();
   };
 
   return (
     <div className="w-full space-y-8">
-      {/* Security Settings */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Shield size={20} className="text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Security & Access Control</h3>
+      {/* Depot History */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Depot History & Activity Log</h3>
+          <Button variant="outline" size="sm">
+            <Download size={16} className="mr-2" />
+            Export History
+          </Button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="requireBadgeAccess"
-                checked={settings.accessControl.requireBadgeAccess}
-                onCheckedChange={(checked) => handleSettingChange('accessControl', 'requireBadgeAccess', checked)}
-              />
-              <Label htmlFor="requireBadgeAccess">Require badge access for entry</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="enableSecurityCameras"
-                checked={settings.accessControl.enableSecurityCameras}
-                onCheckedChange={(checked) => handleSettingChange('accessControl', 'enableSecurityCameras', checked)}
-              />
-              <Label htmlFor="enableSecurityCameras">Enable security cameras</Label>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="automaticLockdown"
-                checked={settings.accessControl.automaticLockdown}
-                onCheckedChange={(checked) => handleSettingChange('accessControl', 'automaticLockdown', checked)}
-              />
-              <Label htmlFor="automaticLockdown">Automatic lockdown on security breach</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="emergencyShutoff"
-                checked={settings.accessControl.emergencyShutoff}
-                onCheckedChange={(checked) => handleSettingChange('accessControl', 'emergencyShutoff', checked)}
-              />
-              <Label htmlFor="emergencyShutoff">Emergency shutoff system</Label>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Operational Settings */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Gear size={20} className="text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Operational Settings</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="maxSimultaneousLoadings">Maximum Simultaneous Loadings</Label>
-            <Input
-              id="maxSimultaneousLoadings"
-              type="number"
-              min="1"
-              max="10"
-              value={settings.operations.maxSimultaneousLoadings}
-              onChange={(e) => handleSettingChange('operations', 'maxSimultaneousLoadings', parseInt(e.target.value))}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="loadingTimeout">Loading Timeout (minutes)</Label>
-            <Input
-              id="loadingTimeout"
-              type="number"
-              min="5"
-              max="120"
-              value={settings.operations.loadingTimeout}
-              onChange={(e) => handleSettingChange('operations', 'loadingTimeout', parseInt(e.target.value))}
-              className="mt-1"
-            />
-          </div>
-
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="autoSchedulingEnabled"
-                checked={settings.operations.autoSchedulingEnabled}
-                onCheckedChange={(checked) => handleSettingChange('operations', 'autoSchedulingEnabled', checked)}
-              />
-              <Label htmlFor="autoSchedulingEnabled">Enable automatic scheduling</Label>
+        {/* Filters */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="eventType">Event Type</Label>
+              <Select value={selectedEventType} onValueChange={setSelectedEventType}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Events</SelectItem>
+                  <SelectItem value="Depot Update">Depot Update</SelectItem>
+                  <SelectItem value="Loading Completed">Loading Completed</SelectItem>
+                  <SelectItem value="Loading Scheduled">Loading Scheduled</SelectItem>
+                  <SelectItem value="Product Added">Product Added</SelectItem>
+                  <SelectItem value="System Alert">System Alert</SelectItem>
+                  <SelectItem value="Security Update">Security Update</SelectItem>
+                  <SelectItem value="Compliance Check">Compliance Check</SelectItem>
+                  <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  <SelectItem value="Integration Update">Integration Update</SelectItem>
+                  <SelectItem value="Depot Settings">Depot Settings</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="qualityCheckRequired"
-                checked={settings.operations.qualityCheckRequired}
-                onCheckedChange={(checked) => handleSettingChange('operations', 'qualityCheckRequired', checked)}
+            <div>
+              <Label htmlFor="dateFrom">From Date</Label>
+              <Input
+                id="dateFrom"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="mt-1"
               />
-              <Label htmlFor="qualityCheckRequired">Require quality checks before loading</Label>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="temperatureMonitoring"
-                checked={settings.operations.temperatureMonitoring}
-                onCheckedChange={(checked) => handleSettingChange('operations', 'temperatureMonitoring', checked)}
+            <div>
+              <Label htmlFor="dateTo">To Date</Label>
+              <Input
+                id="dateTo"
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="mt-1"
               />
-              <Label htmlFor="temperatureMonitoring">Enable temperature monitoring</Label>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="inventoryTracking"
-                checked={settings.operations.inventoryTracking}
-                onCheckedChange={(checked) => handleSettingChange('operations', 'inventoryTracking', checked)}
-              />
-              <Label htmlFor="inventoryTracking">Enable real-time inventory tracking</Label>
+            <div className="flex items-end">
+              <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white w-full">
+                Apply Filters
+              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Notification Settings */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Bell size={20} className="text-orange-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Notifications & Alerts</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="lowInventoryThreshold">Low Inventory Threshold (%)</Label>
-            <Input
-              id="lowInventoryThreshold"
-              type="number"
-              min="0"
-              max="50"
-              value={settings.notifications.lowInventoryThreshold}
-              onChange={(e) => handleSettingChange('notifications', 'lowInventoryThreshold', parseInt(e.target.value))}
-              className="mt-1"
-            />
+        {/* History Table */}
+        <div className="overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-6 bg-gray-50 px-6 py-3 text-sm font-medium text-gray-700 border-b border-gray-200">
+            <div>DATE & TIME</div>
+            <div>USER</div>
+            <div>EVENT TYPE</div>
+            <div>MODULE</div>
+            <div className="col-span-2">DETAILS</div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="emailAlerts"
-                checked={settings.notifications.emailAlerts}
-                onCheckedChange={(checked) => handleSettingChange('notifications', 'emailAlerts', checked)}
-              />
-              <Label htmlFor="emailAlerts">Enable email alerts</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="smsAlerts"
-                checked={settings.notifications.smsAlerts}
-                onCheckedChange={(checked) => handleSettingChange('notifications', 'smsAlerts', checked)}
-              />
-              <Label htmlFor="smsAlerts">Enable SMS alerts</Label>
-            </div>
-          </div>
-
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="temperatureAlerts"
-                checked={settings.notifications.temperatureAlerts}
-                onCheckedChange={(checked) => handleSettingChange('notifications', 'temperatureAlerts', checked)}
-              />
-              <Label htmlFor="temperatureAlerts">Temperature deviation alerts</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="maintenanceReminders"
-                checked={settings.notifications.maintenanceReminders}
-                onCheckedChange={(checked) => handleSettingChange('notifications', 'maintenanceReminders', checked)}
-              />
-              <Label htmlFor="maintenanceReminders">Maintenance reminders</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="loadingCompletion"
-                checked={settings.notifications.loadingCompletion}
-                onCheckedChange={(checked) => handleSettingChange('notifications', 'loadingCompletion', checked)}
-              />
-              <Label htmlFor="loadingCompletion">Loading completion notifications</Label>
-            </div>
+          {/* Table Content */}
+          <div className="overflow-y-auto max-h-96">
+            {paginatedHistory.map((event: DepotHistoryEvent) => (
+              <div key={event.id} className="grid grid-cols-6 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 text-sm">
+                <div className="text-gray-900">
+                  <div className="font-medium">{new Date(event.date).toLocaleDateString()}</div>
+                  <div className="text-xs text-gray-500">{event.time}</div>
+                </div>
+                <div className="text-gray-600">
+                  {event.user}
+                </div>
+                <div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.eventType)}`}>
+                    {event.eventType}
+                  </span>
+                </div>
+                <div className="text-gray-600 text-xs">
+                  {event.module}
+                </div>
+                <div className="col-span-2 text-gray-600">
+                  {event.details}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Integration Settings */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Database size={20} className="text-purple-600" />
-          <h3 className="text-lg font-semibold text-gray-900">System Integrations</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="accountingSystem">Accounting System</Label>
-            <Select 
-              value={settings.integrations.accountingSystem}
-              onValueChange={(value) => handleSettingChange('integrations', 'accountingSystem', value)}
+        {/* Pagination */}
+        <div className="flex justify-between items-center p-6 border-t border-gray-200">
+          <div className="text-sm text-gray-600">
+            Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredHistory.length)} of {filteredHistory.length} events
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
             >
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SAP">SAP</SelectItem>
-                <SelectItem value="Oracle">Oracle</SelectItem>
-                <SelectItem value="QuickBooks">QuickBooks</SelectItem>
-                <SelectItem value="Custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="customApiEndpoint">Custom API Endpoint</Label>
-            <Input
-              id="customApiEndpoint"
-              value={settings.integrations.customApiEndpoint}
-              onChange={(e) => handleSettingChange('integrations', 'customApiEndpoint', e.target.value)}
-              placeholder="https://api.example.com/webhook"
-              className="mt-1"
-            />
-          </div>
-
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="emsIntegration"
-                checked={settings.integrations.emsIntegration}
-                onCheckedChange={(checked) => handleSettingChange('integrations', 'emsIntegration', checked)}
-              />
-              <Label htmlFor="emsIntegration">EMS (Environmental Management System) integration</Label>
+              Previous
+            </Button>
+            <div className="flex items-center px-3 py-1 text-sm">
+              Page {currentPage} of {totalPages}
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="weatherDataFeed"
-                checked={settings.integrations.weatherDataFeed}
-                onCheckedChange={(checked) => handleSettingChange('integrations', 'weatherDataFeed', checked)}
-              />
-              <Label htmlFor="weatherDataFeed">Weather data feed integration</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="gpsTracking"
-                checked={settings.integrations.gpsTracking}
-                onCheckedChange={(checked) => handleSettingChange('integrations', 'gpsTracking', checked)}
-              />
-              <Label htmlFor="gpsTracking">GPS tracking integration</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Compliance Settings */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Warning size={20} className="text-red-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Compliance & Regulatory</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="regulatoryCompliance">Primary Regulatory Framework</Label>
-            <Select 
-              value={settings.compliance.regulatoryCompliance}
-              onValueChange={(value) => handleSettingChange('compliance', 'regulatoryCompliance', value)}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
             >
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="EPA">EPA (Environmental Protection Agency)</SelectItem>
-                <SelectItem value="OSHA">OSHA (Occupational Safety)</SelectItem>
-                <SelectItem value="DOT">DOT (Department of Transportation)</SelectItem>
-                <SelectItem value="ISO">ISO Standards</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="documentRetention">Document Retention Period (Years)</Label>
-            <Input
-              id="documentRetention"
-              type="number"
-              min="1"
-              max="25"
-              value={settings.compliance.documentRetention}
-              onChange={(e) => handleSettingChange('compliance', 'documentRetention', parseInt(e.target.value))}
-              className="mt-1"
-            />
-          </div>
-
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="environmentalReporting"
-                checked={settings.compliance.environmentalReporting}
-                onCheckedChange={(checked) => handleSettingChange('compliance', 'environmentalReporting', checked)}
-              />
-              <Label htmlFor="environmentalReporting">Enable environmental reporting</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="safetyAudits"
-                checked={settings.compliance.safetyAudits}
-                onCheckedChange={(checked) => handleSettingChange('compliance', 'safetyAudits', checked)}
-              />
-              <Label htmlFor="safetyAudits">Mandatory safety audits</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="auditTrail"
-                checked={settings.compliance.auditTrail}
-                onCheckedChange={(checked) => handleSettingChange('compliance', 'auditTrail', checked)}
-              />
-              <Label htmlFor="auditTrail">Maintain detailed audit trail</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Settings Summary */}
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <CheckCircle size={20} className="text-blue-600" />
-          <h3 className="text-lg font-semibold text-blue-900">Settings Summary</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="font-medium text-blue-800">Security Features:</p>
-            <p className="text-blue-700">
-              {Object.values(settings.accessControl).filter(v => v === true).length} of 4 enabled
-            </p>
-          </div>
-          
-          <div>
-            <p className="font-medium text-blue-800">Operational Settings:</p>
-            <p className="text-blue-700">
-              Max {settings.operations.maxSimultaneousLoadings} concurrent loadings
-            </p>
-          </div>
-          
-          <div>
-            <p className="font-medium text-blue-800">Notifications:</p>
-            <p className="text-blue-700">
-              Alert at {settings.notifications.lowInventoryThreshold}% inventory
-            </p>
+              Next
+            </Button>
           </div>
         </div>
       </div>
