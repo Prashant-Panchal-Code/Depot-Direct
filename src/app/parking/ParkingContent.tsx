@@ -9,16 +9,19 @@ import {
   ModuleRegistry,
   AllCommunityModule,
   ICellRendererParams,
+  RowClickedEvent,
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/react";
 import AddParkingDialog, { Parking } from "../components/AddParkingDialog";
+import ParkingDetailsPage, { ParkingDetails } from "../components/ParkingDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function ParkingContent() {
   const { sidebarCollapsed } = useAppContext();
+  const [selectedParking, setSelectedParking] = useState<ParkingDetails | null>(null);
   const [parkings, setParkings] = useState([
     { id: 1, parkingCode: "PK001", parkingName: "Central Business District Lot", latLong: "34.0522, -118.2437", street: "100 Downtown Plaza", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isDepot: false },
     { id: 2, parkingCode: "PK002", parkingName: "Airport Long-term Parking", latLong: "33.9425, -118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isDepot: true },
@@ -49,6 +52,23 @@ export default function ParkingContent() {
       latLong: `${newParking.latitude}, ${newParking.longitude}`,
     };
     setParkings([...parkings, parking]);
+  };
+
+  const handleRowClick = (event: RowClickedEvent) => {
+    setSelectedParking(event.data);
+  };
+
+  const handleBackToList = () => {
+    setSelectedParking(null);
+  };
+
+  const handleSave = (updatedParking: ParkingDetails) => {
+    setParkings(prev => 
+      prev.map(p => 
+        p.id === updatedParking.id ? updatedParking : p
+      )
+    );
+    setSelectedParking(null);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -183,6 +203,17 @@ export default function ParkingContent() {
     resizable: true,
   };
 
+  // If a parking is selected, show details page
+  if (selectedParking) {
+    return (
+      <ParkingDetailsPage
+        parking={selectedParking}
+        onBack={handleBackToList}
+        onSave={handleSave}
+      />
+    );
+  }
+
   return (
     <main
       className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
@@ -253,6 +284,8 @@ export default function ParkingContent() {
               onGridReady={(params: GridReadyEvent) => {
                 params.api.sizeColumnsToFit();
               }}
+              onRowClicked={handleRowClick}
+              rowSelection="single"
             />
           </div>
         </div>

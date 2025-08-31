@@ -26,69 +26,67 @@ export default function SettingsTab() {
 
   const getEventTypeColor = (eventType: string) => {
     switch (eventType) {
-      case "Depot Update":
+      case "Parking Update":
         return "text-primary-custom bg-primary-custom/10";
-      case "Loading Operation":
+      case "Vehicle Check":
         return "text-green-600 bg-green-100";
-      case "Product Management":
+      case "Capacity Adjustment":
         return "text-orange-600 bg-orange-100";
-      case "System Alert":
+      case "Security Alert":
         return "text-red-600 bg-red-100";
       case "User Action":
         return "text-purple-600 bg-purple-100";
-      case "Compliance":
-        return "text-blue-600 bg-blue-100";
       default:
         return "text-gray-600 bg-gray-100";
     }
   };
 
-  // Mock data for demonstration - depot-specific events
+  // Mock data for demonstration - parking-specific events
   const mockHistory: HistoryEvent[] = [
     {
       id: 1,
       date: "2024-07-20",
       time: "14:30",
       user: "John Admin",
-      eventType: "Depot Update",
-      details: "Updated depot operating hours for loading operations",
-      module: "Depot Management"
+      eventType: "Parking Update",
+      details: "Updated parking space count to 150 spaces",
+      module: "Parking Management"
     },
     {
       id: 2,
       date: "2024-07-20",
       time: "09:15",
       user: "Sarah Manager",
-      eventType: "Loading Operation",
-      details: "Truck FL-001-ABC completed loading 15,000L Ultra Low Sulfur Diesel",
-      module: "Loading Operations"
+      eventType: "Vehicle Check",
+      details: "Completed vehicle inspection for overnight parking",
+      module: "Security Management"
     },
     {
       id: 3,
       date: "2024-07-19",
       time: "16:45",
-      user: "Mike Supervisor",
-      eventType: "Product Management",
-      details: "Added new product: Premium Gasoline 98 with 1,800 L/min loading rate",
-      module: "Product Management"
+      user: "Mike Security",
+      eventType: "Security Alert",
+      details: "Unauthorized vehicle detected in reserved area",
+      module: "Security System"
     },
     {
       id: 4,
       date: "2024-07-19",
       time: "11:20",
       user: "System",
-      eventType: "System Alert",
-      details: "Loading bay 3 exceeded temperature threshold during operation",
-      module: "Alert System"
+      eventType: "Capacity Adjustment",
+      details: "Parking lot reached 90% capacity - overflow protocol activated",
+      module: "Capacity Management"
     },
     {
       id: 5,
       date: "2024-07-18",
       time: "13:00",
-      user: "Robert Operator",
-      eventType: "Loading Operation",
-      details: "Scheduled loading for truck FL-005-MNO - 30,000L Heavy Fuel Oil 180",
-      module: "Loading Operations"
+      user: "Robert Attendant",
+      eventType: "Vehicle Check",
+      details: "Daily vehicle count verification completed",
+      module: "Operations"
     },
     {
       id: 6,
@@ -96,26 +94,26 @@ export default function SettingsTab() {
       time: "08:30",
       user: "Admin System",
       eventType: "User Action",
-      details: "Updated access control settings and badge requirements",
-      module: "Security Management"
+      details: "Updated contact information and emergency procedures",
+      module: "Parking Management"
     },
     {
       id: 7,
       date: "2024-07-17",
-      time: "15:20",
-      user: "Lisa Coordinator",
-      eventType: "Compliance",
-      details: "Completed monthly environmental compliance audit",
-      module: "Compliance Management"
+      time: "15:15",
+      user: "Emma Supervisor",
+      eventType: "Parking Update",
+      details: "Reconfigured parking space layout for larger vehicles",
+      module: "Facility Management"
     },
     {
       id: 8,
       date: "2024-07-17",
       time: "10:45",
       user: "System",
-      eventType: "System Alert",
-      details: "Loading bay 2 pressure sensor calibration required",
-      module: "Alert System"
+      eventType: "Security Alert",
+      details: "Motion sensor triggered in after-hours period",
+      module: "Security System"
     },
   ];
 
@@ -134,7 +132,7 @@ export default function SettingsTab() {
     <div className="h-full flex flex-col">
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-gray-900">Depot History & Settings</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Parking History & Settings</h3>
         <div className="flex gap-2">
           <Button variant="outline" className="flex items-center gap-2">
             <Download size={16} />
@@ -142,7 +140,7 @@ export default function SettingsTab() {
           </Button>
           <Button variant="outline" className="flex items-center gap-2">
             <Gear size={16} />
-            Depot Settings
+            Parking Settings
           </Button>
         </div>
       </div>
@@ -175,12 +173,11 @@ export default function SettingsTab() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Events</SelectItem>
-              <SelectItem value="Depot Update">Depot Updates</SelectItem>
-              <SelectItem value="Loading Operation">Loading Operations</SelectItem>
-              <SelectItem value="Product Management">Product Management</SelectItem>
-              <SelectItem value="System Alert">System Alerts</SelectItem>
+              <SelectItem value="Parking Update">Parking Updates</SelectItem>
+              <SelectItem value="Vehicle Check">Vehicle Checks</SelectItem>
+              <SelectItem value="Capacity Adjustment">Capacity Adjustments</SelectItem>
+              <SelectItem value="Security Alert">Security Alerts</SelectItem>
               <SelectItem value="User Action">User Actions</SelectItem>
-              <SelectItem value="Compliance">Compliance</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -192,12 +189,11 @@ export default function SettingsTab() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Modules</SelectItem>
-              <SelectItem value="Depot Management">Depot Management</SelectItem>
-              <SelectItem value="Loading Operations">Loading Operations</SelectItem>
-              <SelectItem value="Product Management">Product Management</SelectItem>
-              <SelectItem value="Alert System">Alert System</SelectItem>
+              <SelectItem value="Parking Management">Parking Management</SelectItem>
               <SelectItem value="Security Management">Security Management</SelectItem>
-              <SelectItem value="Compliance Management">Compliance Management</SelectItem>
+              <SelectItem value="Capacity Management">Capacity Management</SelectItem>
+              <SelectItem value="Security System">Security System</SelectItem>
+              <SelectItem value="Operations">Operations</SelectItem>
             </SelectContent>
           </Select>
         </div>
