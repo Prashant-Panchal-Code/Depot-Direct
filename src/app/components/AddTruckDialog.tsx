@@ -20,7 +20,6 @@ export interface TruckTractor {
   truckName: string;
   truckCode: string;
   registrationNumber: string;
-  capacity: number;
   haulierCompany: string;
   active: boolean;
 }
@@ -30,7 +29,6 @@ export interface NewTruck {
   truckName: string;
   truckCode: string;
   registrationNumber: string;
-  capacity: number;
   haulierCompany: string;
 }
 
@@ -46,7 +44,6 @@ export default function AddTruckDialog({ onSave }: AddTruckDialogProps) {
     truckName: '',
     truckCode: '',
     registrationNumber: '',
-    capacity: 0,
     haulierCompany: '',
   });
 
@@ -70,7 +67,7 @@ export default function AddTruckDialog({ onSave }: AddTruckDialogProps) {
   const handleSave = () => {
     // Basic validation
     if (!formData.truckName || !formData.truckCode || !formData.registrationNumber || 
-        !formData.capacity || !formData.haulierCompany) {
+        !formData.haulierCompany) {
       alert('Please fill in all required fields');
       return;
     }
@@ -82,7 +79,6 @@ export default function AddTruckDialog({ onSave }: AddTruckDialogProps) {
       truckName: '',
       truckCode: '',
       registrationNumber: '',
-      capacity: 0,
       haulierCompany: '',
     });
     setOpen(false);
@@ -125,7 +121,7 @@ export default function AddTruckDialog({ onSave }: AddTruckDialogProps) {
             </div>
           </div>
 
-          {/* Registration and Capacity */}
+          {/* Registration Number */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Registration Number *</label>
@@ -133,15 +129,6 @@ export default function AddTruckDialog({ onSave }: AddTruckDialogProps) {
                 placeholder="e.g., ABC-123"
                 value={formData.registrationNumber}
                 onChange={(e) => handleInputChange('registrationNumber', e.target.value.toUpperCase())}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Capacity (kg) *</label>
-              <Input
-                type="number"
-                placeholder="e.g., 40000"
-                value={formData.capacity || ''}
-                onChange={(e) => handleInputChange('capacity', parseInt(e.target.value) || 0)}
               />
             </div>
           </div>
