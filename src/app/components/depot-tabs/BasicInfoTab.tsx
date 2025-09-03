@@ -56,7 +56,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
     managerEmail: "",
     emergencyContact: "",
     loadingBays: "",
-    storageCapacity: "",
+    averageLoadingTime: "",
     maxTruckSize: "",
     certifications: "",
     operatingHours: mockOperatingHours,
@@ -98,7 +98,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
       managerEmail: "",
       emergencyContact: "",
       loadingBays: "",
-      storageCapacity: "",
+      averageLoadingTime: "",
       maxTruckSize: "",
       certifications: "",
       operatingHours: mockOperatingHours,
@@ -253,15 +253,15 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="storageCapacity" className="text-sm font-medium text-gray-700">
-                    Storage (Liters)
+                  <Label htmlFor="averageLoadingTime" className="text-sm font-medium text-gray-700">
+                    Average Loading Time (mins)
                   </Label>
                   <Input
-                    id="storageCapacity"
+                    id="averageLoadingTime"
                     type="number"
-                    value={formData.storageCapacity}
-                    onChange={(e) => handleInputChange('storageCapacity', e.target.value)}
-                    placeholder="e.g. 500000"
+                    value={formData.averageLoadingTime}
+                    onChange={(e) => handleInputChange('averageLoadingTime', e.target.value)}
+                    placeholder="e.g. 45"
                     className="mt-1"
                   />
                 </div>

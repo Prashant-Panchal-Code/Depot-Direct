@@ -17,6 +17,8 @@ import { SiteDetails } from "./SiteDetailsModal";
 import BasicInfoTab from "./depot-tabs/BasicInfoTab";
 import ProductsTab from "./depot-tabs/ProductsTab";
 import LoadingsTab from "./depot-tabs/LoadingsTab";
+import VehiclesDriversTab from "./depot-tabs/VehiclesDriversTab";
+import DeliverySitesTab from "./depot-tabs/DeliverySitesTab";
 import NotesTab, { Note } from "./site-tabs/NotesTab";
 import SettingsTab from "./depot-tabs/SettingsTab";
 
@@ -133,6 +135,8 @@ export default function DepotDetailsPage({
     { id: "basic-info", label: "Basic Info" },
     { id: "products", label: "Products" },
     { id: "loadings", label: "Loadings" },
+    { id: "vehicles-drivers", label: "Vehicles & Drivers" },
+    { id: "delivery-sites", label: "Delivery Sites" },
     { id: "notes", label: `Notes${openNotesCount > 0 ? ` (${openNotesCount})` : ''}` },
     { id: "settings", label: "Settings" },
   ];
@@ -218,6 +222,12 @@ export default function DepotDetailsPage({
           )}
           {activeTab === "loadings" && (
             <LoadingsTab onSave={handleSave} />
+          )}
+          {activeTab === "vehicles-drivers" && (
+            <VehiclesDriversTab onSave={handleSave} />
+          )}
+          {activeTab === "delivery-sites" && (
+            <DeliverySitesTab onSave={handleSave} />
           )}
           {activeTab === "notes" && (
             <NotesTab 
