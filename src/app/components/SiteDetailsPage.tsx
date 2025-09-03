@@ -18,6 +18,8 @@ import InventoryTab from "./site-tabs/InventoryTab";
 import DeliveriesTab from "./site-tabs/DeliveriesTab";
 import SettingsTab from "./site-tabs/SettingsTab";
 import NotesTab, { Note } from "./site-tabs/NotesTab";
+import DepotAccessTab from "./site-tabs/DepotAccessTab";
+import VehicleAccessTab from "./site-tabs/VehicleAccessTab";
 
 
 interface SiteDetailsPageProps {
@@ -92,6 +94,8 @@ export default function SiteDetailsPage({
     { id: "basic-info", label: "Basic Info" },
     { id: "inventory", label: "Inventory" },
     { id: "deliveries", label: "Deliveries" },
+    { id: "depot-access", label: "Depot Access" },
+    { id: "vehicle-access", label: "Vehicle Access" },
     { id: "notes", label: `Notes${openNotesCount > 0 ? ` (${openNotesCount})` : ''}` },
     { id: "settings", label: "Settings" },
   ];
@@ -181,6 +185,10 @@ export default function SiteDetailsPage({
           {activeTab === "inventory" && <InventoryTab site={site} />}
           
           {activeTab === "deliveries" && <DeliveriesTab />}
+          
+          {activeTab === "depot-access" && <DepotAccessTab site={site} />}
+          
+          {activeTab === "vehicle-access" && <VehicleAccessTab site={site} />}
           
           {activeTab === "notes" && (
             <NotesTab 

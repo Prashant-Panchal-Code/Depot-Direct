@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MapPin, Plus, MagnifyingGlass, Funnel, Clock, CarSimple, Eye, PencilSimple, Trash, X } from "@phosphor-icons/react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MapPin, Plus, MagnifyingGlass, Funnel, Clock, CarSimple, Eye, PencilSimple, Trash } from "@phosphor-icons/react";
 
 interface DeliverySite {
   id: number;
@@ -26,11 +25,12 @@ interface DeliverySite {
   products: string[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DeliverySitesTabProps {
-  onSave: () => void;
+  // This interface is intentionally empty as no props are currently used
 }
 
-export default function DeliverySitesTab({ onSave }: DeliverySitesTabProps) {
+export default function DeliverySitesTab({}: DeliverySitesTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");

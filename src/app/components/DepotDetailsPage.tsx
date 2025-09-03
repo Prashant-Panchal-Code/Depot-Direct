@@ -224,10 +224,10 @@ export default function DepotDetailsPage({
             <LoadingsTab onSave={handleSave} />
           )}
           {activeTab === "vehicles-drivers" && (
-            <VehiclesDriversTab onSave={handleSave} />
+            <VehiclesDriversTab />
           )}
           {activeTab === "delivery-sites" && (
-            <DeliverySitesTab onSave={handleSave} />
+            <DeliverySitesTab />
           )}
           {activeTab === "notes" && (
             <NotesTab 

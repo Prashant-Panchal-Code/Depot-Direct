@@ -2,16 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { TrailerDetails } from "../TrailerDetailsPage";
 import { Gear, Warning, CheckCircle, Archive, Trash } from "@phosphor-icons/react";
 
@@ -159,7 +149,7 @@ export default function SettingsTab({ trailer, onSave }: SettingsTabProps) {
               <div>
                 <h4 className="font-medium text-orange-900">Archive Trailer</h4>
                 <p className="text-sm text-orange-700 mt-1">
-                  Archive this trailer if it's no longer in active service but you want to keep historical records.
+                  Archive this trailer if it&apos;s no longer in active service but you want to keep historical records.
                 </p>
               </div>
               <Button
@@ -197,7 +187,7 @@ export default function SettingsTab({ trailer, onSave }: SettingsTabProps) {
                   <div className="flex-1">
                     <h4 className="font-medium text-red-900 mb-2">Confirm Deletion</h4>
                     <p className="text-sm text-red-800 mb-4">
-                      Are you absolutely sure you want to delete "{trailer.trailerName}"? This will:
+                      Are you absolutely sure you want to delete &quot;{trailer.trailerName}&quot;? This will:
                     </p>
                     <ul className="text-sm text-red-800 list-disc list-inside mb-4 space-y-1">
                       <li>Permanently remove all trailer data</li>

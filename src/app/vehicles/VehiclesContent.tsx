@@ -22,7 +22,7 @@ import {
 import AddTruckDialog, { TruckTractor, NewTruck } from "../components/AddTruckDialog";
 import AddTrailerDialog, { Trailer, NewTrailer } from "../components/AddTrailerDialog";
 import AddVehicleDialog, { Vehicle, NewVehicle } from "../components/AddVehicleDialog";
-import TrailerDetailsPage, { TrailerDetails, TrailerCompartment, ComplianceInfo, MaintenanceInfo } from "../components/TrailerDetailsPage";
+import TrailerDetailsPage, { TrailerDetails } from "../components/TrailerDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -467,7 +467,7 @@ export default function VehiclesContent() {
   ]);
 
   // Handle trailer row double-click
-  const handleTrailerDoubleClick = (trailerData: any) => {
+  const handleTrailerDoubleClick = (trailerData: Trailer) => {
     const trailer = trailers.find(t => t.id === trailerData.id);
     if (trailer) {
       setSelectedTrailer(trailer);
@@ -716,7 +716,7 @@ export default function VehiclesContent() {
   };
 
   // Grid events
-  const onRowDoubleClicked = (event: any) => {
+  const onRowDoubleClicked = (event: { data: Trailer }) => {
     if (activeTab === 'trailers') {
       handleTrailerDoubleClick(event.data);
     }

@@ -5,20 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { TrailerDetails, TrailerCompartment } from "../TrailerDetailsPage";
 import { PlusSquare, Pencil, Trash, Package } from "@phosphor-icons/react";
@@ -174,7 +166,7 @@ export default function CompartmentsTab({ trailer, onSave }: CompartmentsTabProp
     }
 
     // Apply logic before saving
-    let finalFormData = { ...formData };
+    const finalFormData = { ...formData };
     
     // Apply volume logic based on settings
     if (!finalFormData.partialLoadAllowed && finalFormData.mustUse) {
@@ -284,7 +276,7 @@ export default function CompartmentsTab({ trailer, onSave }: CompartmentsTabProp
         <div className="text-center py-12">
           <Package size={48} className="mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Compartments Configured</h3>
-          <p className="text-gray-500 mb-4">This trailer doesn't have any compartments configured yet. Add compartments to define the structure and allowed products.</p>
+          <p className="text-gray-500 mb-4">This trailer doesn&apos;t have any compartments configured yet. Add compartments to define the structure and allowed products.</p>
           <Button onClick={handleAddCompartment} className="bg-primary-custom hover:bg-primary-custom/90">
             <PlusSquare size={16} className="mr-2" />
             Add First Compartment
@@ -527,7 +519,7 @@ export default function CompartmentsTab({ trailer, onSave }: CompartmentsTabProp
                   checked={formData.partialLoadAllowed}
                   onCheckedChange={(checked) => {
                     const partialLoadAllowed = checked as boolean;
-                    let updatedFormData = { 
+                    const updatedFormData = { 
                       ...formData, 
                       partialLoadAllowed 
                     };
@@ -551,7 +543,7 @@ export default function CompartmentsTab({ trailer, onSave }: CompartmentsTabProp
                   checked={formData.mustUse}
                   onCheckedChange={(checked) => {
                     const mustUse = checked as boolean;
-                    let updatedFormData = { 
+                    const updatedFormData = { 
                       ...formData, 
                       mustUse 
                     };
