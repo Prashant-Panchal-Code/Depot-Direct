@@ -23,6 +23,8 @@ import AddTruckDialog, { TruckTractor, NewTruck } from "../components/AddTruckDi
 import AddTrailerDialog, { Trailer, NewTrailer } from "../components/AddTrailerDialog";
 import AddVehicleDialog, { Vehicle, NewVehicle } from "../components/AddVehicleDialog";
 import TrailerDetailsPage, { TrailerDetails } from "../components/TrailerDetailsPage";
+import TruckDetailsPage, { TruckDetails } from "../components/TruckDetailsPage";
+import VehicleDetailsPage, { VehicleDetails } from "../components/VehicleDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -34,14 +36,188 @@ export default function VehiclesContent() {
   const [activeTab, setActiveTab] = useState<TabType>('vehicles');
   const [selectedTrailer, setSelectedTrailer] = useState<TrailerDetails | null>(null);
   const [showTrailerDetails, setShowTrailerDetails] = useState(false);
+  const [selectedTruck, setSelectedTruck] = useState<TruckDetails | null>(null);
+  const [showTruckDetails, setShowTruckDetails] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleDetails | null>(null);
+  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
 
-  // Mock data for trucks
-  const [trucks, setTrucks] = useState<TruckTractor[]>([
-    { id: 1, truckName: "Heavy Hauler 1", truckCode: "TK001", registrationNumber: "ABC-123", haulierCompany: "Express Logistics", active: true },
-    { id: 2, truckName: "Power Truck 2", truckCode: "TK002", registrationNumber: "DEF-456", haulierCompany: "Fast Transport", active: true },
-    { id: 3, truckName: "Max Capacity 3", truckCode: "TK003", registrationNumber: "GHI-789", haulierCompany: "Mega Freight", active: true },
-    { id: 4, truckName: "Reliable Truck 4", truckCode: "TK004", registrationNumber: "JKL-012", haulierCompany: "Express Logistics", active: false },
-    { id: 5, truckName: "Fleet Leader 5", truckCode: "TK005", registrationNumber: "MNO-345", haulierCompany: "Prime Movers", active: true },
+  // Mock data for trucks with extended details
+  const [trucks, setTrucks] = useState<TruckDetails[]>([
+    { 
+      id: 1, 
+      truckName: "Heavy Hauler 1", 
+      truckCode: "TK001", 
+      registrationNumber: "ABC-123", 
+      haulierCompany: "Express Logistics", 
+      active: true,
+      licensePlate: "ABC-123",
+      capacityKL: 25.0,
+      parkingAssigned: "Parking Zone A",
+      owner: "Own",
+      pumpAvailable: true,
+      compliance: {
+        id: 1,
+        adrExpiryDate: "2025-08-15",
+        lastInspectionDate: "2024-08-15",
+        nextInspectionDue: "2025-08-15",
+        certificateNumber: "TK-ADR-2024-001",
+        inspectionType: "Annual",
+        complianceStatus: "Compliant",
+        notes: "All truck inspections up to date. Next annual inspection scheduled."
+      },
+      maintenance: {
+        id: 1,
+        lastServiceDate: "2024-07-10",
+        nextServiceDue: "2024-12-10",
+        serviceType: "Routine",
+        mileage: 150000,
+        serviceProvider: "Main Depot Workshop",
+        cost: 1800.00,
+        workDescription: "Full service including engine check, brake inspection, and hydraulic system maintenance.",
+        status: "Completed",
+        notes: "All systems operational. Recommended brake pad replacement in 3 months."
+      }
+    },
+    { 
+      id: 2, 
+      truckName: "Power Truck 2", 
+      truckCode: "TK002", 
+      registrationNumber: "DEF-456", 
+      haulierCompany: "Fast Transport", 
+      active: true,
+      licensePlate: "DEF-456",
+      capacityKL: 30.0,
+      parkingAssigned: "Parking Zone B",
+      owner: "Third Party",
+      pumpAvailable: false,
+      compliance: {
+        id: 2,
+        adrExpiryDate: "2025-03-20",
+        lastInspectionDate: "2024-03-20",
+        nextInspectionDue: "2025-03-20",
+        certificateNumber: "TK-ADR-2024-002",
+        inspectionType: "Annual",
+        complianceStatus: "Due Soon",
+        notes: "Certificate expires in 6 months. Renewal process to be initiated."
+      },
+      maintenance: {
+        id: 2,
+        lastServiceDate: "2024-06-15",
+        nextServiceDue: "2024-11-15",
+        serviceType: "Routine",
+        mileage: 175000,
+        serviceProvider: "Authorized Service Center",
+        cost: 2100.00,
+        workDescription: "Routine maintenance with engine oil change, filter replacements, and safety checks.",
+        status: "Completed",
+        notes: "Engine running smoothly. No issues detected."
+      }
+    },
+    { 
+      id: 3, 
+      truckName: "Max Capacity 3", 
+      truckCode: "TK003", 
+      registrationNumber: "GHI-789", 
+      haulierCompany: "Mega Freight", 
+      active: true,
+      licensePlate: "GHI-789",
+      capacityKL: 35.0,
+      parkingAssigned: "Main Parking",
+      owner: "Own",
+      pumpAvailable: true,
+      compliance: {
+        id: 3,
+        adrExpiryDate: "2025-11-10",
+        lastInspectionDate: "2024-11-10",
+        nextInspectionDue: "2025-11-10",
+        certificateNumber: "TK-ADR-2024-003",
+        inspectionType: "Annual",
+        complianceStatus: "Compliant",
+        notes: "Recently renewed. All documentation current."
+      },
+      maintenance: {
+        id: 3,
+        lastServiceDate: "2024-08-20",
+        nextServiceDue: "2025-01-20",
+        serviceType: "Routine",
+        mileage: 135000,
+        serviceProvider: "Main Depot Workshop",
+        cost: 1650.00,
+        workDescription: "Complete service including pump maintenance, hydraulic system check, and tire inspection.",
+        status: "Completed",
+        notes: "Pump system serviced and tested. All functions working properly."
+      }
+    },
+    { 
+      id: 4, 
+      truckName: "Reliable Truck 4", 
+      truckCode: "TK004", 
+      registrationNumber: "JKL-012", 
+      haulierCompany: "Express Logistics", 
+      active: false,
+      licensePlate: "JKL-012",
+      capacityKL: 28.0,
+      parkingAssigned: "North Parking",
+      owner: "Own",
+      pumpAvailable: false,
+      compliance: {
+        id: 4,
+        adrExpiryDate: "2024-12-01",
+        lastInspectionDate: "2023-12-01",
+        nextInspectionDue: "2024-12-01",
+        certificateNumber: "TK-ADR-2023-004",
+        inspectionType: "Annual",
+        complianceStatus: "Expired",
+        notes: "Certificate expired. Truck currently inactive until renewal."
+      },
+      maintenance: {
+        id: 4,
+        lastServiceDate: "2024-02-28",
+        nextServiceDue: "2024-08-28",
+        serviceType: "Repair",
+        mileage: 200000,
+        serviceProvider: "External Service Provider",
+        cost: 3200.00,
+        workDescription: "Major engine repair, transmission service, and electrical system overhaul.",
+        status: "Overdue",
+        notes: "Truck requires additional repairs before returning to service."
+      }
+    },
+    { 
+      id: 5, 
+      truckName: "Fleet Leader 5", 
+      truckCode: "TK005", 
+      registrationNumber: "MNO-345", 
+      haulierCompany: "Prime Movers", 
+      active: true,
+      licensePlate: "MNO-345",
+      capacityKL: 32.0,
+      parkingAssigned: "South Parking",
+      owner: "Third Party",
+      pumpAvailable: true,
+      compliance: {
+        id: 5,
+        adrExpiryDate: "2025-05-30",
+        lastInspectionDate: "2024-05-30",
+        nextInspectionDue: "2025-05-30",
+        certificateNumber: "TK-ADR-2024-005",
+        inspectionType: "Annual",
+        complianceStatus: "Compliant",
+        notes: "New truck with full compliance documentation."
+      },
+      maintenance: {
+        id: 5,
+        lastServiceDate: "2024-08-01",
+        nextServiceDue: "2025-02-01",
+        serviceType: "Routine",
+        mileage: 85000,
+        serviceProvider: "Authorized Dealer",
+        cost: 1200.00,
+        workDescription: "First major service since delivery. All systems checked and validated.",
+        status: "Completed",
+        notes: "New truck performing excellently. Standard warranty service completed."
+      }
+    },
   ]);
 
   // Mock data for trailers with extended details
@@ -395,7 +571,7 @@ export default function VehiclesContent() {
   ]);
 
   // Mock data for vehicles (truck + trailer combinations)
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
+  const [vehicles, setVehicles] = useState<VehicleDetails[]>([
     { 
       id: 1, 
       vehicleName: "Heavy Hauler 1 + Fuel Tanker 1", 
@@ -486,11 +662,81 @@ export default function VehiclesContent() {
     );
     setTrailers(updatedTrailers);
   };
+
+  // Handle truck row double-click
+  const handleTruckDoubleClick = (truckData: TruckTractor) => {
+    const truck = trucks.find(t => t.id === truckData.id);
+    if (truck) {
+      setSelectedTruck(truck);
+      setShowTruckDetails(true);
+    }
+  };
+
+  const handleBackFromTruckDetails = () => {
+    setShowTruckDetails(false);
+    setSelectedTruck(null);
+  };
+
+  const handleSaveTruckDetails = (updatedTruck: TruckDetails) => {
+    const updatedTrucks = trucks.map(truck => 
+      truck.id === updatedTruck.id ? updatedTruck : truck
+    );
+    setTrucks(updatedTrucks);
+  };
+
+  // Handle vehicle row double-click
+  const handleVehicleDoubleClick = (vehicleData: Vehicle) => {
+    const vehicle = vehicles.find(v => v.id === vehicleData.id);
+    if (vehicle) {
+      setSelectedVehicle(vehicle);
+      setShowVehicleDetails(true);
+    }
+  };
+
+  const handleBackFromVehicleDetails = () => {
+    setShowVehicleDetails(false);
+    setSelectedVehicle(null);
+  };
+
+  const handleSaveVehicleDetails = (vehicleId: number, data: Partial<VehicleDetails>) => {
+    const updatedVehicles = vehicles.map(vehicle => 
+      vehicle.id === vehicleId ? { ...vehicle, ...data } : vehicle
+    );
+    setVehicles(updatedVehicles);
+  };
+
   const handleAddTruck = (newTruck: NewTruck) => {
-    const truck: TruckTractor = {
+    const truck: TruckDetails = {
       ...newTruck,
       id: trucks.length + 1,
       active: true, // Set as active by default
+      licensePlate: newTruck.registrationNumber, // Use registration number as license plate
+      capacityKL: 25.0,
+      parkingAssigned: "Main Parking",
+      owner: "Own",
+      pumpAvailable: false, // Default to false for new trucks
+      compliance: {
+        id: Date.now(),
+        adrExpiryDate: "",
+        lastInspectionDate: "",
+        nextInspectionDue: "",
+        certificateNumber: "",
+        inspectionType: "Annual",
+        complianceStatus: "Compliant",
+        notes: ""
+      },
+      maintenance: {
+        id: Date.now() + 1,
+        lastServiceDate: "",
+        nextServiceDue: "",
+        serviceType: "Routine",
+        mileage: 0,
+        serviceProvider: "",
+        cost: 0,
+        workDescription: "",
+        status: "Completed",
+        notes: ""
+      }
     };
     setTrucks([...trucks, truck]);
   };
@@ -657,6 +903,12 @@ export default function VehiclesContent() {
       minWidth: 150,
     },
     {
+      field: "parkingAssigned",
+      headerName: "Parking Assigned",
+      flex: 1,
+      minWidth: 150,
+    },
+    {
       field: "haulierCompany",
       headerName: "Haulier",
       flex: 1,
@@ -716,9 +968,13 @@ export default function VehiclesContent() {
   };
 
   // Grid events
-  const onRowDoubleClicked = (event: { data: Trailer }) => {
+  const onRowDoubleClicked = (event: { data: Trailer | TruckTractor | Vehicle }) => {
     if (activeTab === 'trailers') {
-      handleTrailerDoubleClick(event.data);
+      handleTrailerDoubleClick(event.data as Trailer);
+    } else if (activeTab === 'trucks') {
+      handleTruckDoubleClick(event.data as TruckTractor);
+    } else if (activeTab === 'vehicles') {
+      handleVehicleDoubleClick(event.data as Vehicle);
     }
   };
 
@@ -781,6 +1037,18 @@ export default function VehiclesContent() {
           trailer={selectedTrailer}
           onBack={handleBackFromTrailerDetails}
           onSave={handleSaveTrailerDetails}
+        />
+      ) : showTruckDetails && selectedTruck ? (
+        <TruckDetailsPage
+          truck={selectedTruck}
+          onBack={handleBackFromTruckDetails}
+          onSave={handleSaveTruckDetails}
+        />
+      ) : showVehicleDetails && selectedVehicle ? (
+        <VehicleDetailsPage
+          vehicle={selectedVehicle}
+          onBack={handleBackFromVehicleDetails}
+          onSave={handleSaveVehicleDetails}
         />
       ) : (
         <main
@@ -854,6 +1122,13 @@ export default function VehiclesContent() {
 
             {/* Data Grid */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
+              {activeTab === 'vehicles' && (
+                <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-purple-800">
+                    <span className="font-medium">Tip:</span> Double-click on any fleet vehicle row to view detailed information including tractor-trailer combinations, capacity specifications, and assignments.
+                  </p>
+                </div>
+              )}
               {activeTab === 'trailers' && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-800">
@@ -861,7 +1136,14 @@ export default function VehiclesContent() {
                   </p>
                 </div>
               )}
-              <div style={{ height: activeTab === 'trailers' ? "calc(100% - 80px)" : "100%", width: "100%" }}>
+              {activeTab === 'trucks' && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Tip:</span> Double-click on any truck row to view detailed information including basic specifications and configuration.
+                  </p>
+                </div>
+              )}
+              <div style={{ height: (activeTab === 'trailers' || activeTab === 'trucks' || activeTab === 'vehicles') ? "calc(100% - 80px)" : "100%", width: "100%" }}>
                 <AgGridReact
                   rowData={data}
                   columnDefs={columns}

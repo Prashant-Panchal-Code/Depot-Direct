@@ -331,7 +331,14 @@ export default function SitesContent() {
 
             {/* Sites Table - Takes remaining space */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
-              <div style={{ height: "100%", width: "100%" }}>
+              {/* Tip Section */}
+              <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  <span className="font-medium">Tip:</span> Double-click on any site row to view detailed information including tank details, delivery schedules, and site history.
+                </p>
+              </div>
+              
+              <div style={{ height: "calc(100% - 60px)", width: "100%" }}>
                 <AgGridReact
                   rowData={sites}
                   columnDefs={columnDefs}

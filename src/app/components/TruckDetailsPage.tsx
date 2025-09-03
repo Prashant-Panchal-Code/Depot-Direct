@@ -12,33 +12,22 @@ import {
 } from "@/components/ui/breadcrumb";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useAppContext } from "../contexts/AppContext";
-import { Trailer } from "./AddTrailerDialog";
-import BasicInfoTab from "./trailer-tabs/BasicInfoTab";
-import CompartmentsTab from "./trailer-tabs/CompartmentsTab";
-import ComplianceTab from "./trailer-tabs/ComplianceTab";
-import MaintenanceTab from "./trailer-tabs/MaintenanceTab";
-import SettingsTab from "./trailer-tabs/SettingsTab";
+import { TruckTractor } from "./AddTruckDialog";
+import BasicInfoTab from "./truck-tabs/BasicInfoTab";
+import ComplianceTab from "./truck-tabs/ComplianceTab";
+import MaintenanceTab from "./truck-tabs/MaintenanceTab";
+import SettingsTab from "./truck-tabs/SettingsTab";
 
 
-// Extended trailer interface for detailed view
-export interface TrailerDetails extends Trailer {
-  compartments: TrailerCompartment[];
+// Extended truck interface for detailed view
+export interface TruckDetails extends TruckTractor {
+  licensePlate: string;
+  capacityKL: number;
+  parkingAssigned: string;
+  owner: "Own" | "Third Party";
+  pumpAvailable: boolean;
   compliance: ComplianceInfo;
   maintenance: MaintenanceInfo;
-  latLong: string;
-  owner: "Own" | "Third Party";
-  depotAssigned: string;
-}
-
-export interface TrailerCompartment {
-  id: number;
-  compartmentNo: number;
-  capacity: number; // in liters
-  minVolume: number; // in liters
-  maxVolume: number; // in liters
-  allowedProducts: string[];
-  partialLoadAllowed: boolean;
-  mustUse: boolean;
 }
 
 export interface ComplianceInfo {
@@ -65,24 +54,24 @@ export interface MaintenanceInfo {
   notes?: string;
 }
 
-interface TrailerDetailsPageProps {
-  trailer: TrailerDetails;
+interface TruckDetailsPageProps {
+  truck: TruckDetails;
   onBack: () => void;
-  onSave: (updatedTrailer: TrailerDetails) => void;
+  onSave: (updatedTruck: TruckDetails) => void;
 }
 
-export default function TrailerDetailsPage({
-  trailer,
+export default function TruckDetailsPage({
+  truck,
   onBack,
   onSave,
-}: TrailerDetailsPageProps) {
+}: TruckDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
   const [activeTab, setActiveTab] = useState("basic-info");
-  const [localTrailer, setLocalTrailer] = useState<TrailerDetails>(trailer);
+  const [localTruck, setLocalTruck] = useState<TruckDetails>(truck);
 
   useEffect(() => {
-    setLocalTrailer(trailer);
-  }, [trailer]);
+    setLocalTruck(truck);
+  }, [truck]);
 
   // Collapse sidebar when component mounts, restore when unmounting
   useEffect(() => {
@@ -93,41 +82,32 @@ export default function TrailerDetailsPage({
     };
   }, [setSidebarCollapsed]);
 
-  // Tab configuration with counts
+  // Tab configuration
   const tabs = [
     { id: "basic-info", label: "Basic Information", count: null },
-    { id: "compartments", label: "Compartments", count: localTrailer.compartments?.length || 0 },
     { id: "compliance", label: "Compliance", count: null },
     { id: "maintenance", label: "Maintenance", count: null },
     { id: "settings", label: "Settings", count: null },
   ];
 
-  const handleSave = (updatedData: Partial<TrailerDetails>) => {
-    const updatedTrailer = { ...localTrailer, ...updatedData };
-    
-    // Auto-calculate numberOfCompartments from compartments array
-    if (updatedData.compartments) {
-      updatedTrailer.numberOfCompartments = updatedData.compartments.length;
-    }
-    
-    setLocalTrailer(updatedTrailer);
-    onSave(updatedTrailer);
+  const handleSave = (updatedData: Partial<TruckDetails>) => {
+    const updatedTruck = { ...localTruck, ...updatedData };
+    setLocalTruck(updatedTruck);
+    onSave(updatedTruck);
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "basic-info":
-        return <BasicInfoTab trailer={localTrailer} onSave={handleSave} />;
-      case "compartments":
-        return <CompartmentsTab trailer={localTrailer} onSave={handleSave} />;
+        return <BasicInfoTab truck={localTruck} onSave={handleSave} />;
       case "compliance":
-        return <ComplianceTab trailer={localTrailer} onSave={handleSave} />;
+        return <ComplianceTab truck={localTruck} onSave={handleSave} />;
       case "maintenance":
-        return <MaintenanceTab trailer={localTrailer} onSave={handleSave} />;
+        return <MaintenanceTab truck={localTruck} onSave={handleSave} />;
       case "settings":
-        return <SettingsTab trailer={localTrailer} onSave={handleSave} />;
+        return <SettingsTab truck={localTruck} onSave={handleSave} />;
       default:
-        return <BasicInfoTab trailer={localTrailer} onSave={handleSave} />;
+        return <BasicInfoTab truck={localTruck} onSave={handleSave} />;
     }
   };
 
@@ -141,13 +121,13 @@ export default function TrailerDetailsPage({
         {/* Header with Title and Back Button */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-gray-900">{localTrailer.trailerName}-<span className="text-2xl text-gray-600">{localTrailer.trailerCode}</span></h2>
+            <h2 className="text-2xl font-bold text-gray-900">{localTruck.truckName}-<span className="text-2xl text-gray-600">{localTruck.truckCode}</span></h2>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              localTrailer.active 
+              localTruck.active 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800'
             }`}>
-              {localTrailer.active ? 'Active' : 'Inactive'}
+              {localTruck.active ? 'Active' : 'Inactive'}
             </span>
           </div>
           <Button 
@@ -157,7 +137,7 @@ export default function TrailerDetailsPage({
             className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-800 shadow-sm"
           >
             <ArrowLeft size={16} />
-            Back to Trailers
+            Back to Trucks
           </Button>
         </div>
 
@@ -170,12 +150,12 @@ export default function TrailerDetailsPage({
                   onClick={onBack}
                   className="cursor-pointer text-primary-custom hover:text-primary-custom/80"
                 >
-                  Trailers
+                  Vehicles
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage className="text-gray-900">Trailer Details</BreadcrumbPage>
+                <BreadcrumbPage className="text-gray-900">Truck Details</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

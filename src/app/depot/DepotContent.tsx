@@ -9,7 +9,6 @@ import {
   ModuleRegistry,
   AllCommunityModule,
   ICellRendererParams,
-  RowClickedEvent,
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/react";
@@ -55,7 +54,7 @@ export default function DepotContent() {
     setDepots([...depots, depot]);
   };
 
-  const handleRowClick = (event: RowClickedEvent) => {
+  const handleRowDoubleClick = (event: { data: DepotDetails }) => {
     setSelectedDepot(event.data);
     setShowDepotDetails(true);
   };
@@ -269,7 +268,14 @@ export default function DepotContent() {
 
         {/* Depots Table - Takes remaining space */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
-          <div style={{ height: "100%", width: "100%" }}>
+          {/* Tip Section */}
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <span className="font-medium">Tip:</span> Double-click on any depot row to view detailed information including basic info, delivery sites, vehicles, and settings.
+            </p>
+          </div>
+          
+          <div style={{ height: "calc(100% - 60px)", width: "100%" }}>
             <AgGridReact
               rowData={depots}
               columnDefs={columnDefs}
@@ -284,7 +290,7 @@ export default function DepotContent() {
               onGridReady={(params: GridReadyEvent) => {
                 params.api.sizeColumnsToFit();
               }}
-              onRowClicked={handleRowClick}
+              onRowDoubleClicked={handleRowDoubleClick}
             />
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select, 
   SelectContent, 
@@ -11,23 +12,23 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { TrailerDetails } from "../TrailerDetailsPage";
+import { TruckDetails } from "../TruckDetailsPage";
 
 interface BasicInfoTabProps {
-  trailer: TrailerDetails;
-  onSave: (data: Partial<TrailerDetails>) => void;
+  truck: TruckDetails;
+  onSave: (data: Partial<TruckDetails>) => void;
 }
 
-export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
+export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
   const [formData, setFormData] = useState({
-    trailerName: trailer.trailerName,
-    registrationNumber: trailer.registrationNumber,
-    volumeCapacity: trailer.volumeCapacity,
-    weightCapacity: trailer.weightCapacity,
-    haulierCompany: trailer.haulierCompany,
-    depotAssigned: trailer.depotAssigned,
-    owner: trailer.owner,
-    active: trailer.active,
+    truckName: truck.truckName,
+    licensePlate: truck.licensePlate,
+    capacityKL: truck.capacityKL,
+    haulierCompany: truck.haulierCompany,
+    parkingAssigned: truck.parkingAssigned,
+    owner: truck.owner,
+    active: truck.active,
+    pumpAvailable: truck.pumpAvailable,
   });
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -42,26 +43,18 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
   };
 
   const handleCancel = () => {
-    // Reset form data to original trailer values
+    // Reset form data to original truck values
     setFormData({
-      trailerName: trailer.trailerName,
-      registrationNumber: trailer.registrationNumber,
-      volumeCapacity: trailer.volumeCapacity,
-      weightCapacity: trailer.weightCapacity,
-      haulierCompany: trailer.haulierCompany,
-      depotAssigned: trailer.depotAssigned,
-      owner: trailer.owner,
-      active: trailer.active,
+      truckName: truck.truckName,
+      licensePlate: truck.licensePlate,
+      capacityKL: truck.capacityKL,
+      haulierCompany: truck.haulierCompany,
+      parkingAssigned: truck.parkingAssigned,
+      owner: truck.owner,
+      active: truck.active,
+      pumpAvailable: truck.pumpAvailable,
     });
   };
-
-  const depots = [
-    "Main Depot",
-    "North Terminal", 
-    "South Hub",
-    "West Terminal",
-    "East Distribution"
-  ];
 
   const haulierCompanies = [
     "Express Logistics",
@@ -70,6 +63,16 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
     "Prime Movers",
     "Swift Carriers",
     "Reliable Haulage"
+  ];
+
+  const parkingAreas = [
+    "Parking Zone A",
+    "Parking Zone B", 
+    "Parking Zone C",
+    "Main Parking",
+    "North Parking",
+    "South Parking",
+    "VIP Parking"
   ];
 
   return (
@@ -84,85 +87,50 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
           {/* Left Column */}
           <div className="space-y-6">
             <div>
-              <Label htmlFor="trailerName">Trailer Name</Label>
+              <Label htmlFor="truckName">Truck Name</Label>
               <Input
-                id="trailerName"
-                value={formData.trailerName}
-                onChange={(e) => handleInputChange('trailerName', e.target.value)}
+                id="truckName"
+                value={formData.truckName}
+                onChange={(e) => handleInputChange('truckName', e.target.value)}
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="trailerCode">Trailer Code</Label>
+              <Label htmlFor="truckCode">Tractor Code</Label>
               <div className="mt-1 p-3 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-gray-900 font-medium">{trailer.trailerCode}</p>
-                <p className="text-xs text-gray-500 mt-1">Trailer code cannot be modified</p>
+                <p className="text-gray-900 font-medium">{truck.truckCode}</p>
+                <p className="text-xs text-gray-500 mt-1">Tractor code cannot be modified</p>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="registrationNumber">Registration Number</Label>
+              <Label htmlFor="licensePlate">License Plate</Label>
               <Input
-                id="registrationNumber"
-                value={formData.registrationNumber}
-                onChange={(e) => handleInputChange('registrationNumber', e.target.value.toUpperCase())}
+                id="licensePlate"
+                value={formData.licensePlate}
+                onChange={(e) => handleInputChange('licensePlate', e.target.value.toUpperCase())}
                 className="mt-1"
+                placeholder="ABC-123"
               />
             </div>
 
             <div>
-              <Label htmlFor="volumeCapacity">Volume Capacity (L)</Label>
+              <Label htmlFor="capacityKL">Capacity (KL)</Label>
               <Input
-                id="volumeCapacity"
+                id="capacityKL"
                 type="number"
-                value={formData.volumeCapacity}
-                onChange={(e) => handleInputChange('volumeCapacity', parseInt(e.target.value) || 0)}
+                value={formData.capacityKL}
+                onChange={(e) => handleInputChange('capacityKL', parseFloat(e.target.value) || 0)}
                 className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="weightCapacity">Weight Capacity (kg)</Label>
-              <Input
-                id="weightCapacity"
-                type="number"
-                value={formData.weightCapacity}
-                onChange={(e) => handleInputChange('weightCapacity', parseInt(e.target.value) || 0)}
-                className="mt-1"
+                step="0.1"
+                min="0"
               />
             </div>
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="numberOfCompartments">Number of Compartments</Label>
-              <div className="mt-1 p-3 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-gray-900 font-medium">{trailer.compartments?.length || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">Calculated from compartments configuration</p>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="depotAssigned">Depot Assigned</Label>
-              <Select
-                value={formData.depotAssigned}
-                onValueChange={(value) => handleInputChange('depotAssigned', value)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select depot" />
-                </SelectTrigger>
-                <SelectContent>
-                  {depots.map((depot) => (
-                    <SelectItem key={depot} value={depot}>
-                      {depot}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div>
               <Label htmlFor="haulierCompany">Haulier Company</Label>
               <Select
@@ -176,6 +144,25 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
                   {haulierCompanies.map((company) => (
                     <SelectItem key={company} value={company}>
                       {company}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="parkingAssigned">Parking Assigned</Label>
+              <Select
+                value={formData.parkingAssigned}
+                onValueChange={(value) => handleInputChange('parkingAssigned', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select parking" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parkingAreas.map((parking) => (
+                    <SelectItem key={parking} value={parking}>
+                      {parking}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -213,6 +200,19 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <div className="flex items-center space-x-2 mt-1">
+                <Checkbox
+                  id="pumpAvailable"
+                  checked={formData.pumpAvailable}
+                  onCheckedChange={(checked) => handleInputChange('pumpAvailable', checked as boolean)}
+                />
+                <Label htmlFor="pumpAvailable" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Pump Available
+                </Label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function BasicInfoTab({ trailer, onSave }: BasicInfoTabProps) {
           Cancel
         </Button>
         <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white" onClick={handleSave}>
-          Save Changes
+          Save
         </Button>
       </div>
     </div>
