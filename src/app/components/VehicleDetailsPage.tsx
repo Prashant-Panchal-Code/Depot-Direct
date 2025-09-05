@@ -16,6 +16,7 @@ import { Vehicle } from "./AddVehicleDialog";
 import { TrailerCompartment } from "./TrailerDetailsPage";
 import BasicInfoTab from "./vehicle-tabs/BasicInfoTab";
 import TrailersTab from "./vehicle-tabs/TrailersTab";
+import BlueprintTab, { Blueprint } from "./vehicle-tabs/BlueprintTab";
 
 
 // Extended vehicle interface for detailed view
@@ -28,6 +29,7 @@ export interface VehicleDetails extends Vehicle {
   insuranceExpiryDate?: string;
   notes?: string;
   assignedTrailers?: VehicleTrailer[]; // Trailers assigned to this vehicle
+  blueprint?: Blueprint; // Blueprint data for the vehicle
 }
 
 // Trailer assignment interface for vehicle trailers
@@ -124,6 +126,7 @@ export default function VehicleDetailsPage({ vehicle, onBack, onSave }: VehicleD
     
     return [
       { id: "basic-info", label: "Basic Information", count: null },
+      { id: "blueprint", label: "Blueprint", count: null },
       { id: "trailers", label: "Trailers", count: currentTrailerCount },
       // Additional tabs can be added here in the future
       // { id: "maintenance", label: "Maintenance", count: null },
@@ -136,6 +139,8 @@ export default function VehicleDetailsPage({ vehicle, onBack, onSave }: VehicleD
     switch (activeTab) {
       case "basic-info":
         return <BasicInfoTab vehicle={localVehicle} onSave={handleSave} />;
+      case "blueprint":
+        return <BlueprintTab vehicle={localVehicle} onSave={handleSave} />;
       case "trailers":
         return <TrailersTab vehicle={localVehicle} onSave={handleSave} />;
       default:

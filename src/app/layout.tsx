@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./contexts/AppContext";
+import { Toaster } from "@/components/ui/toaster";
 
 // AG Grid imports
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         <AppProvider>
           {children}
+          <Toaster />
         </AppProvider>
       </body>
     </html>

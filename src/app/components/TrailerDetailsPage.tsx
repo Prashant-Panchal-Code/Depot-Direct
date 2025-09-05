@@ -18,6 +18,7 @@ import CompartmentsTab from "./trailer-tabs/CompartmentsTab";
 import ComplianceTab from "./trailer-tabs/ComplianceTab";
 import MaintenanceTab from "./trailer-tabs/MaintenanceTab";
 import SettingsTab from "./trailer-tabs/SettingsTab";
+import WeightDimensionsTab from "./trailer-tabs/WeightDimensionsTab";
 
 
 // Extended trailer interface for detailed view
@@ -97,6 +98,7 @@ export default function TrailerDetailsPage({
   const tabs = [
     { id: "basic-info", label: "Basic Information", count: null },
     { id: "compartments", label: "Compartments", count: localTrailer.compartments?.length || 0 },
+    { id: "weight-dimensions", label: "Weight & Dimensions", count: null },
     { id: "compliance", label: "Compliance", count: null },
     { id: "maintenance", label: "Maintenance", count: null },
     { id: "settings", label: "Settings", count: null },
@@ -120,6 +122,8 @@ export default function TrailerDetailsPage({
         return <BasicInfoTab trailer={localTrailer} onSave={handleSave} />;
       case "compartments":
         return <CompartmentsTab trailer={localTrailer} onSave={handleSave} />;
+      case "weight-dimensions":
+        return <WeightDimensionsTab trailer={localTrailer} onSave={handleSave} />;
       case "compliance":
         return <ComplianceTab trailer={localTrailer} onSave={handleSave} />;
       case "maintenance":

@@ -17,6 +17,7 @@ import BasicInfoTab from "./truck-tabs/BasicInfoTab";
 import ComplianceTab from "./truck-tabs/ComplianceTab";
 import MaintenanceTab from "./truck-tabs/MaintenanceTab";
 import SettingsTab from "./truck-tabs/SettingsTab";
+import WeightDimensionsTab from "./truck-tabs/WeightDimensionsTab";
 
 
 // Extended truck interface for detailed view
@@ -85,6 +86,7 @@ export default function TruckDetailsPage({
   // Tab configuration
   const tabs = [
     { id: "basic-info", label: "Basic Information", count: null },
+    { id: "weight-dimensions", label: "Weight & Dimensions", count: null },
     { id: "compliance", label: "Compliance", count: null },
     { id: "maintenance", label: "Maintenance", count: null },
     { id: "settings", label: "Settings", count: null },
@@ -100,6 +102,8 @@ export default function TruckDetailsPage({
     switch (activeTab) {
       case "basic-info":
         return <BasicInfoTab truck={localTruck} onSave={handleSave} />;
+      case "weight-dimensions":
+        return <WeightDimensionsTab truck={localTruck} onSave={handleSave} />;
       case "compliance":
         return <ComplianceTab truck={localTruck} onSave={handleSave} />;
       case "maintenance":
