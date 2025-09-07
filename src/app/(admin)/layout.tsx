@@ -18,7 +18,7 @@ interface AdminLayoutProps {
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   // Get user info from headers set by middleware
   const headersList = await headers()
-  const user = getUserFromHeaders(headersList)
+  const _user = getUserFromHeaders(headersList)
 
   return (
     <>

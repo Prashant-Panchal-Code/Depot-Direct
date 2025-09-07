@@ -15,9 +15,11 @@
 'use client'
 
 import UsersGrid from '@/components/admin/UsersGrid'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 export default function UsersPage() {
   return (
+    <AdminLayoutWrapper>
     <div className="space-y-6">
       {/* Page Header */}
       <div className="border-b border-gray-200 pb-4">
@@ -31,6 +33,7 @@ export default function UsersPage() {
       <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
         <UsersGrid />
       </div>
-    </div>
+      </div>
+    </AdminLayoutWrapper>
   )
 }

@@ -14,6 +14,7 @@
 'use client'
 
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 export default function CompaniesPage() {
   // Simple company selection handler (optional for this page)
@@ -23,21 +24,23 @@ export default function CompaniesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <AdminLayoutWrapper>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
+          <p className="mt-2 text-sm text-gray-600">
           Manage all companies in the system. Create, edit, and assign regions to companies.
         </p>
       </div>
 
-      {/* Companies Grid */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-        <CompaniesGrid 
-          onSelect={handleCompanySelect}
-        />
+        {/* Companies Grid */}
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+          <CompaniesGrid 
+            onSelect={handleCompanySelect}
+          />
+        </div>
       </div>
-    </div>
+    </AdminLayoutWrapper>
   )
 }

@@ -377,7 +377,7 @@ export default function CompanyForm({ company, onSaved, onClose }: CompanyFormPr
                       </FormControl>
                       <SelectContent>
                         {countriesLoading ? (
-                          <SelectItem value="" disabled>Loading countries...</SelectItem>
+                          <SelectItem value="loading" disabled>Loading countries...</SelectItem>
                         ) : (
                           countries.filter(c => c.active).map(country => (
                             <SelectItem key={country.id} value={country.id.toString()}>

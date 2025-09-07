@@ -2,7 +2,8 @@
  * Root Landing Page
  * 
  * This page serves as the entry point for the application.
- * Authenticated users are redirected to /dashboard.
+ * Authenticated admin users are redirected to /admin.
+ * Authenticated regular users are redirected to /dashboard.
  * Unauthenticated users see a welcome page with login option.
  */
 
@@ -14,15 +15,19 @@ import { useUser } from '@/hooks/useUser'
 import Link from 'next/link'
 
 export default function HomePage() {
-  const { loading, isAuthenticated } = useUser()
+  const { loading, isAuthenticated, isAdmin } = useUser()
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect authenticated users to dashboard
+    // Redirect authenticated users based on their role
     if (!loading && isAuthenticated) {
-      router.push('/dashboard')
+      if (isAdmin) {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
     }
-  }, [loading, isAuthenticated, router])
+  }, [loading, isAuthenticated, isAdmin, router])
 
   if (loading) {
     return (

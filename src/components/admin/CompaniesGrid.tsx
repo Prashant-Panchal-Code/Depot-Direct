@@ -26,7 +26,7 @@ import { AgGridReact } from 'ag-grid-react'
 import { ColDef, GridApi, GridReadyEvent, RowClickedEvent, RowClassParams, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
-import { CheckSquare, Circle, Rows, XCircle } from "@phosphor-icons/react"
+import { CheckSquare, Rows, XCircle } from "@phosphor-icons/react"
 
 import { showToast } from '@/components/ui/toast-placeholder'
 
@@ -308,7 +308,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
   }
 
   // Grid options
-  const gridOptions = {
+  const _gridOptions = {
     rowSelection: 'single' as const,
     suppressRowClickSelection: false,
     rowHeight: 50,

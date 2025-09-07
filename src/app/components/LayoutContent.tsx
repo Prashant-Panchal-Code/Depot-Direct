@@ -6,7 +6,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 
 export default function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { sidebarCollapsed } = useAppContext();
+  const { sidebarCollapsed: _sidebarCollapsed } = useAppContext();
   const pathname = usePathname();
   
   // Don't show header/sidebar on login, unauthorized pages

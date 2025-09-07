@@ -14,6 +14,7 @@
 'use client'
 
 import RegionsGrid from '@/components/admin/RegionsGrid'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 export default function RegionsPage() {
   // Simple region selection handler (optional for this page)
@@ -23,11 +24,12 @@ export default function RegionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Regions</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <AdminLayoutWrapper>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Regions</h1>
+          <p className="mt-2 text-sm text-gray-600">
           Manage all regions across countries. Create, edit, and organize geographical regions.
         </p>
       </div>
@@ -38,6 +40,7 @@ export default function RegionsPage() {
           onSelect={handleRegionSelect}
         />
       </div>
-    </div>
+      </div>
+    </AdminLayoutWrapper>
   )
 }

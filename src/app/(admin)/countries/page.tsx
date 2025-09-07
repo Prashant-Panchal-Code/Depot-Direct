@@ -18,6 +18,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { showToast } from '@/components/ui/toast-placeholder'
+import { useAppContext } from '../../contexts/AppContext';
 
 // Country interface
 interface Country {
@@ -80,6 +81,7 @@ const mockCountries: Country[] = [
 ]
 
 export default function CountriesPage() {
+  const { sidebarCollapsed } = useAppContext();
   const [countries, setCountries] = useState<Country[]>([])
   const [loading, setLoading] = useState(true)
   const [showCountryForm, setShowCountryForm] = useState(false)
@@ -201,14 +203,18 @@ export default function CountriesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Countries</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Manage countries available in the system for companies and regions.
-        </p>
-      </div>
+    <main className={`pt-24 min-h-screen bg-gray-50 text-gray-900 overflow-y-auto transition-all duration-300 ${
+      sidebarCollapsed ? 'ml-16' : 'ml-64'
+    }`}>
+      <div className="p-8">
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="border-b border-gray-200 pb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Countries</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Manage countries available in the system for companies and regions.
+            </p>
+          </div>
 
       {/* Actions */}
       <div className="flex justify-between items-center">
@@ -368,6 +374,8 @@ export default function CountriesPage() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
+    </main>
   )
 }

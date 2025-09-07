@@ -20,6 +20,7 @@ import { useState } from 'react'
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
 import RegionsGrid from '@/components/admin/RegionsGrid'
 import UsersGrid from '@/components/admin/UsersGrid'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 // Types for the selected entities
 interface SelectedCompany {
@@ -51,16 +52,17 @@ export default function OrgSetupPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Organizational Setup
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Manage companies, regions, and users. Select a company to filter regions and users.
-        </p>
-      </div>
+    <AdminLayoutWrapper>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Organizational Setup
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Manage companies, regions, and users. Select a company to filter regions and users.
+          </p>
+        </div>
 
       {/* Selection Indicators */}
       {(selectedCompany || selectedRegion) && (
@@ -154,6 +156,7 @@ export default function OrgSetupPage() {
         </div>
 
       </div>
-    </div>
+      </div>
+    </AdminLayoutWrapper>
   )
 }

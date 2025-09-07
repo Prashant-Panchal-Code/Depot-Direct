@@ -18,16 +18,18 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 export default function ImportExportPage() {
   const [activeOperation, setActiveOperation] = useState<'import' | 'export'>('import')
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Import / Export</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <AdminLayoutWrapper>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Import / Export</h1>
+          <p className="mt-2 text-sm text-gray-600">
           Manage system data through bulk import and export operations. 
           Import CSV files or export data for backup and analysis.
         </p>
@@ -405,6 +407,7 @@ export default function ImportExportPage() {
           <li>• Add scheduled export functionality</li>
         </ul>
       </div>
-    </div>
+      </div>
+    </AdminLayoutWrapper>
   )
 }

@@ -49,13 +49,30 @@ export function middleware(request: NextRequest) {
       throw new Error('Token expired')
     }
     
-    // Check admin access for admin paths
-    const adminPaths = ['/admin', '/users', '/data-management']
+    // Admin routes that require admin role
+    const adminPaths = ['/admin', '/users', '/data-management', '/org-setup', '/countries', '/companies', '/regions', '/admin-users', '/assignments', '/import-export']
+    
+    // Regular user routes that should redirect admin users to admin equivalent
+    const regularUserPaths = ['/dashboard', '/schedule', '/vehicles', '/depot', '/sites', '/parking', '/reports']
+    
+    // Check if this is an admin route
     if (adminPaths.some(adminPath => path.startsWith(adminPath))) {
       if (payload.role !== 'admin') {
         console.log(`🚫 ADMIN ACCESS DENIED FOR: ${path} (role: ${payload.role})`)
         return NextResponse.redirect(new URL('/unauthorized', request.url))
       }
+    }
+    
+    // If admin user tries to access regular user routes, redirect to admin dashboard
+    if (payload.role === 'admin' && regularUserPaths.some(userPath => path.startsWith(userPath))) {
+      console.log(`🔄 REDIRECTING ADMIN FROM USER ROUTE ${path} TO ADMIN DASHBOARD`)
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+    
+    // If regular user tries to access admin routes, redirect to unauthorized
+    if (payload.role !== 'admin' && adminPaths.some(adminPath => path.startsWith(adminPath))) {
+      console.log(`🚫 USER ACCESS DENIED FOR ADMIN ROUTE: ${path} (role: ${payload.role})`)
+      return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
     
     // Token exists and is valid format, allow access

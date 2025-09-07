@@ -18,16 +18,18 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 
 export default function AssignmentsPage() {
   const [activeTab, setActiveTab] = useState<'companies' | 'users' | 'bulk'>('companies')
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="border-b border-gray-200 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
-        <p className="mt-2 text-sm text-gray-600">
+    <AdminLayoutWrapper>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Assignments</h1>
+          <p className="mt-2 text-sm text-gray-600">
           Manage relationships between companies, regions, and users. Bulk assign and organize entities.
         </p>
       </div>
@@ -248,6 +250,7 @@ export default function AssignmentsPage() {
           <li>• Add CSV import/export functionality</li>
         </ul>
       </div>
-    </div>
+      </div>
+    </AdminLayoutWrapper>
   )
 }

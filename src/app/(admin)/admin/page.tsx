@@ -5,15 +5,24 @@
  * Protected by middleware - only accessible to admin users.
  */
 
+'use client';
+
+import { useAppContext } from '../../contexts/AppContext';
+
 export default function AdminDashboard() {
+  const { sidebarCollapsed } = useAppContext();
+
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="mt-2 text-gray-600">
-          System overview and administrative functions
-        </p>
-      </div>
+    <main className={`pt-24 min-h-screen bg-gray-50 text-gray-900 overflow-y-auto transition-all duration-300 ${
+      sidebarCollapsed ? 'ml-16' : 'ml-64'
+    }`}>
+      <div className="p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="mt-2 text-gray-600">
+            System overview and administrative functions
+          </p>
+        </div>
 
       {/* Admin Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -141,5 +150,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+    </main>
   )
 }

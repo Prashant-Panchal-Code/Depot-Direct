@@ -518,7 +518,7 @@ export default function VehiclesDriversTab({}: VehiclesDriversTabProps) {
                         </SelectItem>
                       ))}
                       {!editingVehicle && availableVehicles.length === 0 && (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-vehicles" disabled>
                           No available vehicles - all vehicles already have access
                         </SelectItem>
                       )}
@@ -616,7 +616,7 @@ export default function VehiclesDriversTab({}: VehiclesDriversTabProps) {
                         </SelectItem>
                       ))}
                       {!editingDriver && availableDrivers.length === 0 && (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="no-drivers" disabled>
                           No available drivers - all drivers already have access
                         </SelectItem>
                       )}

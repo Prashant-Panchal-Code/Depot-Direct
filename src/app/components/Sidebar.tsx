@@ -52,13 +52,14 @@ export default function Sidebar() {
 
   // Admin-only menu items (matching the admin layout)
   const adminMenuItems = [
-    { href: '/org-setup', icon: '🏢', label: 'Organizational Setup' },
-    { href: '/admin/countries', icon: '🌍', label: 'Countries' },
-    { href: '/admin/companies', icon: '🏭', label: 'Companies' },
-    { href: '/admin/regions', icon: '🗺️', label: 'Regions' },
-    { href: '/admin/admin-users', icon: '👥', label: 'Users' },
-    { href: '/admin/assignments', icon: '📝', label: 'Assignments' },
-    { href: '/admin/import-export', icon: '📤', label: 'Import/Export' },
+    { href: '/admin', icon: <PresentationChart size={25} weight="duotone" />, label: 'Admin Dashboard' },
+    { href: '/org-setup', icon: '🏢', label: 'Org Setup' },
+    { href: '/countries', icon: '🌍', label: 'Countries' },
+    { href: '/companies', icon: '🏭', label: 'Companies' },
+    { href: '/regions', icon: '🗺️', label: 'Regions' },
+    { href: '/admin-users', icon: '👥', label: 'Admin Users' },
+    { href: '/assignments', icon: '📝', label: 'Assignments' },
+    { href: '/import-export', icon: '📤', label: 'Import/Export' },
     { href: '/data-management', icon: <Kanban size={25} weight="duotone" />, label: 'Data Management' },
     { href: '/users', icon: <Users size={25} weight="duotone" />, label: 'Users' },
   ];

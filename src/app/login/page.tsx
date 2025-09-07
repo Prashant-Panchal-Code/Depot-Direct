@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { loginUser } from '@/hooks/useUser'
 
@@ -37,9 +37,37 @@ function LoginForm() {
       console.log('🔍 Login result:', result)
       
       if (result.success) {
-        console.log('🔍 Login successful, redirecting to:', callbackUrl)
-        // Redirect to callback URL or dashboard
-        window.location.href = callbackUrl
+        console.log('🔍 Login successful, checking user role for redirect...')
+        
+        // Get user info to determine redirect URL
+        try {
+          const userResponse = await fetch('/api/auth/user', {
+            credentials: 'include'
+          })
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json()
+            console.log('🔍 User data after login:', userData)
+            
+            // Determine redirect URL based on role
+            let redirectUrl = callbackUrl
+            if (callbackUrl === '/dashboard') {
+              // Only change default redirect if it's the default dashboard
+              redirectUrl = userData.role === 'admin' ? '/admin' : '/dashboard'
+            }
+            
+            console.log('🔍 Redirecting to:', redirectUrl)
+            window.location.href = redirectUrl
+          } else {
+            // Fallback to default redirect if user info fetch fails
+            console.log('🔍 Could not fetch user info, using default redirect:', callbackUrl)
+            window.location.href = callbackUrl
+          }
+        } catch (error) {
+          console.log('🔍 Error fetching user info:', error)
+          // Fallback to default redirect
+          window.location.href = callbackUrl
+        }
       } else {
         console.log('🔍 Login failed:', result.error)
         setError(result.error || 'Login failed')
