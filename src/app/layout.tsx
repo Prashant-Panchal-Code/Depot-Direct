@@ -3,9 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./contexts/AppContext";
 import { Toaster } from "@/components/ui/toaster";
+import { UserProvider } from "@/app/components/UserProvider";
 
 // AG Grid imports
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import LayoutContent from "./components/LayoutContent";
 
 // Register all Community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -31,8 +33,12 @@ export default function RootLayout({
         className={`${inter.variable} antialiased`}
       >
         <AppProvider>
-          {children}
-          <Toaster />
+          <UserProvider>
+            <LayoutContent>
+              {children}
+            </LayoutContent>
+            <Toaster />
+          </UserProvider>
         </AppProvider>
       </body>
     </html>
