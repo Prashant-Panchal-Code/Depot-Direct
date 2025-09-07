@@ -54,7 +54,7 @@ interface VehicleDetailsPageProps {
 }
 
 export default function VehicleDetailsPage({ vehicle, onBack, onSave }: VehicleDetailsPageProps) {
-  const { sidebarCollapsed } = useAppContext();
+  const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
   const [activeTab, setActiveTab] = useState("basic-info");
   
   // Add mock assigned trailers data directly during initialization
@@ -109,6 +109,15 @@ export default function VehicleDetailsPage({ vehicle, onBack, onSave }: VehicleD
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicle.id]);
+
+  // Collapse sidebar when component mounts, restore when unmounting
+  useEffect(() => {
+    setSidebarCollapsed(true);
+    
+    return () => {
+      setSidebarCollapsed(false);
+    };
+  }, [setSidebarCollapsed]);
 
   const handleSave = (data: Partial<VehicleDetails>) => {
     // Only update if there's actual data to update
