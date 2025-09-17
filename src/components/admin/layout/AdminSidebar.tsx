@@ -44,10 +44,6 @@ export default function AdminSidebar() {
     { href: '/admin', icon: <PresentationChart size={25} weight="duotone" />, label: 'Admin Dashboard' },
     { href: '/org-setup', icon: '🏢', label: 'Org Setup' },
     { href: '/admin-users', icon: '👥', label: 'Admin Users' },
-    { href: '/assignments', icon: '📝', label: 'Assignments' },
-    { href: '/import-export', icon: '📤', label: 'Import/Export' },
-    { href: '/data-management', icon: <Kanban size={25} weight="duotone" />, label: 'Data Management' },
-    { href: '/users', icon: <Users size={25} weight="duotone" />, label: 'Users' },
   ];
 
   return (

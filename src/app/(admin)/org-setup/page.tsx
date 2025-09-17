@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
@@ -60,6 +60,34 @@ const mockCountries: Country[] = [
   },
 ]
 
+// Mock companies data for auto-selection
+const mockCompanies: SelectedCompany[] = [
+  {
+    id: 1,
+    name: 'ACME Corporation',
+    country_id: 1,
+    country_name: 'United States'
+  },
+  {
+    id: 2,
+    name: 'Global Logistics Ltd',
+    country_id: 2,
+    country_name: 'Canada'
+  },
+  {
+    id: 3,
+    name: 'UK Transport Ltd',
+    country_id: 3,
+    country_name: 'United Kingdom'
+  },
+  {
+    id: 4,
+    name: 'Australia Freight Co',
+    country_id: 4,
+    country_name: 'Australia'
+  }
+]
+
 // Types for the selected entities
 interface SelectedCompany {
   id: number
@@ -82,11 +110,34 @@ export default function OrgSetupPage() {
   const [selectedCompany, setSelectedCompany] = useState<SelectedCompany | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<SelectedRegion | null>(null)
 
+  // Auto-select first company when entering detailed view
+  useEffect(() => {
+    if (currentView === 'detailed' && selectedCountry && !selectedCompany) {
+      // Find companies for the selected country
+      const companiesForCountry = mockCompanies.filter(company => 
+        company.country_id === selectedCountry.id
+      )
+      
+      if (companiesForCountry.length > 0) {
+        // Auto-select the first company
+        setSelectedCompany(companiesForCountry[0])
+      }
+    }
+  }, [currentView, selectedCountry, selectedCompany])
+
+  // Clear region selection when company changes and refresh data
+  useEffect(() => {
+    if (selectedCompany) {
+      setSelectedRegion(null)
+      // Regions will automatically refresh based on the selected company
+    }
+  }, [selectedCompany])
+
   // Handle country double-click to go to detailed view
   const handleCountryDoubleClick = (country: Country) => {
     setSelectedCountry(country)
     setCurrentView('detailed')
-    setSelectedCompany(null)
+    setSelectedCompany(null) // Will be auto-selected by useEffect
     setSelectedRegion(null)
     // Collapse sidebar when entering detailed view
     setSidebarCollapsed(true)
@@ -102,15 +153,16 @@ export default function OrgSetupPage() {
     setSidebarCollapsed(false)
   }
 
-  // Handle company selection
+  // Handle company selection - clear region when company changes
   const handleCompanySelect = (company: SelectedCompany | null) => {
     setSelectedCompany(company)
-    setSelectedRegion(null)
+    // Region will be cleared by useEffect when company changes
   }
 
-  // Handle region selection
+  // Handle region selection - filters users by region
   const handleRegionSelect = (region: SelectedRegion | null) => {
     setSelectedRegion(region)
+    // Users grid will automatically refresh based on selected region
   }
 
   // Handle country status toggle
@@ -139,13 +191,8 @@ export default function OrgSetupPage() {
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-3">
-              <Button className="bg-primary-custom hover:bg-blue-700 text-white">
-                + Add Country
-              </Button>
-            </div>
+          {/* Summary Info */}
+          <div className="flex justify-end items-center">
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <span>Total Countries: {countries.length}</span>
               <span>•</span>
@@ -242,7 +289,9 @@ export default function OrgSetupPage() {
               Organization Setup - {selectedCountry?.name}
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Manage companies, regions, and users for {selectedCountry?.name}.
+              Manage companies, regions, and users for {selectedCountry?.name}. 
+              {selectedCompany && ` Currently viewing: ${selectedCompany.name}`}
+              {selectedRegion && ` → ${selectedRegion.name}`}
             </p>
           </div>
 
@@ -253,7 +302,7 @@ export default function OrgSetupPage() {
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
                 <p className="text-sm text-gray-500">
-                  Companies in {selectedCountry?.name}
+                  Companies in {selectedCountry?.name} (first company auto-selected)
                 </p>
               </div>
               <div className="p-4">
@@ -290,9 +339,11 @@ export default function OrgSetupPage() {
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Users</h2>
                 <p className="text-sm text-gray-500">
-                  {selectedCompany 
-                    ? `Users for ${selectedCompany.name}` 
-                    : 'Select a company to filter users'
+                  {selectedRegion 
+                    ? `Users for ${selectedRegion.name} region` 
+                    : selectedCompany 
+                      ? `All users for ${selectedCompany.name}` 
+                      : 'Select a company to view users'
                   }
                 </p>
               </div>
