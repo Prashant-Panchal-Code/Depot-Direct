@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAppContext } from "../contexts/AppContext";
+import { useAppContext } from "@/app/contexts/AppContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -19,12 +19,12 @@ import {
   Car, 
   Package
 } from "@phosphor-icons/react";
-import AddTruckDialog, { TruckTractor, NewTruck } from "../components/AddTruckDialog";
-import AddTrailerDialog, { Trailer, NewTrailer } from "../components/AddTrailerDialog";
-import AddVehicleDialog, { Vehicle, NewVehicle } from "../components/AddVehicleDialog";
-import TrailerDetailsPage, { TrailerDetails } from "../components/TrailerDetailsPage";
-import TruckDetailsPage, { TruckDetails } from "../components/TruckDetailsPage";
-import VehicleDetailsPage, { VehicleDetails } from "../components/VehicleDetailsPage";
+import AddTruckDialog, { TruckTractor, NewTruck } from "@/app/components/AddTruckDialog";
+import AddTrailerDialog, { Trailer, NewTrailer } from "@/app/components/AddTrailerDialog";
+import AddVehicleDialog, { Vehicle, NewVehicle } from "@/app/components/AddVehicleDialog";
+import TrailerDetailsPage, { TrailerDetails } from "@/app/components/TrailerDetailsPage";
+import TruckDetailsPage, { TruckDetails } from "@/app/components/TruckDetailsPage";
+import VehicleDetailsPage, { VehicleDetails } from "@/app/components/VehicleDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);

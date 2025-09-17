@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAppContext } from "../contexts/AppContext";
+import { useAppContext } from "@/app/contexts/AppContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -12,8 +12,9 @@ import {
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/react";
-import AddDepotDialog, { Depot } from "../components/AddDepotDialog";
-import DepotDetailsPage, { DepotDetails } from "../components/DepotDetailsPage";
+import AddDepotDialog, { Depot } from "@/app/components/AddDepotDialog";
+import DepotDetailsPage, { DepotDetails } from "@/app/components/DepotDetailsPage";
+
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);

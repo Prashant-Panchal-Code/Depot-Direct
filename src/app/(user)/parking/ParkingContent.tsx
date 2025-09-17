@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAppContext } from "../contexts/AppContext";
+import { useAppContext } from "@/app/contexts/AppContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -12,8 +12,8 @@ import {
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/react";
-import AddParkingDialog, { Parking } from "../components/AddParkingDialog";
-import ParkingDetailsPage, { ParkingDetails } from "../components/ParkingDetailsPage";
+import AddParkingDialog, { Parking } from "@/app/components/AddParkingDialog";
+import ParkingDetailsPage, { ParkingDetails } from "@/app/components/ParkingDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);

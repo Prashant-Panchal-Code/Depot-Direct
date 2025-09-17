@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAppContext } from "../contexts/AppContext";
+import { useAppContext } from "@/app/contexts/AppContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -12,9 +12,9 @@ import {
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle } from "@phosphor-icons/react";
-import AddSiteDialog, { Site, NewSite } from "../components/AddSiteDialog";
-import { SiteDetails } from "../components/SiteDetailsModal";
-import SiteDetailsPage from "../components/SiteDetailsPage";
+import AddSiteDialog, { Site, NewSite } from "@/app/components/AddSiteDialog";
+import { SiteDetails } from "@/app/components/SiteDetailsModal";
+import SiteDetailsPage from "@/app/components/SiteDetailsPage";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);

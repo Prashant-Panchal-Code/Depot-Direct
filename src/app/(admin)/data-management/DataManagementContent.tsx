@@ -1,6 +1,6 @@
 'use client';
 
-import { useAppContext } from '../contexts/AppContext';
+import { useAppContext } from '@/app/contexts/AppContext';
 
 export default function DataManagementContent() {
   const { selectedCountry, selectedRegion, sidebarCollapsed } = useAppContext();
