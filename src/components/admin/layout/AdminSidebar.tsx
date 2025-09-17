@@ -43,9 +43,6 @@ export default function AdminSidebar() {
   const adminMenuItems = [
     { href: '/admin', icon: <PresentationChart size={25} weight="duotone" />, label: 'Admin Dashboard' },
     { href: '/org-setup', icon: '🏢', label: 'Org Setup' },
-    { href: '/countries', icon: '🌍', label: 'Countries' },
-    { href: '/companies', icon: '🏭', label: 'Companies' },
-    { href: '/regions', icon: '🗺️', label: 'Regions' },
     { href: '/admin-users', icon: '👥', label: 'Admin Users' },
     { href: '/assignments', icon: '📝', label: 'Assignments' },
     { href: '/import-export', icon: '📤', label: 'Import/Export' },
