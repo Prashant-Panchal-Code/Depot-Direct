@@ -41,7 +41,7 @@ function LoginForm() {
         
         // Get user info to determine redirect URL
         try {
-          const userResponse = await fetch('/api/auth/user', {
+          const userResponse = await fetch('/api/auth/session', {
             credentials: 'include'
           })
           
@@ -53,7 +53,7 @@ function LoginForm() {
             let redirectUrl = callbackUrl
             if (callbackUrl === '/dashboard') {
               // Only change default redirect if it's the default dashboard
-              redirectUrl = userData.role === 'admin' ? '/admin' : '/dashboard'
+              redirectUrl = userData.user?.role === 'admin' ? '/admin' : '/dashboard'
             }
             
             console.log('🔍 Redirecting to:', redirectUrl)
