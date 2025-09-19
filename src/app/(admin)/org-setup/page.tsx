@@ -8,85 +8,12 @@ import CompaniesGrid from '@/components/admin/CompaniesGrid'
 import RegionsGrid from '@/components/admin/RegionsGrid'
 import UsersGrid from '@/components/admin/UsersGrid'
 import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
+import AdminApiService, { Country } from '@/lib/api/admin'
 
-// Country interface
-interface Country {
-  id: number
-  name: string
-  iso_code: string
-  active: boolean
-  region_count?: number
-  company_count?: number
-  created_at: string
+// Updated Country interface to match API response
+interface CountryDisplay extends Country {
+  active: boolean // We'll derive this from the data or set a default
 }
-
-// Mock countries data
-const mockCountries: Country[] = [
-  {
-    id: 1,
-    name: 'United States',
-    iso_code: 'US',
-    active: true,
-    region_count: 4,
-    company_count: 8,
-    created_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    name: 'Canada',
-    iso_code: 'CA',
-    active: true,
-    region_count: 3,
-    company_count: 5,
-    created_at: '2023-01-02T00:00:00Z'
-  },
-  {
-    id: 3,
-    name: 'United Kingdom',
-    iso_code: 'GB',
-    active: true,
-    region_count: 2,
-    company_count: 3,
-    created_at: '2023-01-03T00:00:00Z'
-  },
-  {
-    id: 4,
-    name: 'Australia',
-    iso_code: 'AU',
-    active: false,
-    region_count: 1,
-    company_count: 2,
-    created_at: '2023-01-04T00:00:00Z'
-  },
-]
-
-// Mock companies data for auto-selection
-const mockCompanies: SelectedCompany[] = [
-  {
-    id: 1,
-    name: 'ACME Corporation',
-    country_id: 1,
-    country_name: 'United States'
-  },
-  {
-    id: 2,
-    name: 'Global Logistics Ltd',
-    country_id: 2,
-    country_name: 'Canada'
-  },
-  {
-    id: 3,
-    name: 'UK Transport Ltd',
-    country_id: 3,
-    country_name: 'United Kingdom'
-  },
-  {
-    id: 4,
-    name: 'Australia Freight Co',
-    country_id: 4,
-    country_name: 'Australia'
-  }
-]
 
 // Types for the selected entities
 interface SelectedCompany {
@@ -105,23 +32,48 @@ interface SelectedRegion {
 export default function OrgSetupPage() {
   const { setSidebarCollapsed } = useAppContext()
   const [currentView, setCurrentView] = useState<'countries' | 'detailed'>('countries')
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
-  const [countries, setCountries] = useState<Country[]>(mockCountries)
+  const [selectedCountry, setSelectedCountry] = useState<CountryDisplay | null>(null)
+  const [countries, setCountries] = useState<CountryDisplay[]>([])
   const [selectedCompany, setSelectedCompany] = useState<SelectedCompany | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<SelectedRegion | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Load countries data from API
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        console.log('Loading countries from API...')
+        const countriesData = await AdminApiService.getCountriesWithStats()
+        
+        // Transform API data to include active status (defaulting to true)
+        const transformedCountries: CountryDisplay[] = countriesData.map(country => ({
+          ...country,
+          active: true // Default all countries to active for now
+        }))
+        
+        console.log('Successfully loaded countries:', transformedCountries.length)
+        setCountries(transformedCountries)
+      } catch (err) {
+        console.error('Failed to load countries:', err)
+        setError(`Failed to load countries: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        showToast('Failed to load countries. Please check if the API server is running.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCountries()
+  }, [])
 
   // Auto-select first company when entering detailed view
   useEffect(() => {
     if (currentView === 'detailed' && selectedCountry && !selectedCompany) {
-      // Find companies for the selected country
-      const companiesForCountry = mockCompanies.filter(company => 
-        company.country_id === selectedCountry.id
-      )
-      
-      if (companiesForCountry.length > 0) {
-        // Auto-select the first company
-        setSelectedCompany(companiesForCountry[0])
-      }
+      // For now, we'll let the CompaniesGrid handle company selection
+      // This will be updated when we have the companies API endpoint
     }
   }, [currentView, selectedCountry, selectedCompany])
 
@@ -134,7 +86,7 @@ export default function OrgSetupPage() {
   }, [selectedCompany])
 
   // Handle country double-click to go to detailed view
-  const handleCountryDoubleClick = (country: Country) => {
+  const handleCountryDoubleClick = (country: CountryDisplay) => {
     setSelectedCountry(country)
     setCurrentView('detailed')
     setSelectedCompany(null) // Will be auto-selected by useEffect
@@ -166,15 +118,24 @@ export default function OrgSetupPage() {
   }
 
   // Handle country status toggle
-  const handleCountryToggle = (countryId: number) => {
-    setCountries(prev => 
-      prev.map(country => 
-        country.id === countryId 
-          ? { ...country, active: !country.active }
-          : country
+  const handleCountryToggle = async (countryId: number) => {
+    try {
+      const country = countries.find(c => c.id === countryId)
+      if (!country) return
+
+      // For now, just update locally. Later, we can add API call for status toggle
+      setCountries(prev => 
+        prev.map(country => 
+          country.id === countryId 
+            ? { ...country, active: !country.active }
+            : country
+        )
       )
-    )
-    showToast('Country status updated successfully')
+      showToast('Country status updated successfully')
+    } catch (err) {
+      console.error('Failed to toggle country status:', err)
+      showToast('Failed to update country status')
+    }
   }
 
   return (
@@ -191,85 +152,108 @@ export default function OrgSetupPage() {
             </p>
           </div>
 
-          {/* Summary Info */}
-          <div className="flex justify-end items-center">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <span>Total Countries: {countries.length}</span>
-              <span>•</span>
-              <span>Active: {countries.filter(c => c.active).length}</span>
+          {/* Loading and Error States */}
+          {loading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="text-gray-500">Loading countries...</div>
             </div>
-          </div>
+          )}
 
-          {/* Countries Table */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Country
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ISO Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Companies
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Regions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {countries.map((country) => (
-                  <tr 
-                    key={country.id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onDoubleClick={() => handleCountryDoubleClick(country)}
-                    title="Double-click to view detailed setup"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{country.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {country.iso_code}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {country.company_count || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {country.region_count || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        country.active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {country.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleCountryToggle(country.id)
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-red-800">{error}</div>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <>
+              {/* Summary Info */}
+              <div className="flex justify-end items-center">
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>Total Countries: {countries.length}</span>
+                  <span>•</span>
+                  <span>Active: {countries.filter(c => c.active).length}</span>
+                </div>
+              </div>
+
+              {/* Countries Table */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Country
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ISO Code
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Companies
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Regions
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Depots
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {countries.map((country) => (
+                      <tr 
+                        key={country.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onDoubleClick={() => handleCountryDoubleClick(country)}
+                        title="Double-click to view detailed setup"
                       >
-                        {country.active ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{country.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {country.isoCode}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {country.companiesCount || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {country.regionsCount || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {country.depotsCount || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            country.active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {country.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCountryToggle(country.id)
+                            }}
+                            className="text-indigo-600 hover:text-indigo-900 mr-3"
+                          >
+                            {country.active ? 'Deactivate' : 'Activate'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
