@@ -34,6 +34,7 @@ import { showToast } from '@/components/ui/toast-placeholder'
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 import CompanyForm from './CompanyForm'
+import { adminApi } from '@/lib/api/service'
 
 // Company data interface
 interface Company {
@@ -52,6 +53,20 @@ interface CompaniesGridProps {
   selectedCompanyId?: number
   compact?: boolean // For 3-pane layout vs full-width layout
   selectedCountry?: { id: number; name: string } // For pre-selecting country in new company form
+}
+
+// Map API response to Company interface
+const mapApiResponseToCompany = (apiResponse: any): Company => {
+  return {
+    id: apiResponse.id,
+    company_code: apiResponse.companyCode || '',
+    name: apiResponse.name,
+    country_id: apiResponse.countryId,
+    country_name: apiResponse.countryName || 'Unknown',
+    region_count: 0, // Not provided in API response
+    user_count: 0,   // Not provided in API response
+    description: apiResponse.description || ''
+  }
 }
 
 // Mock data fallback
@@ -114,36 +129,23 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
       }
 
       try {
-        // TODO: Replace with real API call and add auth token
-        const response = await fetch(`/api/depotdirect/companies/${company.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Add authorization header
-          }
-        })
-
-        if (response.ok) {
-          // Remove from local state
-          setCompanies(prev => prev.filter(c => c.id !== company.id))
-          showToast('Company deleted successfully', 'success')
-          
-          // Clear selection if deleted company was selected
-          if (selectedCompanyId === company.id) {
-            onSelect(null)
-          }
-        } else {
-          throw new Error('Failed to delete company')
-        }
-      } catch (error) {
-        console.warn('Delete API failed, simulating success for UI demo:', error)
-        // Simulate success for UI demo
-        setCompanies(prev => prev.filter(c => c.id !== company.id))
-        showToast('Company deleted (simulated)', 'success')
+        // Delete company using real API
+        await adminApi.delete(`/Companies/${company.id}`)
         
+        // Remove from local state
+        setCompanies(prev => prev.filter(c => c.id !== company.id))
+        showToast('Company deleted successfully', 'success')
+        
+        // Clear selection if deleted company was selected
         if (selectedCompanyId === company.id) {
           onSelect(null)
         }
+      } catch (error) {
+        console.error('Delete company failed:', error)
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Failed to delete company'
+        showToast(errorMessage, 'error')
       }
     }
 
@@ -215,20 +217,21 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
   const fetchCompanies = useCallback(async () => {
     setLoading(true)
     try {
-      // TODO: Add auth token to request
-      const response = await fetch('/api/depotdirect/companies?limit=100', {
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add authorization header
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setCompanies(data.companies || data)
+      let companies: Company[]
+      
+      if (selectedCountry) {
+        // Fetch companies for specific country using real API
+        const apiResponse = await adminApi.get(`/Companies/by-country/${selectedCountry.id}`)
+        companies = Array.isArray(apiResponse) 
+          ? apiResponse.map(mapApiResponseToCompany)
+          : [mapApiResponseToCompany(apiResponse)]
       } else {
-        throw new Error('API response not ok')
+        // Fetch all companies - fallback to mock data for now
+        // TODO: Implement get all companies API endpoint
+        companies = mockCompanies
       }
+      
+      setCompanies(companies)
     } catch (error) {
       console.warn('Companies API failed, using mock data:', error)
       setCompanies(mockCompanies)
@@ -236,7 +239,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedCountry])
 
   // Initialize data
   useEffect(() => {
