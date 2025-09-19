@@ -136,14 +136,14 @@ export default function OrgSetupPage() {
   }
 
   // Handle company selection - clear region when company changes
-  const handleCompanySelect = (company: SelectedCompany | null) => {
+  const handleCompanySelect = useCallback((company: SelectedCompany | null) => {
     setSelectedCompany(company)
-  }
+  }, [])
 
   // Handle region selection - filters users by region
-  const handleRegionSelect = (region: SelectedRegion | null) => {
+  const handleRegionSelect = useCallback((region: SelectedRegion | null) => {
     setSelectedRegion(region)
-  }
+  }, [])
 
   // Handle row double click for AG-Grid
   const onRowDoubleClicked = useCallback((event: RowDoubleClickedEvent) => {

@@ -313,27 +313,35 @@ export default function UsersGrid({ filterCompanyId, filterRegionId }: UsersGrid
 
   // Fetch users data
   const fetchUsers = useCallback(async () => {
+    // Don't fetch if no company is selected
+    if (!filterCompanyId) {
+      setAllUsers([])
+      return
+    }
+
     setLoading(true)
     try {
-      // TODO: Add auth token and filtering parameters
-      let url = '/api/depotdirect/users?limit=100'
-      if (filterCompanyId) {
-        url += `&company_id=${filterCompanyId}`
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add authorization header
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAllUsers(data.users || data)
-      } else {
-        throw new Error('Users API failed')
-      }
+      // TEMPORARILY DISABLED: API endpoint not implemented yet
+      // Always use mock data to prevent 404 errors and unnecessary API calls
+      setAllUsers(mockUsers)
+      
+      // TODO: Implement users API endpoint and uncomment below
+      // let url = '/api/depotdirect/users?limit=100'
+      // if (filterCompanyId) {
+      //   url += `&company_id=${filterCompanyId}`
+      // }
+      // const response = await fetch(url, {
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     // TODO: Add authorization header
+      //   }
+      // })
+      // if (response.ok) {
+      //   const data = await response.json()
+      //   setAllUsers(data.users || data)
+      // } else {
+      //   throw new Error('Users API failed')
+      // }
     } catch (error) {
       console.warn('Users API failed, using mock data:', error)
       setAllUsers(mockUsers)
@@ -343,9 +351,16 @@ export default function UsersGrid({ filterCompanyId, filterRegionId }: UsersGrid
     }
   }, [filterCompanyId])
 
-  // Initialize data
+  // Initialize data with debouncing to prevent rapid API calls
   useEffect(() => {
-    fetchUsers()
+    // Debounce the API call to prevent rapid-fire requests
+    const timeoutId = setTimeout(() => {
+      fetchUsers()
+    }, 300) // 300ms debounce
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
   }, [fetchUsers])
 
   // Handle grid ready

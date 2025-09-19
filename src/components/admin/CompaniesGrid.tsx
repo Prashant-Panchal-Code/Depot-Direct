@@ -241,15 +241,42 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     }
   }, [selectedCountry])
 
-  // Initialize data
+  // Auto-select first company when companies load and no selection exists
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompanyId) {
+      const firstCompany = companies[0]
+      onSelect({
+        id: firstCompany.id,
+        name: firstCompany.name,
+        country_id: firstCompany.country_id,
+        country_name: firstCompany.country_name
+      })
+    }
+  }, [companies, selectedCompanyId, onSelect])
+
+  // Initialize data - call fetchCompanies only when selectedCountry changes
   useEffect(() => {
     fetchCompanies()
-  }, [fetchCompanies])
+  }, [selectedCountry?.id]) // Only depend on the country ID, not the entire fetchCompanies function
 
   // Handle grid ready
   const onGridReady = (params: GridReadyEvent) => {
     gridApiRef.current = params.api
   }
+
+  // Effect to select row in AG-Grid when selectedCompanyId changes
+  useEffect(() => {
+    if (gridApiRef.current && selectedCompanyId) {
+      gridApiRef.current.forEachNode((node) => {
+        if (node.data?.id === selectedCompanyId) {
+          node.setSelected(true)
+          gridApiRef.current?.ensureNodeVisible(node)
+        } else {
+          node.setSelected(false)
+        }
+      })
+    }
+  }, [selectedCompanyId, companies])
 
   // Handle row click for selection
   const onRowClicked = (event: RowClickedEvent) => {
@@ -350,10 +377,12 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             headerHeight={35}
             suppressMenuHide={true}
             theme={themeQuartz}
+            rowSelection="single"
+            suppressRowClickSelection={false}
             onGridReady={onGridReady}
             onRowClicked={onRowClicked}
             rowClassRules={{
-              'bg-blue-50': (params: RowClassParams<Company>) => params.data?.id === selectedCompanyId
+              'ag-row-selected bg-blue-100 border-l-4 border-l-blue-500': (params: RowClassParams<Company>) => params.data?.id === selectedCompanyId
             }}
           />
         </div>
@@ -423,10 +452,12 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             headerHeight={45}
             suppressMenuHide={true}
             theme={themeQuartz}
+            rowSelection="single"
+            suppressRowClickSelection={false}
             onGridReady={onGridReady}
             onRowClicked={onRowClicked}
             rowClassRules={{
-              'bg-blue-50': (params: RowClassParams<Company>) => params.data?.id === selectedCompanyId
+              'ag-row-selected bg-blue-100 border-l-4 border-l-blue-500': (params: RowClassParams<Company>) => params.data?.id === selectedCompanyId
             }}
           />
         </div>
