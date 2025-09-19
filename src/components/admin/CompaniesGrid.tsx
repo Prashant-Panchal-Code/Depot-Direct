@@ -26,7 +26,7 @@ import { AgGridReact } from 'ag-grid-react'
 import { ColDef, GridApi, GridReadyEvent, RowClickedEvent, RowClassParams, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
-import { CheckSquare, Rows, XCircle } from "@phosphor-icons/react"
+import { Rows } from "@phosphor-icons/react"
 
 import { showToast } from '@/components/ui/toast-placeholder'
 
@@ -44,7 +44,6 @@ interface Company {
   country_name: string
   region_count: number
   user_count: number
-  active: boolean
   description?: string
 }
 
@@ -52,6 +51,7 @@ interface CompaniesGridProps {
   onSelect: (company: { id: number; name: string; country_id: number; country_name: string } | null) => void
   selectedCompanyId?: number
   compact?: boolean // For 3-pane layout vs full-width layout
+  selectedCountry?: { id: number; name: string } // For pre-selecting country in new company form
 }
 
 // Mock data fallback
@@ -64,7 +64,6 @@ const mockCompanies: Company[] = [
     country_name: 'United States',
     region_count: 3,
     user_count: 45,
-    active: true,
     description: 'Leading logistics provider'
   },
   {
@@ -75,7 +74,6 @@ const mockCompanies: Company[] = [
     country_name: 'Canada',
     region_count: 2,
     user_count: 23,
-    active: true,
     description: 'Canadian freight specialist'
   },
   {
@@ -86,12 +84,11 @@ const mockCompanies: Company[] = [
     country_name: 'Mexico',
     region_count: 4,
     user_count: 67,
-    active: false,
     description: 'Cross-border transportation'
   }
 ]
 
-export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = false }: CompaniesGridProps) {
+export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = false, selectedCountry }: CompaniesGridProps) {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -202,20 +199,6 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
       headerName: 'Users',
       width: 100,
       type: 'numericColumn'
-    },
-    {
-      field: 'active',
-      headerName: 'Status',
-      width: 100,
-      cellRenderer: (params: { value: boolean }) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          params.value 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {params.value ? 'Active' : 'Inactive'}
-        </span>
-      )
     },
     {
       field: 'actions',
@@ -337,14 +320,6 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
               <Rows size={14} color="#02589d" weight="duotone" />
               <span className="font-medium text-gray-700">{companies.length}</span>
             </div>
-            <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
-              <CheckSquare size={14} weight="duotone" color="green" />
-              <span className="font-medium text-green-600">{companies.filter(c => c.active).length}</span>
-            </div>
-            <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
-              <XCircle size={14} color="red" weight="duotone" />
-              <span className="font-medium text-red-600">{companies.filter(c => !c.active).length}</span>
-            </div>
           </div>
           <Button
             onClick={() => {
@@ -386,6 +361,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             company={editingCompany}
             onSaved={handleFormSave}
             onClose={handleFormClose}
+            selectedCountry={selectedCountry}
           />
         )}
       </div>
@@ -406,24 +382,6 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
                 {companies.length}
               </span>
               <span className="text-xs text-gray-600">Total</span>
-            </div>
-          </div>
-          <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-            <span className="text-base"><CheckSquare size={25} weight="duotone" color="green" /></span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-sm font-bold text-green-600">
-                {companies.filter((c) => c.active).length}
-              </span>
-              <span className="text-xs text-gray-600">Active</span>
-            </div>
-          </div>
-          <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-            <span className="text-base"><XCircle size={25} color="red" weight="duotone" /></span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-sm font-bold text-red-600">
-                {companies.filter((c) => !c.active).length}
-              </span>
-              <span className="text-xs text-gray-600">Inactive</span>
             </div>
           </div>
         </div>
@@ -477,6 +435,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
           company={editingCompany}
           onSaved={handleFormSave}
           onClose={handleFormClose}
+          selectedCountry={selectedCountry}
         />
       )}
     </div>

@@ -41,7 +41,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -51,6 +50,7 @@ import {
 } from '@/components/ui/select'
 import { showToast } from '@/components/ui/toast-placeholder'
 import ManageRegionsModal from './ManageRegionsModal'
+import { adminApi } from '@/lib/api/service'
 
 
 // Company form validation schema
@@ -58,8 +58,7 @@ const companySchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters'),
   company_code: z.string().optional(),
   country_id: z.string().min(1, 'Please select a country'),
-  description: z.string().optional(),
-  active: z.boolean()
+  description: z.string().optional()
 })
 
 type CompanyFormData = z.infer<typeof companySchema>
@@ -73,7 +72,6 @@ interface Company {
   country_name: string
   region_count: number
   user_count: number
-  active: boolean
   description?: string
 }
 
@@ -82,25 +80,39 @@ interface Country {
   id: number
   name: string
   iso_code: string
-  active: boolean
 }
 
 interface CompanyFormProps {
   company?: Company | null
   onSaved: (company: Company) => void
   onClose: () => void
+  selectedCountry?: { id: number; name: string } // Pre-selected country (makes field read-only)
 }
 
 // Mock countries fallback
 const mockCountries: Country[] = [
-  { id: 1, name: 'United States', iso_code: 'US', active: true },
-  { id: 2, name: 'Canada', iso_code: 'CA', active: true },
-  { id: 3, name: 'Mexico', iso_code: 'MX', active: true },
-  { id: 4, name: 'United Kingdom', iso_code: 'GB', active: true },
-  { id: 5, name: 'Germany', iso_code: 'DE', active: true }
+  { id: 1, name: 'United States', iso_code: 'US' },
+  { id: 2, name: 'Canada', iso_code: 'CA' },
+  { id: 3, name: 'Mexico', iso_code: 'MX' },
+  { id: 4, name: 'United Kingdom', iso_code: 'GB' },
+  { id: 5, name: 'Germany', iso_code: 'DE' }
 ]
 
-export default function CompanyForm({ company, onSaved, onClose }: CompanyFormProps) {
+// Map API response to Company interface
+const mapApiResponseToCompany = (apiResponse: any): Company => {
+  return {
+    id: apiResponse.id,
+    company_code: apiResponse.companyCode || '',
+    name: apiResponse.name,
+    country_id: apiResponse.countryId,
+    country_name: apiResponse.country?.name || 'Unknown',
+    region_count: 0, // Not provided in API response
+    user_count: 0,   // Not provided in API response
+    description: apiResponse.description || ''
+  }
+}
+
+export default function CompanyForm({ company, onSaved, onClose, selectedCountry }: CompanyFormProps) {
   const [countries, setCountries] = useState<Country[]>([])
   const [countriesLoading, setCountriesLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -115,9 +127,8 @@ export default function CompanyForm({ company, onSaved, onClose }: CompanyFormPr
     defaultValues: {
       name: company?.name || '',
       company_code: company?.company_code || '',
-      country_id: company?.country_id?.toString() || '',
-      description: company?.description || '',
-      active: company?.active !== false
+      country_id: company?.country_id?.toString() || selectedCountry?.id?.toString() || '',
+      description: company?.description || ''
     }
   })
 
@@ -224,77 +235,42 @@ export default function CompanyForm({ company, onSaved, onClose }: CompanyFormPr
         }
       }
 
-      // Prepare submission data
+      // Prepare submission data according to API specification
       const submitData = {
-        ...data,
-        country_id: parseInt(data.country_id),
-        company_code: data.company_code || null
+        companyCode: data.company_code || '',
+        name: data.name,
+        countryId: parseInt(data.country_id),
+        description: data.description || ''
       }
 
       let savedCompany: Company
 
       if (isEdit) {
-        // Update existing company
-        // TODO: Replace with real API call and add auth token, CSRF protection
-        const response = await fetch(`/api/depotdirect/companies/${company.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Add authorization header and CSRF token
-          },
-          body: JSON.stringify(submitData)
-        })
-
-        if (response.ok) {
-          const result = await response.json()
-          savedCompany = result.company || result
-        } else {
-          throw new Error('Failed to update company')
-        }
+        // Update existing company using admin API service
+        const result = await adminApi.put(`/Companies/${company.id}`, submitData) as any
+        savedCompany = mapApiResponseToCompany(result)
       } else {
-        // Create new company
-        // TODO: Replace with real API call and add auth token, CSRF protection
-        const response = await fetch('/api/depotdirect/companies', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Add authorization header and CSRF token
-          },
-          body: JSON.stringify(submitData)
-        })
-
-        if (response.ok) {
-          const result = await response.json()
-          savedCompany = result.company || result
-        } else {
-          throw new Error('Failed to create company')
-        }
+        // Create new company using admin API service
+        const result = await adminApi.post('/Companies', submitData) as any
+        savedCompany = mapApiResponseToCompany(result)
       }
 
+      // Show success message and close form
       onSaved(savedCompany)
-
-    } catch (error) {
-      console.warn('Company save API failed, simulating success for UI demo:', error)
-      
-      // Simulate successful save for UI demo
-      const selectedCountry = countries.find(c => c.id === parseInt(data.country_id))
-      const mockSavedCompany: Company = {
-        id: company?.id || Date.now(),
-        company_code: data.company_code || '',
-        name: data.name,
-        country_id: parseInt(data.country_id),
-        country_name: selectedCountry?.name || 'Unknown',
-        region_count: company?.region_count || 0,
-        user_count: company?.user_count || 0,
-        active: data.active,
-        description: data.description
-      }
-
-      onSaved(mockSavedCompany)
       showToast(
-        `Company ${isEdit ? 'updated' : 'created'} (simulated)`, 
+        `Company ${isEdit ? 'updated' : 'created'} successfully`, 
         'success'
       )
+
+    } catch (error) {
+      console.error('Company save failed:', error)
+      
+      // Show error message to user
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : `Failed to ${isEdit ? 'update' : 'create'} company`
+      
+      showToast(errorMessage, 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -369,24 +345,39 @@ export default function CompanyForm({ company, onSaved, onClose }: CompanyFormPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Country *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    {selectedCountry ? (
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
+                        <Input
+                          value={selectedCountry.name}
+                          disabled
+                          className="bg-gray-50 cursor-not-allowed"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {countriesLoading ? (
-                          <SelectItem value="loading" disabled>Loading countries...</SelectItem>
-                        ) : (
-                          countries.filter(c => c.active).map(country => (
-                            <SelectItem key={country.id} value={country.id.toString()}>
-                              {country.name} ({country.iso_code})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    ) : (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {countriesLoading ? (
+                            <SelectItem value="loading" disabled>Loading countries...</SelectItem>
+                          ) : (
+                            countries.map(country => (
+                              <SelectItem key={country.id} value={country.id.toString()}>
+                                {country.name} ({country.iso_code})
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {selectedCountry && (
+                      <FormDescription>
+                        Country is pre-selected based on your current selection
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -407,28 +398,6 @@ export default function CompanyForm({ company, onSaved, onClose }: CompanyFormPr
                       />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Active Status */}
-              <FormField
-                control={form.control}
-                name="active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Active</FormLabel>
-                      <FormDescription>
-                        Company is active and can be assigned users
-                      </FormDescription>
-                    </div>
                   </FormItem>
                 )}
               />

@@ -15,7 +15,7 @@ import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community
 
 // Updated Country interface to match API response
 interface CountryDisplay extends Country {
-  active: boolean // We'll derive this from the data or set a default
+  // No additional properties needed, using API response as-is
 }
 
 // Types for the selected entities
@@ -89,14 +89,8 @@ export default function OrgSetupPage() {
         console.log('Loading countries from API...')
         const countriesData = await AdminApiService.getCountriesWithStats()
         
-        // Transform API data to include active status (defaulting to true)
-        const transformedCountries: CountryDisplay[] = countriesData.map(country => ({
-          ...country,
-          active: true // Default all countries to active for now
-        }))
-        
-        console.log('Successfully loaded countries:', transformedCountries.length)
-        setCountries(transformedCountries)
+        console.log('Successfully loaded countries:', countriesData.length)
+        setCountries(countriesData)
       } catch (err) {
         console.error('Failed to load countries:', err)
         setError(`Failed to load countries: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -112,8 +106,7 @@ export default function OrgSetupPage() {
   // Auto-select first company when entering detailed view
   useEffect(() => {
     if (currentView === 'detailed' && selectedCountry && !selectedCompany) {
-      // For now, we'll let the CompaniesGrid handle company selection
-      // This will be updated when we have the companies API endpoint
+      // Company selection will be handled by CompaniesGrid component
     }
   }, [currentView, selectedCountry, selectedCompany])
 
@@ -121,7 +114,6 @@ export default function OrgSetupPage() {
   useEffect(() => {
     if (selectedCompany) {
       setSelectedRegion(null)
-      // Regions will automatically refresh based on the selected company
     }
   }, [selectedCompany])
 
@@ -129,9 +121,8 @@ export default function OrgSetupPage() {
   const handleCountryDoubleClick = (country: CountryDisplay) => {
     setSelectedCountry(country)
     setCurrentView('detailed')
-    setSelectedCompany(null) // Will be auto-selected by useEffect
+    setSelectedCompany(null)
     setSelectedRegion(null)
-    // Collapse sidebar when entering detailed view
     setSidebarCollapsed(true)
   }
 
@@ -141,20 +132,17 @@ export default function OrgSetupPage() {
     setSelectedCountry(null)
     setSelectedCompany(null)
     setSelectedRegion(null)
-    // Expand sidebar when returning to countries view
     setSidebarCollapsed(false)
   }
 
   // Handle company selection - clear region when company changes
   const handleCompanySelect = (company: SelectedCompany | null) => {
     setSelectedCompany(company)
-    // Region will be cleared by useEffect when company changes
   }
 
   // Handle region selection - filters users by region
   const handleRegionSelect = (region: SelectedRegion | null) => {
     setSelectedRegion(region)
-    // Users grid will automatically refresh based on selected region
   }
 
   // Handle row double click for AG-Grid
@@ -275,7 +263,7 @@ export default function OrgSetupPage() {
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
                 <p className="text-sm text-gray-500">
-                  Companies in {selectedCountry?.name} (first company auto-selected)
+                  Companies in {selectedCountry?.name}
                 </p>
               </div>
               <div className="p-4">
@@ -283,6 +271,7 @@ export default function OrgSetupPage() {
                   onSelect={handleCompanySelect}
                   selectedCompanyId={selectedCompany?.id}
                   compact={true}
+                  selectedCountry={selectedCountry ? { id: selectedCountry.id, name: selectedCountry.name } : undefined}
                 />
               </div>
             </div>
