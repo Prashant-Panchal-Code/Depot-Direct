@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
@@ -9,6 +9,9 @@ import RegionsGrid from '@/components/admin/RegionsGrid'
 import UsersGrid from '@/components/admin/UsersGrid'
 import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 import AdminApiService, { Country } from '@/lib/api/admin'
+import { AgGridReact } from 'ag-grid-react'
+import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community'
+
 
 // Updated Country interface to match API response
 interface CountryDisplay extends Country {
@@ -38,6 +41,43 @@ export default function OrgSetupPage() {
   const [selectedRegion, setSelectedRegion] = useState<SelectedRegion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // AG-Grid column definitions
+  const columnDefs: ColDef[] = [
+    {
+      headerName: 'Country',
+      field: 'name',
+      flex: 1,
+      sortable: true,
+      filter: true,
+      cellClass: 'font-medium text-gray-900 px-3 py-1',
+      minWidth: 150
+    },
+    {
+      headerName: 'ISO Code',
+      field: 'isoCode',
+      width: 100,
+      sortable: true,
+      filter: true,
+      cellClass: 'px-3 py-1'
+    },
+    {
+      headerName: 'Companies',
+      field: 'companiesCount',
+      width: 100,
+      sortable: true,
+      valueFormatter: (params) => params.value || '0',
+      cellClass: 'px-3 py-1 text-center'
+    },
+    {
+      headerName: 'Regions',
+      field: 'regionsCount',
+      width: 100,
+      sortable: true,
+      valueFormatter: (params) => params.value || '0',
+      cellClass: 'px-3 py-1 text-center'
+    }
+  ]
 
   // Load countries data from API
   useEffect(() => {
@@ -117,26 +157,18 @@ export default function OrgSetupPage() {
     // Users grid will automatically refresh based on selected region
   }
 
-  // Handle country status toggle
-  const handleCountryToggle = async (countryId: number) => {
-    try {
-      const country = countries.find(c => c.id === countryId)
-      if (!country) return
-
-      // For now, just update locally. Later, we can add API call for status toggle
-      setCountries(prev => 
-        prev.map(country => 
-          country.id === countryId 
-            ? { ...country, active: !country.active }
-            : country
-        )
-      )
-      showToast('Country status updated successfully')
-    } catch (err) {
-      console.error('Failed to toggle country status:', err)
-      showToast('Failed to update country status')
+  // Handle row double click for AG-Grid
+  const onRowDoubleClicked = useCallback((event: RowDoubleClickedEvent) => {
+    if (event.data) {
+      handleCountryDoubleClick(event.data)
     }
-  }
+  }, [])
+
+  // Grid ready event handler
+  const onGridReady = useCallback((params: GridReadyEvent) => {
+    // Auto-size columns to fit content
+    params.api.sizeColumnsToFit()
+  }, [])
 
   return (
     <AdminLayoutWrapper>
@@ -147,9 +179,16 @@ export default function OrgSetupPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               Organizational Setup
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage countries and organizations. Double-click on a country to view detailed setup.
-            </p>
+            <div className="mt-2 flex justify-between items-center">
+              <p className="text-sm text-gray-600">
+                Manage countries and organizations. Double-click on a country to view detailed setup.
+              </p>
+              {!loading && !error && (
+                <span className="text-sm text-gray-600">
+                  Total Countries: {countries.length}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Loading and Error States */}
@@ -167,90 +206,40 @@ export default function OrgSetupPage() {
 
           {!loading && !error && (
             <>
-              {/* Summary Info */}
-              <div className="flex justify-end items-center">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <span>Total Countries: {countries.length}</span>
-                  <span>•</span>
-                  <span>Active: {countries.filter(c => c.active).length}</span>
-                </div>
-              </div>
-
-              {/* Countries Table */}
+              {/* Countries AG-Grid */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Country
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ISO Code
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Companies
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Regions
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Depots
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {countries.map((country) => (
-                      <tr 
-                        key={country.id}
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onDoubleClick={() => handleCountryDoubleClick(country)}
-                        title="Double-click to view detailed setup"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{country.name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {country.isoCode}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {country.companiesCount || 0}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {country.regionsCount || 0}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {country.depotsCount || 0}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            country.active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {country.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleCountryToggle(country.id)
-                            }}
-                            className="text-indigo-600 hover:text-indigo-900 mr-3"
-                          >
-                            {country.active ? 'Deactivate' : 'Activate'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div 
+                  className="ag-theme-alpine" 
+                  style={{ height: 'calc(100vh - 14em)', width: '100%' }}
+                >
+                  <AgGridReact
+                    rowData={countries}
+                    columnDefs={columnDefs}
+                    onRowDoubleClicked={onRowDoubleClicked}
+                    onGridReady={onGridReady}
+                    domLayout="normal"
+                    suppressRowClickSelection={true}
+                    rowHeight={36}
+                    headerHeight={40}
+                    enableCellTextSelection={true}
+                    ensureDomOrder={true}
+                    suppressColumnVirtualisation={true}
+                    animateRows={true}
+                    defaultColDef={{
+                      resizable: true,
+                      sortable: true,
+                      filter: false,
+                      cellClass: 'text-sm text-gray-600 flex items-center'
+                    }}
+                    rowClass="hover:bg-gray-50 cursor-pointer"
+                    getRowStyle={(params) => {
+                      return { 
+                        borderBottom: '1px solid #e5e7eb',
+                        cursor: 'pointer'
+                      }
+                    }}
+                  />
+                </div>                
               </div>
             </>
           )}
