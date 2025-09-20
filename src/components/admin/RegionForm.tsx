@@ -52,8 +52,7 @@ import { adminApi } from '@/lib/api/service'
 const regionSchema = z.object({
   name: z.string().min(2, 'Region name must be at least 2 characters'),
   region_code: z.string().optional(),
-  company_id: z.string().min(1, 'Please select a company'),
-  description: z.string().optional()
+  company_id: z.string().min(1, 'Please select a company')
 })
 
 type RegionFormData = z.infer<typeof regionSchema>
@@ -67,7 +66,6 @@ interface Region {
   company_name: string
   country_id: number
   country_name: string
-  description?: string
 }
 
 // Company interface for selection
@@ -102,8 +100,7 @@ const mapApiResponseToRegion = (apiResponse: any): Region => {
     company_id: apiResponse.companyId,
     company_name: apiResponse.companyName || 'Unknown',
     country_id: apiResponse.countryId,
-    country_name: apiResponse.countryName || 'Unknown',
-    description: apiResponse.description || ''
+    country_name: apiResponse.countryName || 'Unknown'
   }
 }
 
@@ -121,8 +118,7 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
     defaultValues: {
       name: region?.name || '',
       region_code: region?.region_code || '',
-      company_id: region?.company_id?.toString() || selectedCompany?.id?.toString() || '',
-      description: region?.description || ''
+      company_id: region?.company_id?.toString() || selectedCompany?.id?.toString() || ''
     }
   })
 
@@ -216,8 +212,7 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
       const submitData = {
         regionCode: data.region_code || '',
         name: data.name,
-        companyId: parseInt(data.company_id),
-        description: data.description || ''
+        companyId: parseInt(data.company_id)
       }
 
       let savedRegion: Region
@@ -349,27 +344,6 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
                       This region will be created under {selectedCompany.name} in {selectedCompany.country_name}
                     </FormDescription>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Optional description of the region..."
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -43,9 +43,7 @@ interface Company {
   name: string
   country_id: number
   country_name: string
-  region_count: number
-  user_count: number
-  description?: string
+  description: string
 }
 
 interface CompaniesGridProps {
@@ -63,8 +61,6 @@ const mapApiResponseToCompany = (apiResponse: any): Company => {
     name: apiResponse.name,
     country_id: apiResponse.countryId,
     country_name: apiResponse.countryName || 'Unknown',
-    region_count: 0, // Not provided in API response
-    user_count: 0,   // Not provided in API response
     description: apiResponse.description || ''
   }
 }
@@ -77,8 +73,6 @@ const mockCompanies: Company[] = [
     name: 'ACME Corporation',
     country_id: 1,
     country_name: 'United States',
-    region_count: 3,
-    user_count: 45,
     description: 'Leading logistics provider'
   },
   {
@@ -87,8 +81,6 @@ const mockCompanies: Company[] = [
     name: 'Global Logistics Ltd',
     country_id: 2,
     country_name: 'Canada',
-    region_count: 2,
-    user_count: 23,
     description: 'Canadian freight specialist'
   },
   {
@@ -97,8 +89,6 @@ const mockCompanies: Company[] = [
     name: 'Mexico Transport Co',
     country_id: 3,
     country_name: 'Mexico',
-    region_count: 4,
-    user_count: 67,
     description: 'Cross-border transportation'
   }
 ]
@@ -168,41 +158,35 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     {
       field: 'company_code',
       headerName: 'Code',
-      flex: 1,
-      minWidth: 120,
+      width: 100,
       pinned: 'left'
     },
     {
       field: 'name',
       headerName: 'Company Name',
-      flex: 2,
-      minWidth: 200,
+      width: 200,
       pinned: 'left'
     },
     {
       field: 'country_name',
       headerName: 'Country',
+      width: 130
+    },
+    {
+      field: 'description',
+      headerName: 'Description',
       flex: 1,
-      minWidth: 130
-    },
-    {
-      field: 'region_count',
-      headerName: 'Regions',
-      flex: 0.5,
-      minWidth: 100,
-      type: 'numericColumn'
-    },
-    {
-      field: 'user_count',
-      headerName: 'Users',
-      flex: 0.5,
-      minWidth: 100,
-      type: 'numericColumn'
+      minWidth: 250,
+      cellRenderer: (params: { value: string }) => (
+        <span className="text-gray-600 text-sm" title={params.value || ''}>
+          {params.value ? (params.value.length > 50 ? `${params.value.substring(0, 50)}...` : params.value) : '-'}
+        </span>
+      )
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+
       cellRenderer: ActionsRenderer,
       sortable: false,
       filter: false,
@@ -369,7 +353,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             defaultColDef={defaultColDef}
             animateRows={true}
             pagination={true}
-            paginationPageSize={59}
+            paginationPageSize={20}
             rowHeight={40}
             headerHeight={35}
             suppressMenuHide={true}
@@ -444,7 +428,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             defaultColDef={defaultColDef}
             animateRows={true}
             pagination={true}
-            paginationPageSize={59}
+            paginationPageSize={20}
             rowHeight={55}
             headerHeight={45}
             suppressMenuHide={true}

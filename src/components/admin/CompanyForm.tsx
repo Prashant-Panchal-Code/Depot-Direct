@@ -68,9 +68,7 @@ interface Company {
   name: string
   country_id: number
   country_name: string
-  region_count: number
-  user_count: number
-  description?: string
+  description: string
 }
 
 // Country interface
@@ -104,8 +102,6 @@ const mapApiResponseToCompany = (apiResponse: any): Company => {
     name: apiResponse.name,
     country_id: apiResponse.countryId,
     country_name: apiResponse.country?.name || 'Unknown',
-    region_count: 0, // Not provided in API response
-    user_count: 0,   // Not provided in API response
     description: apiResponse.description || ''
   }
 }

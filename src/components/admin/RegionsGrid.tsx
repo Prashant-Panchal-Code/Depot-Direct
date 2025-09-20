@@ -37,7 +37,6 @@ interface Region {
   company_name: string
   country_id: number
   country_name: string
-  description?: string
 }
 
 interface SelectedCompany {
@@ -68,8 +67,7 @@ const mockRegions: Region[] = [
     company_id: 1,
     company_name: 'ACME Corporation',
     country_id: 1,
-    country_name: 'United States',
-    description: 'West Coast operations'
+    country_name: 'United States'
   },
   {
     id: 2,
@@ -78,8 +76,7 @@ const mockRegions: Region[] = [
     company_id: 1,
     company_name: 'ACME Corporation',
     country_id: 1,
-    country_name: 'United States',
-    description: 'Central hub'
+    country_name: 'United States'
   },
   {
     id: 3,
@@ -88,8 +85,7 @@ const mockRegions: Region[] = [
     company_id: 1,
     company_name: 'ACME Corporation',
     country_id: 1,
-    country_name: 'United States',
-    description: 'East Coast operations'
+    country_name: 'United States'
   },
   {
     id: 5,
@@ -98,8 +94,7 @@ const mockRegions: Region[] = [
     company_id: 2,
     company_name: 'Global Logistics Ltd',
     country_id: 2,
-    country_name: 'Canada',
-    description: 'Primary Canadian region'
+    country_name: 'Canada'
   },
   {
     id: 6,
@@ -108,8 +103,7 @@ const mockRegions: Region[] = [
     company_id: 2,
     company_name: 'Global Logistics Ltd',
     country_id: 2,
-    country_name: 'Canada',
-    description: 'French-speaking region'
+    country_name: 'Canada'
   },
   {
     id: 8,
@@ -118,8 +112,7 @@ const mockRegions: Region[] = [
     company_id: 3,
     company_name: 'Mexico Transport Co',
     country_id: 3,
-    country_name: 'Mexico',
-    description: 'Western Mexico operations'
+    country_name: 'Mexico'
   }
 ]
 
@@ -131,9 +124,9 @@ const mapApiResponseToRegion = (apiResponse: any): Region => {
     name: apiResponse.name,
     company_id: apiResponse.companyId,
     company_name: apiResponse.companyName || 'Unknown',
-    country_id: apiResponse.countryId,
-    country_name: apiResponse.countryName || 'Unknown',
-    description: apiResponse.description || ''
+    // Note: API response doesn't include country info, using defaults
+    country_id: 0,
+    country_name: 'N/A'
   }
 }
 
@@ -235,39 +228,18 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     {
       field: 'region_code',
       headerName: 'Code',
-      width: 100,
       pinned: 'left'
     },
     {
       field: 'name',
       headerName: 'Region Name',
-      width: 180,
+
       pinned: 'left'
-    },
-    {
-      field: 'company_name',
-      headerName: 'Company',
-      width: 160
-    },
-    {
-      field: 'country_name',
-      headerName: 'Country',
-      width: 130
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      width: 200,
-      cellRenderer: (params: { value: string }) => (
-        <span className="text-gray-600 text-sm" title={params.value || ''}>
-          {params.value ? (params.value.length > 30 ? `${params.value.substring(0, 30)}...` : params.value) : '-'}
-        </span>
-      )
     },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 120,
+
       cellRenderer: ActionsRenderer,
       sortable: false,
       filter: false,
@@ -280,23 +252,24 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     setLoading(true)
     try {
       if (selectedCompany) {
-        // TODO: Fetch regions by company when API is available
-        // const apiResponse = await adminApi.get(`/Regions/by-company/${selectedCompany.id}`)
-        // const regions = Array.isArray(apiResponse) 
-        //   ? apiResponse.map(mapApiResponseToRegion)
-        //   : [mapApiResponseToRegion(apiResponse)]
-        // setAllRegions(regions)
-        
-        // For now, use mock data
-        setAllRegions(mockRegions)
+        // Fetch regions by company using real API
+        const apiResponse = await adminApi.get(`/Regions/by-company/${selectedCompany.id}`)
+        const regions = Array.isArray(apiResponse) 
+          ? apiResponse.map(mapApiResponseToRegion)
+          : [mapApiResponseToRegion(apiResponse)]
+        setAllRegions(regions)
       } else {
-        // Fetch all regions - use mock data for now
-        setAllRegions(mockRegions)
+        // If no company is selected, show empty list
+        setAllRegions([])
       }
     } catch (error) {
-      console.warn('Regions API failed, using mock data:', error)
-      setAllRegions(mockRegions)
-      showToast('Using demo data - API unavailable', 'warning')
+      console.error('Failed to fetch regions:', error)
+      // Fall back to mock data on error
+      const filteredMockData = selectedCompany 
+        ? mockRegions.filter(region => region.company_id === selectedCompany.id)
+        : []
+      setAllRegions(filteredMockData)
+      showToast('Failed to fetch regions from API, using demo data', 'warning')
     } finally {
       setLoading(false)
     }
@@ -394,7 +367,7 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
           defaultColDef={defaultColDef}
           animateRows={true}
           pagination={true}
-          paginationPageSize={15}
+          paginationPageSize={20}
           rowHeight={40}
           headerHeight={35}
           suppressMenuHide={true}

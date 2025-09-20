@@ -255,10 +255,10 @@ export default function OrgSetupPage() {
             </p>
           </div>
 
-          {/* Two-Pane Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-300px)]">
-            {/* Left Pane - Companies Grid */}
-            <div className="bg-white rounded-lg shadow border border-gray-200">
+          {/* Two-Pane Layout - Companies get more space */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+            {/* Left Pane - Companies Grid (2/3 width) */}
+            <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200">
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
                 <p className="text-sm text-gray-500">
@@ -275,8 +275,8 @@ export default function OrgSetupPage() {
               </div>
             </div>
 
-            {/* Right Pane - Regions Grid */}
-            <div className="bg-white rounded-lg shadow border border-gray-200">
+            {/* Right Pane - Regions Grid (1/3 width) */}
+            <div className="lg:col-span-1 bg-white rounded-lg shadow border border-gray-200">
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Regions</h2>
                 <p className="text-sm text-gray-500">
