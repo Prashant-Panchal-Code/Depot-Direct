@@ -6,7 +6,6 @@ import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
 import RegionsGrid from '@/components/admin/RegionsGrid'
-import UsersGrid from '@/components/admin/UsersGrid'
 import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 import AdminApiService, { Country } from '@/lib/api/admin'
 import { AgGridReact } from 'ag-grid-react'
@@ -250,14 +249,14 @@ export default function OrgSetupPage() {
               Organization Setup - {selectedCountry?.name}
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Manage companies, regions, and users for {selectedCountry?.name}. 
+              Manage companies and regions for {selectedCountry?.name}. 
               {selectedCompany && ` Currently viewing: ${selectedCompany.name}`}
               {selectedRegion && ` → ${selectedRegion.name}`}
             </p>
           </div>
 
-          {/* Three-Pane Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+          {/* Two-Pane Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-300px)]">
             {/* Left Pane - Companies Grid */}
             <div className="bg-white rounded-lg shadow border border-gray-200">
               <div className="border-b border-gray-200 p-4">
@@ -276,7 +275,7 @@ export default function OrgSetupPage() {
               </div>
             </div>
 
-            {/* Middle Pane - Regions Grid */}
+            {/* Right Pane - Regions Grid */}
             <div className="bg-white rounded-lg shadow border border-gray-200">
               <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Regions</h2>
@@ -292,27 +291,6 @@ export default function OrgSetupPage() {
                   onSelect={handleRegionSelect}
                   selectedRegionId={selectedRegion?.id}
                   selectedCompany={selectedCompany}
-                />
-              </div>
-            </div>
-
-            {/* Right Pane - Users Grid */}
-            <div className="bg-white rounded-lg shadow border border-gray-200">
-              <div className="border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">Users</h2>
-                <p className="text-sm text-gray-500">
-                  {selectedRegion 
-                    ? `Users for ${selectedRegion.name} region` 
-                    : selectedCompany 
-                      ? `All users for ${selectedCompany.name}` 
-                      : 'Select a company to view users'
-                  }
-                </p>
-              </div>
-              <div className="p-4">
-                <UsersGrid 
-                  filterCompanyId={selectedCompany?.id}
-                  filterRegionId={selectedRegion?.id}
                 />
               </div>
             </div>

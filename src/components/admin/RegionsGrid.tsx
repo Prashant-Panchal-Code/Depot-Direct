@@ -196,14 +196,6 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         >
           Edit
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleDelete}
-          className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:border-red-300"
-        >
-          Delete
-        </Button>
       </div>
     )
   }, [selectedRegionId, onSelect])
@@ -380,11 +372,7 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
             <Rows size={14} color="#02589d" weight="duotone" />
             <span className="font-medium text-gray-700">{filteredRegions.length}</span>
           </div>
-          {selectedCompany && (
-            <div className="bg-blue-50 px-2 py-1 rounded text-xs">
-              <span className="text-blue-600 font-medium">{selectedCompany.name}</span>
-            </div>
-          )}
+         
         </div>
         <Button
           onClick={handleCreateRegion}
@@ -395,17 +383,10 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         </Button>
       </div>
 
-      {/* Filter Info */}
-      {selectedCompany && (
-        <div className="bg-blue-50 border border-blue-200 rounded px-2 py-1 text-xs">
-          <span className="text-blue-700">
-            {selectedCompany.country_name} regions
-          </span>
-        </div>
-      )}
+ 
 
       {/* Compact AG Grid */}
-      <div style={{ height: '350px', width: '100%' }}>
+      <div style={{ height: 'calc(100vh - 25rem)', width: '100%' }}>
         <AgGridReact
           ref={gridRef}
           rowData={filteredRegions}

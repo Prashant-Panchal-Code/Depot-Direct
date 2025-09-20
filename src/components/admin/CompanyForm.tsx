@@ -6,7 +6,6 @@
  * - React Hook Form with Zod validation
  * - Country selection with API fetch + fallback
  * - Company code uniqueness validation
- * - Manage Regions button with DualList component
  * - Proper accessibility with focus management
  * - Loading states and error handling
  * 
@@ -49,7 +48,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { showToast } from '@/components/ui/toast-placeholder'
-import ManageRegionsModal from './ManageRegionsModal'
 import { adminApi } from '@/lib/api/service'
 
 
@@ -116,7 +114,6 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
   const [countries, setCountries] = useState<Country[]>([])
   const [countriesLoading, setCountriesLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showRegionsModal, setShowRegionsModal] = useState(false)
   const [codeError, setCodeError] = useState<string>('')
 
   const isEdit = !!company
@@ -132,8 +129,15 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
     }
   })
 
-  // Fetch countries on mount
+  // Fetch countries on mount (only if no selectedCountry is provided)
   useEffect(() => {
+    // Skip fetching countries if selectedCountry is already provided
+    if (selectedCountry) {
+      setCountries([{ id: selectedCountry.id, name: selectedCountry.name, iso_code: '' }])
+      setCountriesLoading(false)
+      return
+    }
+
     const fetchCountries = async () => {
       try {
         // TODO: Add auth token to request
@@ -160,7 +164,7 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
     }
 
     fetchCountries()
-  }, [])
+  }, [selectedCountry])
 
   // Auto-focus name field when dialog opens
   useEffect(() => {
@@ -421,31 +425,11 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
                     {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Create')}
                   </Button>
                 </div>
-                
-                {/* Manage Regions Button - only show for existing companies */}
-                {isEdit && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowRegionsModal(true)}
-                    className="sm:w-auto"
-                  >
-                    Manage Regions
-                  </Button>
-                )}
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-
-      {/* Manage Regions Modal */}
-      {showRegionsModal && isEdit && (
-        <ManageRegionsModal
-          company={company}
-          onClose={() => setShowRegionsModal(false)}
-        />
-      )}
     </>
   )
 }

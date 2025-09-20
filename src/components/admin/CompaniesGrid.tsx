@@ -159,14 +159,6 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
         >
           Edit
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleDelete}
-          className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50"
-        >
-          Delete
-        </Button>
       </div>
     )
   }, [selectedCompanyId, onSelect])
@@ -176,30 +168,35 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     {
       field: 'company_code',
       headerName: 'Code',
-      width: 120,
+      flex: 1,
+      minWidth: 120,
       pinned: 'left'
     },
     {
       field: 'name',
       headerName: 'Company Name',
-      width: 200,
+      flex: 2,
+      minWidth: 200,
       pinned: 'left'
     },
     {
       field: 'country_name',
       headerName: 'Country',
-      width: 130
+      flex: 1,
+      minWidth: 130
     },
     {
       field: 'region_count',
       headerName: 'Regions',
-      width: 100,
+      flex: 0.5,
+      minWidth: 100,
       type: 'numericColumn'
     },
     {
       field: 'user_count',
       headerName: 'Users',
-      width: 100,
+      flex: 0.5,
+      minWidth: 100,
       type: 'numericColumn'
     },
     {
@@ -364,7 +361,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
         </div>
 
         {/* Compact AG Grid */}
-        <div style={{ height: '350px', width: '100%' }}>
+        <div style={{ height: 'calc(100vh - 25rem)', width: '100%' }}>
           <AgGridReact
             ref={gridRef}
             rowData={companies}
@@ -372,7 +369,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             defaultColDef={defaultColDef}
             animateRows={true}
             pagination={true}
-            paginationPageSize={15}
+            paginationPageSize={59}
             rowHeight={40}
             headerHeight={35}
             suppressMenuHide={true}
@@ -439,7 +436,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
           </p>
         </div>
         
-        <div style={{ height: "500px", width: "100%" }}>
+        <div style={{ height: "calc(100vh - 300px)", width: "100%" }}>
           <AgGridReact
             ref={gridRef}
             rowData={companies}
@@ -447,7 +444,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             defaultColDef={defaultColDef}
             animateRows={true}
             pagination={true}
-            paginationPageSize={20}
+            paginationPageSize={59}
             rowHeight={55}
             headerHeight={45}
             suppressMenuHide={true}
