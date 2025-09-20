@@ -57,26 +57,47 @@ export class ApiService {
       const response = await fetch(url, requestOptions)
       
       if (!response.ok) {
-        console.error('API Error Response:', {
+        // Capture response details before consuming the body
+        const responseDetails = {
           status: response.status,
           statusText: response.statusText,
-          url
-        })
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`)
+          url: url
+        }
+        
+        // Try to extract error message from response body
+        let errorMessage = `HTTP error! status: ${responseDetails.status} - ${responseDetails.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          
+          if (errorData.message) {
+            errorMessage = errorData.message
+          } else if (errorData.error) {
+            errorMessage = errorData.error
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData
+          }
+        } catch (jsonError) {
+          // If response body is not JSON, use the default HTTP error message
+          console.warn('Could not parse error response as JSON:', jsonError)
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
       return data
     } catch (error) {
-      console.error(`API request failed for ${url}:`, error)
-      
-      // Provide more specific error messages for common issues
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        throw new Error(`Cannot connect to API server at ${url}. Please ensure:\n1. API server is running on http://localhost:5204\n2. Server has CORS properly configured\n3. No firewall or network issues`)
+      // If this is already an Error we threw from the response.ok check, re-throw as-is
+      if (error instanceof Error && !error.message.includes('Failed to fetch')) {
+        throw error
       }
       
-      if (error instanceof Error && error.message.includes('HTTP error')) {
-        throw error // Re-throw HTTP errors as-is
+      console.error(`API request failed for ${url}:`, error)
+      
+      // Handle network/connection errors
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(`Cannot connect to API server at ${url}. Please ensure:\n1. API server is running on http://localhost:5204\n2. Server has CORS properly configured\n3. No firewall or network issues`)
       }
       
       throw new Error(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`)

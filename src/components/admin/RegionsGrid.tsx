@@ -349,8 +349,10 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         </div>
         <Button
           onClick={handleCreateRegion}
-          className="bg-primary-custom hover:bg-primary-custom/90 text-white text-xs h-7 px-2"
+          disabled={!selectedCompany}
+          className="bg-primary-custom hover:bg-primary-custom/90 text-white text-xs h-7 px-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
           size="sm"
+          title={!selectedCompany ? "Select a company first to add regions" : "Add new region"}
         >
           Add
         </Button>

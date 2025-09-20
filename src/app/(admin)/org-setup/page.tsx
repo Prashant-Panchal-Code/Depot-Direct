@@ -79,28 +79,28 @@ export default function OrgSetupPage() {
   ]
 
   // Load countries data from API
-  useEffect(() => {
-    const loadCountries = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        console.log('Loading countries from API...')
-        const countriesData = await AdminApiService.getCountriesWithStats()
-        
-        console.log('Successfully loaded countries:', countriesData.length)
-        setCountries(countriesData)
-      } catch (err) {
-        console.error('Failed to load countries:', err)
-        setError(`Failed to load countries: ${err instanceof Error ? err.message : 'Unknown error'}`)
-        showToast('Failed to load countries. Please check if the API server is running.')
-      } finally {
-        setLoading(false)
-      }
+  const loadCountries = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      console.log('Loading countries from API...')
+      const countriesData = await AdminApiService.getCountriesWithStats()
+      
+      console.log('Successfully loaded countries:', countriesData.length)
+      setCountries(countriesData)
+    } catch (err) {
+      console.error('Failed to load countries:', err)
+      setError(`Failed to load countries: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      showToast('Failed to load countries. Please check if the API server is running.')
+    } finally {
+      setLoading(false)
     }
-
-    loadCountries()
   }, [])
+
+  useEffect(() => {
+    loadCountries()
+  }, [loadCountries])
 
   // Auto-select first company when entering detailed view
   useEffect(() => {
@@ -132,6 +132,8 @@ export default function OrgSetupPage() {
     setSelectedCompany(null)
     setSelectedRegion(null)
     setSidebarCollapsed(false)
+    // Refresh countries data to get updated company/region counts
+    loadCountries()
   }
 
   // Handle company selection - clear region when company changes
@@ -238,7 +240,7 @@ export default function OrgSetupPage() {
             <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
               <button
                 onClick={handleBackToCountries}
-                className="hover:text-blue-600 hover:underline"
+                className="transition-colors cursor-pointer text-primary-custom hover:text-primary-custom/80 "
               >
                 Countries
               </button>
