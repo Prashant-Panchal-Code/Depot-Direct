@@ -40,6 +40,8 @@ export default function OrgSetupPage() {
   const [selectedRegion, setSelectedRegion] = useState<SelectedRegion | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Tabs within the detailed view
+  const [activeTab, setActiveTab] = useState<'org' | 'users'>('org')
 
   // AG-Grid column definitions
   const columnDefs: ColDef[] = [
@@ -250,53 +252,82 @@ export default function OrgSetupPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               Organization Setup - {selectedCountry?.name}
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage companies and regions for {selectedCountry?.name}. 
-              {selectedCompany && ` Currently viewing: ${selectedCompany.name}`}
-              {selectedRegion && ` → ${selectedRegion.name}`}
-            </p>
+            
           </div>
 
-          {/* Two-Pane Layout - Companies get more space */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
-            {/* Left Pane - Companies Grid (2/3 width) */}
-            <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200">
-              <div className="border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
-                <p className="text-sm text-gray-500">
-                  Companies in {selectedCountry?.name}
-                </p>
-              </div>
-              <div className="p-4">
-                <CompaniesGrid 
-                  onSelect={handleCompanySelect}
-                  selectedCompanyId={selectedCompany?.id}
-                  compact={true}
-                  selectedCountry={selectedCountry ? { id: selectedCountry.id, name: selectedCountry.name } : undefined}
-                />
-              </div>
-            </div>
-
-            {/* Right Pane - Regions Grid (1/3 width) */}
-            <div className="lg:col-span-1 bg-white rounded-lg shadow border border-gray-200">
-              <div className="border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">Regions</h2>
-                <p className="text-sm text-gray-500">
-                  {selectedCompany 
-                    ? `Regions for ${selectedCompany.name}` 
-                    : 'Select a company to filter regions'
-                  }
-                </p>
-              </div>
-              <div className="p-4">
-                <RegionsGrid 
-                  onSelect={handleRegionSelect}
-                  selectedRegionId={selectedRegion?.id}
-                  selectedCompany={selectedCompany}
-                />
-              </div>
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <div className="flex space-x-6">
+              <button
+                onClick={() => setActiveTab('org')}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'org'
+                    ? 'border-primary-custom text-primary-custom'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Companies & Regions
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'users'
+                    ? 'border-primary-custom text-primary-custom'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Users
+              </button>
             </div>
           </div>
+
+          {/* Tab Panels */}
+          {activeTab === 'org' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+              {/* Left Pane - Companies Grid (2/3 width) */}
+              <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200">
+                <div className="border-b border-gray-200 p-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
+                  <p className="text-sm text-gray-500">
+                    Companies in {selectedCountry?.name}
+                  </p>
+                </div>
+                <div className="p-4">
+                  <CompaniesGrid 
+                    onSelect={handleCompanySelect}
+                    selectedCompanyId={selectedCompany?.id}
+                    compact={true}
+                    selectedCountry={selectedCountry ? { id: selectedCountry.id, name: selectedCountry.name } : undefined}
+                  />
+                </div>
+              </div>
+
+              {/* Right Pane - Regions Grid (1/3 width) */}
+              <div className="lg:col-span-1 bg-white rounded-lg shadow border border-gray-200">
+                <div className="border-b border-gray-200 p-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Regions</h2>
+                  <p className="text-sm text-gray-500">
+                    {selectedCompany 
+                      ? `Regions for ${selectedCompany.name}` 
+                      : 'Select a company to filter regions'}
+                  </p>
+                </div>
+                <div className="p-4">
+                  <RegionsGrid 
+                    onSelect={handleRegionSelect}
+                    selectedRegionId={selectedRegion?.id}
+                    selectedCompany={selectedCompany}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'users' && (
+            <div className="h-[calc(100vh-300px)]">
+              {/* Users screen intentionally left blank for now */}
+            </div>
+          )}
         </div>
       )}
     </AdminLayoutWrapper>
