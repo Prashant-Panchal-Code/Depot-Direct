@@ -6,6 +6,7 @@ import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
 import RegionsGrid from '@/components/admin/RegionsGrid'
+import UsersGrid from '@/components/admin/UsersGrid'
 import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 import AdminApiService, { Country } from '@/lib/api/admin'
 import { AgGridReact } from 'ag-grid-react'
@@ -105,11 +106,6 @@ export default function OrgSetupPage() {
   }, [loadCountries])
 
   // Auto-select first company when entering detailed view
-  useEffect(() => {
-    if (currentView === 'detailed' && selectedCountry && !selectedCompany) {
-      // Company selection will be handled by CompaniesGrid component
-    }
-  }, [currentView, selectedCountry, selectedCompany])
 
   // Clear region selection when company changes and refresh data
   useEffect(() => {
@@ -325,7 +321,19 @@ export default function OrgSetupPage() {
 
           {activeTab === 'users' && (
             <div className="h-[calc(100vh-300px)]">
-              {/* Users screen intentionally left blank for now */}
+              <div className="bg-white rounded-lg shadow border border-gray-200 h-full">
+                <div className="border-b border-gray-200 p-4">
+                  <h3 className="text-lg font-medium text-gray-900">Users Management</h3>
+                 
+                </div>
+                <div className="p-4">
+                  <UsersGrid 
+                    filterCompanyId={selectedCompany?.id}
+                    filterRegionId={selectedRegion?.id}
+                    filterCountryId={selectedCountry?.id}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -1,4 +1,44 @@
 /**
+ * CompaniesGrid - Fully implemented AG-Grid for Com// Map API response to Company interface
+const mapApiResponseToCompany = (apiResponse: any): Company => {
+  return {
+    id: apiResponse.id,
+    company_code: apiResponse.companyCode || '',
+    name: apiResponse.name,
+    country_id: apiResponse.countryId,
+    country_name: apiResponse.country?.name || '',
+    description: apiResponse.description || ''
+  }
+}
+
+// Convert local Company interface to AdminCompany interface
+const convertToAdminCompany = (company: Company): AdminCompany => {
+  return {
+    id: company.id,
+    name: company.name,
+    companyCode: company.company_code,
+    countryId: company.country_id,
+    description: company.description,
+    metadata: {},
+    createdBy: null,
+    lastUpdatedBy: null,
+    createdAt: '',
+    updatedAt: '',
+    deletedAt: null,
+    country: {
+      id: company.country_id,
+      name: company.country_name,
+      isoCode: '',
+      metadata: {},
+      createdAt: '',
+      updatedAt: '',
+      createdBy: null,
+      lastUpdatedBy: null
+    }
+  }
+}
+
+/**
  * CompaniesGrid - Fully implemented AG-Grid for Company Management
  * 
  * Purpose: Admin interface for CRUD operations on companies with row selection
@@ -36,7 +76,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 import CompanyForm from './CompanyForm'
 import { adminApi } from '@/lib/api/service'
 
-// Company data interface
+// Company data interface for this component
 interface Company {
   id: number
   company_code: string
@@ -216,6 +256,7 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     } catch (error) {
       console.warn('Companies API failed, using mock data:', error)
       setCompanies(mockCompanies)
+      
       showToast('Using demo data - API unavailable', 'warning')
     } finally {
       setLoading(false)
