@@ -73,15 +73,18 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const filters: { companyId?: number; regionId?: number } = {}
+      const filters: { companyId?: number; regionId?: number; countryId?: number } = {}
       if (filterCompanyId) filters.companyId = filterCompanyId
       if (filterRegionId) filters.regionId = filterRegionId
+      if (filterCountryId) filters.countryId = filterCountryId
       
       const users = await AdminApiService.getUsers(filters)
+      console.log('Fetched users:', users)
       setAllUsers(users)
     } catch (error) {
       console.error('Error fetching users:', error)
-      showToast('Failed to load users', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load users'
+      showToast(errorMessage, 'error')
       // Fall back to mock data in case of API error
       setAllUsers(mockUsers.filter(user => 
         !filterCompanyId || user.companyId === filterCompanyId
@@ -89,7 +92,7 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     } finally {
       setLoading(false)
     }
-  }, [filterCompanyId, filterRegionId])
+  }, [filterCompanyId, filterRegionId, filterCountryId])
 
   // Load users on mount and when filters change
   useEffect(() => {
@@ -126,7 +129,8 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         showToast(`User ${user.active ? 'deactivated' : 'activated'} successfully`, 'success')
       } catch (error) {
         console.error('Error updating user status:', error)
-        showToast('Failed to update user status', 'error')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update user status'
+        showToast(errorMessage, 'error')
       }
     }
 
@@ -241,8 +245,8 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex gap-2">
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
             <Rows size={14} color="#02589d" weight="duotone" />
@@ -266,17 +270,18 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         </Button>
       </div>
 
-      <div style={{ height: '600px', width: '100%' }}>
+      <div className="flex-1 min-h-0" style={{ width: '100%' }}>
         <AgGridReact
           rowData={filteredUsers}
           columnDefs={columnDefs}
           defaultColDef={{ sortable: true, filter: true, resizable: true }}
           animateRows={true}
-          pagination={true}
-          paginationPageSize={20}
+          pagination={false}
           rowHeight={45}
           headerHeight={35}
           theme={themeQuartz}
+          suppressPaginationPanel={true}
+          domLayout="normal"
         />
       </div>
 

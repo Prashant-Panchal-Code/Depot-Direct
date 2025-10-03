@@ -79,8 +79,9 @@ export interface User {
   metadata?: any
   createdAt: string
   updatedAt: string
-  createdBy?: string
-  lastUpdatedBy?: string
+  createdBy?: string | null
+  lastUpdatedBy?: string | null
+  deletedAt?: string | null
   // Additional fields for display
   roleName?: string
   companyName?: string
@@ -120,7 +121,14 @@ export class AdminApiService {
   }
 
   // Get users with optional filtering
-  static async getUsers(filters?: { companyId?: number; regionId?: number }): Promise<User[]> {
+  static async getUsers(filters?: { companyId?: number; regionId?: number; countryId?: number }): Promise<User[]> {
+    // If countryId is provided, use the by-country endpoint
+    if (filters?.countryId) {
+      const byCountryEndpoint = `${API_CONFIG.ADMIN.ENDPOINTS.USERS_BY_COUNTRY}/${filters.countryId}`
+      return adminApi.get<User[]>(byCountryEndpoint)
+    }
+    
+    // Otherwise use the general users endpoint with filters
     let endpoint = API_CONFIG.ADMIN.ENDPOINTS.USERS
     
     if (filters) {

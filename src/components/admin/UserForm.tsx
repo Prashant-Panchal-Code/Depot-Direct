@@ -68,7 +68,8 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
         }
       } catch (error) {
         console.error('Error loading dropdown data:', error)
-        showToast('Failed to load form data', 'error')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load form data'
+        showToast(errorMessage, 'error')
       }
     }
 
@@ -112,6 +113,13 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
     // Validation
     if (!formData.email || !formData.fullName || !formData.roleId) {
       showToast('Please fill in all required fields', 'error')
+      return
+    }
+
+    // Email format validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailPattern.test(formData.email)) {
+      showToast('Please enter a valid email address', 'error')
       return
     }
 
@@ -160,7 +168,8 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
       onClose()
     } catch (error) {
       console.error('Error saving user:', error)
-      showToast(`Failed to ${mode} user`, 'error')
+      const errorMessage = error instanceof Error ? error.message : `Failed to ${mode} user`
+      showToast(errorMessage, 'error')
     } finally {
       setLoading(false)
     }
@@ -206,6 +215,11 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
               placeholder="Enter email address"
               required
             />
+            {mode === 'create' && (
+              <p className="text-xs text-gray-500">
+                Email addresses must be unique across all users in the system.
+              </p>
+            )}
           </div>
 
           {/* Password */}

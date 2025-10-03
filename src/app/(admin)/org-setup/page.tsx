@@ -197,7 +197,7 @@ export default function OrgSetupPage() {
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div 
                   className="ag-theme-alpine" 
-                  style={{ height: 'calc(100vh - 14em)', width: '100%' }}
+                  style={{ height: 'calc(100vh - 280px)', width: '100%' }}
                 >
                   <AgGridReact
                     rowData={countries}
@@ -212,6 +212,8 @@ export default function OrgSetupPage() {
                     ensureDomOrder={true}
                     suppressColumnVirtualisation={true}
                     animateRows={true}
+                    pagination={false}
+                    suppressPaginationPanel={true}
                     defaultColDef={{
                       resizable: true,
                       sortable: true,
@@ -279,16 +281,16 @@ export default function OrgSetupPage() {
 
           {/* Tab Panels */}
           {activeTab === 'org' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-340px)]">
               {/* Left Pane - Companies Grid (2/3 width) */}
-              <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200">
-                <div className="border-b border-gray-200 p-4">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200 flex flex-col">
+                <div className="border-b border-gray-200 p-4 flex-shrink-0">
                   <h2 className="text-lg font-semibold text-gray-900">Companies</h2>
                   <p className="text-sm text-gray-500">
                     Companies in {selectedCountry?.name}
                   </p>
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex-1 min-h-0">
                   <CompaniesGrid 
                     onSelect={handleCompanySelect}
                     selectedCompanyId={selectedCompany?.id}
@@ -299,8 +301,8 @@ export default function OrgSetupPage() {
               </div>
 
               {/* Right Pane - Regions Grid (1/3 width) */}
-              <div className="lg:col-span-1 bg-white rounded-lg shadow border border-gray-200">
-                <div className="border-b border-gray-200 p-4">
+              <div className="lg:col-span-1 bg-white rounded-lg shadow border border-gray-200 flex flex-col">
+                <div className="border-b border-gray-200 p-4 flex-shrink-0">
                   <h2 className="text-lg font-semibold text-gray-900">Regions</h2>
                   <p className="text-sm text-gray-500">
                     {selectedCompany 
@@ -308,7 +310,7 @@ export default function OrgSetupPage() {
                       : 'Select a company to filter regions'}
                   </p>
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex-1 min-h-0">
                   <RegionsGrid 
                     onSelect={handleRegionSelect}
                     selectedRegionId={selectedRegion?.id}
@@ -320,13 +322,13 @@ export default function OrgSetupPage() {
           )}
 
           {activeTab === 'users' && (
-            <div className="h-[calc(100vh-300px)]">
-              <div className="bg-white rounded-lg shadow border border-gray-200 h-full">
-                <div className="border-b border-gray-200 p-4">
+            <div className="h-[calc(100vh-340px)]">
+              <div className="bg-white rounded-lg shadow border border-gray-200 h-full flex flex-col">
+                <div className="border-b border-gray-200 p-4 flex-shrink-0">
                   <h3 className="text-lg font-medium text-gray-900">Users Management</h3>
                  
                 </div>
-                <div className="p-4">
+                <div className="p-4 flex-1 min-h-0">
                   <UsersGrid 
                     filterCompanyId={selectedCompany?.id}
                     filterRegionId={selectedRegion?.id}

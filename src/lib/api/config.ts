@@ -15,6 +15,7 @@ export const API_CONFIG = {
       COMPANIES: '/companies',
       REGIONS: '/regions',
       USERS: '/users',
+      USERS_BY_COUNTRY: '/Users/by-country',
       ROLES: '/roles'
     }
   },

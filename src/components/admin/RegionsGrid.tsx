@@ -337,9 +337,9 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
   }
 
   return (
-    <div className="space-y-3">
+    <div className="h-full flex flex-col">
       {/* Compact Stats Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex gap-2">
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
             <Rows size={14} color="#02589d" weight="duotone" />
@@ -358,18 +358,15 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         </Button>
       </div>
 
- 
-
       {/* Compact AG Grid */}
-      <div style={{ height: 'calc(100vh - 25rem)', width: '100%' }}>
+      <div className="flex-1 min-h-0" style={{ width: '100%' }}>
         <AgGridReact
           ref={gridRef}
           rowData={filteredRegions}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           animateRows={true}
-          pagination={true}
-          paginationPageSize={20}
+          pagination={false}
           rowHeight={40}
           headerHeight={35}
           suppressMenuHide={true}
@@ -381,6 +378,8 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
           rowClassRules={{
             'ag-row-selected bg-blue-100 border-l-4 border-l-blue-500': (params: RowClassParams<Region>) => params.data?.id === selectedRegionId
           }}
+          suppressPaginationPanel={true}
+          domLayout="normal"
         />
       </div>
 
