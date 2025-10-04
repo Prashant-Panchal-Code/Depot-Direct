@@ -27,6 +27,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 import RegionForm from './RegionForm'
 import { adminApi } from '@/lib/api/service'
+import AdminApiService, { Region as ApiRegion } from '@/lib/api/admin'
 
 // Region data interface - updated to reflect company connection
 interface Region {
@@ -252,12 +253,23 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     setLoading(true)
     try {
       if (selectedCompany) {
-        // Fetch regions by company using real API
-        const apiResponse = await adminApi.get(`/Regions/by-company/${selectedCompany.id}`)
-        const regions = Array.isArray(apiResponse) 
-          ? apiResponse.map(mapApiResponseToRegion)
-          : [mapApiResponseToRegion(apiResponse)]
-        setAllRegions(regions)
+        // Fetch regions by company using AdminApiService
+        console.log('Fetching regions for company:', selectedCompany.id)
+        const regions = await AdminApiService.getRegions(selectedCompany.id)
+        console.log('Fetched regions:', regions)
+        
+        // Map API response to local Region interface
+        const mappedRegions = regions.map((region: ApiRegion) => ({
+          id: region.id,
+          region_code: region.regionCode || '',
+          name: region.name,
+          company_id: region.companyId,
+          company_name: region.companyName || selectedCompany.name,
+          country_id: selectedCompany.country_id,
+          country_name: selectedCompany.country_name
+        }))
+        
+        setAllRegions(mappedRegions)
       } else {
         // If no company is selected, show empty list
         setAllRegions([])
@@ -269,7 +281,8 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         ? mockRegions.filter(region => region.company_id === selectedCompany.id)
         : []
       setAllRegions(filteredMockData)
-      showToast('Failed to fetch regions from API, using demo data', 'warning')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch regions from API'
+      showToast(`${errorMessage}, using demo data`, 'warning')
     } finally {
       setLoading(false)
     }

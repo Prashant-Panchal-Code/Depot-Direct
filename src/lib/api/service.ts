@@ -68,25 +68,55 @@ export class ApiService {
         let errorMessage = `HTTP error! status: ${responseDetails.status} - ${responseDetails.statusText}`
         
         try {
-          const errorData = await response.json()
-          
-          if (errorData.message) {
-            errorMessage = errorData.message
-          } else if (errorData.error) {
-            errorMessage = errorData.error
-          } else if (typeof errorData === 'string') {
-            errorMessage = errorData
+          const errorText = await response.text()
+          if (errorText.trim()) {
+            try {
+              const errorData = JSON.parse(errorText)
+              if (errorData.message) {
+                errorMessage = errorData.message
+              } else if (errorData.error) {
+                errorMessage = errorData.error
+              } else if (typeof errorData === 'string') {
+                errorMessage = errorData
+              }
+            } catch (jsonError) {
+              // If not JSON, use the text as-is if it's meaningful
+              if (errorText.length < 200) {
+                errorMessage = errorText
+              }
+            }
           }
-        } catch (jsonError) {
-          // If response body is not JSON, use the default HTTP error message
-          console.warn('Could not parse error response as JSON:', jsonError)
+        } catch (textError) {
+          // If we can't read the response body, use the default HTTP error message
+          console.warn('Could not read error response:', textError)
         }
         
         throw new Error(errorMessage)
       }
 
-      const data = await response.json()
-      return data
+      // Handle empty responses (common for DELETE operations)
+      const contentLength = response.headers.get('content-length')
+      const contentType = response.headers.get('content-type')
+      
+      if (contentLength === '0' || !contentType?.includes('application/json')) {
+        // Return undefined/null for empty responses (void operations)
+        return undefined as T
+      }
+      
+      // Check if response body is empty
+      const responseText = await response.text()
+      if (!responseText.trim()) {
+        return undefined as T
+      }
+      
+      // Parse as JSON if we have content
+      try {
+        const data = JSON.parse(responseText)
+        return data
+      } catch (parseError) {
+        console.warn('Failed to parse response as JSON:', parseError)
+        return undefined as T
+      }
     } catch (error) {
       // If this is already an Error we threw from the response.ok check, re-throw as-is
       if (error instanceof Error && !error.message.includes('Failed to fetch')) {
@@ -118,7 +148,56 @@ export class ApiService {
   }
 
   async delete<T>(endpoint: string, token?: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE', token })
+    // Special handling for DELETE requests to avoid JSON parsing issues
+    const url = buildUrl(this.module, endpoint)
+    const authHeaders = getAuthHeaders(this.module, token)
+    
+    const requestOptions: RequestInit = {
+      method: 'DELETE',
+      headers: {
+        ...authHeaders
+      }
+    }
+
+    try {
+      const response = await fetch(url, requestOptions)
+      
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`
+        
+        try {
+          const errorText = await response.text()
+          if (errorText.trim()) {
+            try {
+              const errorData = JSON.parse(errorText)
+              if (errorData.message) {
+                errorMessage = errorData.message
+              } else if (errorData.error) {
+                errorMessage = errorData.error
+              }
+            } catch {
+              // Use text as error message if not JSON
+              if (errorText.length < 200) {
+                errorMessage = errorText
+              }
+            }
+          }
+        } catch {
+          // Use default error message
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      // For successful DELETE operations, don't try to parse JSON
+      // Just return undefined/null as most DELETE operations return empty responses
+      return undefined as T
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('Network error occurred')
+    }
   }
 }
 

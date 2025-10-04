@@ -5,10 +5,11 @@ import { AgGridReact } from 'ag-grid-react'
 import { ColDef, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
-import { CheckSquare, XCircle, Rows } from "@phosphor-icons/react"
+import { CheckSquare, XCircle, Rows, MapPin, Users } from "@phosphor-icons/react"
 import { showToast } from '@/components/ui/toast-placeholder'
 import AdminApiService, { User, Company } from '@/lib/api/admin'
 import UserForm from './UserForm'
+import UserRegionAssignmentModal from './UserRegionAssignmentModal'
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule])
@@ -68,6 +69,8 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
   const [showUserForm, setShowUserForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [showRegionAssignmentModal, setShowRegionAssignmentModal] = useState(false)
+  const [selectedUserForRegions, setSelectedUserForRegions] = useState<User | null>(null)
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
@@ -79,7 +82,6 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       if (filterCountryId) filters.countryId = filterCountryId
       
       const users = await AdminApiService.getUsers(filters)
-      console.log('Fetched users:', users)
       setAllUsers(users)
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -99,11 +101,10 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     fetchUsers()
   }, [fetchUsers])
 
-  // Filter users by company (additional client-side filtering if needed)
+  // Filter users by company (only if explicitly requested - for admin view, show all users)
   const filteredUsers = allUsers.filter(user => {
-    if (filterCompanyId && user.companyId !== filterCompanyId) {
-      return false
-    }
+    // For now, show all users regardless of company/region filters
+    // This can be made more restrictive if needed
     return true
   })
 
@@ -134,10 +135,24 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       }
     }
 
+    const handleManageRegions = () => {
+      setSelectedUserForRegions(user)
+      setShowRegionAssignmentModal(true)
+    }
+
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-1 flex-wrap">
         <Button size="sm" variant="outline" onClick={handleEdit} className="h-7 px-2 text-xs">
           Edit
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleManageRegions}
+          className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700"
+          title="Assign/Remove Regions"
+        >
+          <MapPin size={14} />
         </Button>
         <Button
           size="sm"
@@ -196,6 +211,34 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       minWidth: 130
     },
     {
+      field: 'assignedRegions',
+      headerName: 'Regions',
+      flex: 1,
+      minWidth: 150,
+      cellRenderer: (params: any) => {
+        const regions = params.value || []
+        if (regions.length === 0) {
+          return (
+            <span className="text-gray-400 text-xs italic">No regions assigned</span>
+          )
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {regions.slice(0, 2).map((region: any, index: number) => (
+              <span key={index} className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                {region.name}
+              </span>
+            ))}
+            {regions.length > 2 && (
+              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                +{regions.length - 2} more
+              </span>
+            )}
+          </div>
+        )
+      }
+    },
+    {
       field: 'active',
       headerName: 'Status',
       flex: 0.6,
@@ -213,7 +256,7 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 160,
+      width: 200,
       cellRenderer: ActionsRenderer,
       sortable: false,
       filter: false,
@@ -240,9 +283,23 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     setEditingUser(null)
   }
 
+  const handleRegionAssignmentSuccess = () => {
+    // Refresh users data to reflect any changes
+    fetchUsers()
+    setShowRegionAssignmentModal(false)
+    setSelectedUserForRegions(null)
+  }
+
+  const handleRegionAssignmentClose = () => {
+    setShowRegionAssignmentModal(false)
+    setSelectedUserForRegions(null)
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-40">Loading users...</div>
   }
+
+  const displayUsers = filteredUsers
 
   return (
     <div className="h-full flex flex-col">
@@ -250,15 +307,15 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         <div className="flex gap-2">
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
             <Rows size={14} color="#02589d" weight="duotone" />
-            <span className="font-medium text-gray-700">{filteredUsers.length}</span>
+            <span className="font-medium text-gray-700">{displayUsers.length}</span>
           </div>
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
             <CheckSquare size={14} weight="duotone" color="green" />
-            <span className="font-medium text-green-600">{filteredUsers.filter(u => u.active).length}</span>
+            <span className="font-medium text-green-600">{displayUsers.filter(u => u.active).length}</span>
           </div>
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
             <XCircle size={14} color="red" weight="duotone" />
-            <span className="font-medium text-red-600">{filteredUsers.filter(u => !u.active).length}</span>
+            <span className="font-medium text-red-600">{displayUsers.filter(u => !u.active).length}</span>
           </div>
         </div>
         <Button
@@ -270,19 +327,35 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0" style={{ width: '100%' }}>
-        <AgGridReact
-          rowData={filteredUsers}
-          columnDefs={columnDefs}
-          defaultColDef={{ sortable: true, filter: true, resizable: true }}
-          animateRows={true}
-          pagination={false}
-          rowHeight={45}
-          headerHeight={35}
-          theme={themeQuartz}
-          suppressPaginationPanel={true}
-          domLayout="normal"
-        />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {displayUsers.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="text-center">
+              <Users size={48} className="mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">No users found</p>
+              <p className="text-sm">
+                {allUsers.length === 0 
+                  ? 'No users available for this country' 
+                  : 'No users match the current filters'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full w-full overflow-hidden">
+            <AgGridReact
+              rowData={displayUsers}
+              columnDefs={columnDefs}
+              defaultColDef={{ sortable: true, filter: true, resizable: true }}
+              animateRows={true}
+              pagination={false}
+              rowHeight={45}
+              headerHeight={35}
+              theme={themeQuartz}
+              suppressPaginationPanel={true}
+              domLayout="normal"
+            />
+          </div>
+        )}
       </div>
 
       <UserForm
@@ -292,6 +365,13 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         user={editingUser}
         mode={formMode}
         filterCountryId={filterCountryId}
+      />
+
+      <UserRegionAssignmentModal
+        open={showRegionAssignmentModal}
+        onClose={handleRegionAssignmentClose}
+        onSuccess={handleRegionAssignmentSuccess}
+        user={selectedUserForRegions}
       />
     </div>
   )

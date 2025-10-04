@@ -45,6 +45,21 @@ export interface Role {
   name: string
 }
 
+export interface Region {
+  id: number
+  name: string
+  regionCode?: string
+  companyId: number
+  companyName?: string
+  countryId?: number
+  countryName?: string
+  metadata?: any
+  createdAt: string
+  updatedAt: string
+  createdBy?: string | null
+  lastUpdatedBy?: string | null
+}
+
 // User DTO types
 export interface AddUserDTO {
   companyId?: number
@@ -85,6 +100,31 @@ export interface User {
   // Additional fields for display
   roleName?: string
   companyName?: string
+  assignedRegions?: Region[]
+}
+
+// Interface for user-region assignment
+export interface UserRegionAssignment {
+  id: number
+  userId: number
+  regionId: number
+  metadata: any
+  createdBy: number
+  createdAt: string
+  updatedAt: string
+  user: User
+  region: Region
+}
+
+// Interface for region assignment operations
+export interface AssignRegionsDTO {
+  userId: number
+  regionIds: number[]
+}
+
+// Interface for user with regions response from the new API
+export interface UserWithRegions extends User {
+  regions: Region[]
 }
 
 // Admin API service functions
@@ -113,11 +153,11 @@ export class AdminApiService {
   }
 
   // Get regions for a specific company
-  static async getRegions(companyId?: number): Promise<any[]> {
+  static async getRegions(companyId?: number): Promise<Region[]> {
     const endpoint = companyId 
-      ? `${API_CONFIG.ADMIN.ENDPOINTS.REGIONS}?companyId=${companyId}`
+      ? `${API_CONFIG.ADMIN.ENDPOINTS.REGIONS_BY_COMPANY}/${companyId}`
       : API_CONFIG.ADMIN.ENDPOINTS.REGIONS
-    return adminApi.get<any[]>(endpoint)
+    return adminApi.get<Region[]>(endpoint)
   }
 
   // Get users with optional filtering
@@ -167,6 +207,21 @@ export class AdminApiService {
   // Toggle country status (if the API supports it)
   static async toggleCountryStatus(countryId: number, active: boolean): Promise<Country> {
     return adminApi.put<Country>(`${API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES}/${countryId}`, { active })
+  }
+
+  // Assign a region to a user (using the real API endpoint)
+  static async assignUserToRegion(userId: number, regionId: number): Promise<UserRegionAssignment> {
+    return adminApi.post<UserRegionAssignment>(`/UserRegions/user/${userId}/regions`, { regionId })
+  }
+
+  // Remove a user from a region
+  static async removeUserFromRegion(userId: number, regionId: number): Promise<void> {
+    return adminApi.delete<void>(`/UserRegions/user/${userId}/regions/${regionId}`)
+  }
+
+  // Get user's assigned regions
+  static async getUserRegions(userId: number): Promise<UserWithRegions> {
+    return adminApi.get<UserWithRegions>(`/UserRegions/user/${userId}/regions`)
   }
 }
 
