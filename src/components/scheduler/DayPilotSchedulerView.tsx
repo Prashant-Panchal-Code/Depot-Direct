@@ -88,61 +88,57 @@ export default function DayPilotSchedulerView({
       
       // Calculate estimated duration based on quantity (1 hour per 1000L)
       const estimatedDuration = Math.max(60, Math.ceil(orderData.quantity / 1000) * 60); // minimum 1 hour
-      const endTime = addMinutes(timeSlot, estimatedDuration);
       
-      // Only check if start time is after availability start
-      const availabilityStart = new Date(selectedDate);
-      availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+      // Get the next available slot for sequential scheduling
+      const nextSlot = getNextAvailableSlot(vehicleId, estimatedDuration);
       
-      if (timeSlot < availabilityStart) {
-        toast.error(`Cannot schedule before vehicle availability starts (${format(availabilityStart, 'HH:mm')})`);
+      if (!nextSlot) {
+        toast.error('Vehicle not found');
       } else {
-        // Check for overlapping shipments
-        const overlapCheck = checkForOverlappingShipments(vehicleId, timeSlot, endTime);
+        const result = await createShipmentFromUnassigned(
+          orderData.orderId,
+          vehicleId,
+          nextSlot.startTime,
+          nextSlot.endTime
+        );
         
-        if (overlapCheck.hasOverlap) {
-          toast.error(`Cannot schedule: conflicts with existing shipment ${overlapCheck.conflictingShipment?.orderId}`);
+        if (!result.success) {
+          toast.error(result.error || 'Failed to create shipment');
         } else {
-          const result = await createShipmentFromUnassigned(
-            orderData.orderId,
-            vehicleId,
-            timeSlot,
-            endTime
-          );
-          
-          if (!result.success) {
-            toast.error(result.error || 'Failed to create shipment');
-          } else {
-            toast.success(`Shipment created for order ${orderData.orderId}`);
-          }
+          toast.success(`Shipment created for order ${orderData.orderId} at ${format(nextSlot.startTime, 'HH:mm')}`);
         }
       }
     } else if (shipmentId && shipmentId !== '') {
-      // Handle existing shipment drop - move shipment
+      // Handle existing shipment drop - move shipment and reorganize all shipments
       const shipment = shipments.find(s => s.id === shipmentId);
       if (shipment) {
         const duration = differenceInMinutes(shipment.end, shipment.start);
-        const newEnd = addMinutes(timeSlot, duration);
+        const originalVehicleId = shipment.vehicleId;
         
-        // Only check if start time is after availability start
-        const availabilityStart = new Date(selectedDate);
-        availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
-        
-        if (timeSlot < availabilityStart) {
-          toast.error(`Cannot schedule before vehicle availability starts (${format(availabilityStart, 'HH:mm')})`);
+        // If moving to the same vehicle, we'll reorganize
+        // If moving to a different vehicle, we'll add to the end
+        if (vehicleId === originalVehicleId) {
+          // Moving within same vehicle - just reorganize everything
+          await reorganizeVehicleShipments(vehicleId);
+          toast.success('All shipments reorganized sequentially');
         } else {
-          // Check for overlapping shipments (excluding the current shipment being moved)
-          const overlapCheck = checkForOverlappingShipments(vehicleId, timeSlot, newEnd, shipmentId);
+          // Moving to different vehicle - add to the end of target vehicle
+          const nextSlot = getNextAvailableSlot(vehicleId, duration);
           
-          if (overlapCheck.hasOverlap) {
-            toast.error(`Cannot move shipment: conflicts with existing shipment ${overlapCheck.conflictingShipment?.orderId}`);
+          if (!nextSlot) {
+            toast.error('Vehicle not found');
           } else {
-            const result = await moveShipment(shipmentId, vehicleId, timeSlot, newEnd);
+            const result = await moveShipment(shipmentId, vehicleId, nextSlot.startTime, nextSlot.endTime);
             
             if (!result.success) {
               toast.error(result.error || 'Failed to move shipment');
             } else {
-              toast.success('Shipment moved successfully');
+              // Reorganize both vehicles after the move
+              if (originalVehicleId) {
+                await reorganizeVehicleShipments(originalVehicleId);
+              }
+              await reorganizeVehicleShipments(vehicleId);
+              toast.success(`Shipment moved to ${format(nextSlot.startTime, 'HH:mm')} and vehicles reorganized`);
             }
           }
         }
@@ -194,6 +190,67 @@ export default function DayPilotSchedulerView({
     }
     
     return { hasOverlap: false };
+  };
+
+  const getNextAvailableSlot = (vehicleId: string, duration: number, excludeShipmentId?: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return null;
+
+    const vehicleShipments = shipments
+      .filter(s => s.vehicleId === vehicleId && s.id !== excludeShipmentId)
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    // Get vehicle availability start time for the selected date
+    const availabilityStart = new Date(selectedDate);
+    availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+
+    if (vehicleShipments.length === 0) {
+      // First shipment - must start at availability start
+      return {
+        startTime: availabilityStart,
+        endTime: addMinutes(availabilityStart, duration)
+      };
+    } else {
+      // Find the end time of the last shipment
+      const lastShipment = vehicleShipments[vehicleShipments.length - 1];
+      const lastShipmentEnd = new Date(lastShipment.end);
+      
+      return {
+        startTime: lastShipmentEnd,
+        endTime: addMinutes(lastShipmentEnd, duration)
+      };
+    }
+  };
+
+  const reorganizeVehicleShipments = async (vehicleId: string, movedShipmentId?: string) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return;
+
+    // Get all shipments for this vehicle
+    const vehicleShipments = shipments
+      .filter(s => s.vehicleId === vehicleId)
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    if (vehicleShipments.length === 0) return;
+
+    // Get vehicle availability start time for the selected date
+    const availabilityStart = new Date(selectedDate);
+    availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+
+    let currentTime = availabilityStart;
+
+    // Reorganize all shipments sequentially
+    for (const shipment of vehicleShipments) {
+      const duration = differenceInMinutes(shipment.end, shipment.start);
+      const newEnd = addMinutes(currentTime, duration);
+
+      // Only update if the times have changed
+      if (currentTime.getTime() !== new Date(shipment.start).getTime()) {
+        await moveShipment(shipment.id, vehicleId, currentTime, newEnd);
+      }
+
+      currentTime = newEnd;
+    }
   };
 
   return (
@@ -272,7 +329,16 @@ export default function DayPilotSchedulerView({
                   {dragOverVehicle === vehicle.id && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
-                        Drop to create shipment
+                        {(() => {
+                          const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
+                          if (vehicleShipments.length === 0) {
+                            return `Drop to start at ${format(vehicle.availabilityStart, 'HH:mm')}`;
+                          } else {
+                            const sortedShipments = vehicleShipments.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+                            const lastShipment = sortedShipments[sortedShipments.length - 1];
+                            return `Drop to start at ${format(new Date(lastShipment.end), 'HH:mm')}`;
+                          }
+                        })()}
                       </div>
                     </div>
                   )}

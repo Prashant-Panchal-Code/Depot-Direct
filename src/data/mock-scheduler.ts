@@ -267,8 +267,8 @@ export const mockShipments: Shipment[] = [
     productType: 'diesel',
     quantity: 7500,
     priority: 'high',
-    start: addHours(today, 8),
-    end: addHours(today, 10),
+    start: addHours(today, 6), // Starts at vehicle-1 availability (06:00)
+    end: addHours(today, 8),   // 2 hours duration (7500L)
     compartmentAllocations: [{ compartmentId: 'comp-1a', quantity: 7500 }],
     status: 'assigned',
     customerName: 'Shell Station A',
@@ -281,8 +281,8 @@ export const mockShipments: Shipment[] = [
     productType: 'petrol',
     quantity: 5000,
     priority: 'medium',
-    start: addHours(today, 11),
-    end: addHours(today, 13),
+    start: addHours(today, 8), // Starts immediately after shipment-1 ends
+    end: addHours(today, 10),  // 2 hours duration (5000L)
     compartmentAllocations: [{ compartmentId: 'comp-1b', quantity: 5000 }],
     status: 'assigned',
     customerName: 'BP Station B',
@@ -295,8 +295,8 @@ export const mockShipments: Shipment[] = [
     productType: 'diesel',
     quantity: 9000,
     priority: 'high',
-    start: addHours(today, 9),
-    end: addHours(today, 11),
+    start: addHours(today, 7), // Starts at vehicle-2 availability (07:00)
+    end: addHours(today, 10),  // 3 hours duration (9000L)
     compartmentAllocations: [{ compartmentId: 'comp-2a', quantity: 9000 }],
     status: 'assigned',
     customerName: 'Texaco Station C',
@@ -309,8 +309,8 @@ export const mockShipments: Shipment[] = [
     productType: 'petrol',
     quantity: 6000,
     priority: 'low',
-    start: addHours(today, 14),
-    end: addHours(today, 16),
+    start: addHours(today, 10), // Starts immediately after shipment-3 ends
+    end: addHours(today, 12),   // 2 hours duration (6000L)
     compartmentAllocations: [{ compartmentId: 'comp-2b', quantity: 6000 }],
     status: 'assigned',
     customerName: 'Mobil Station D',
@@ -323,8 +323,8 @@ export const mockShipments: Shipment[] = [
     productType: 'diesel',
     quantity: 8000,
     priority: 'medium',
-    start: addHours(today, 10),
-    end: addHours(today, 12),
+    start: addHours(today, 9), // Starts at vehicle-5 availability (09:00)
+    end: addHours(today, 11),  // 2 hours duration (8000L)
     compartmentAllocations: [{ compartmentId: 'comp-1a', quantity: 8000 }],
     status: 'assigned',
     customerName: 'Exxon Station E',

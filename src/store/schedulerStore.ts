@@ -116,10 +116,10 @@ export const useSchedulerStore = create<SchedulerState>()(
           return { success: false, error: 'Shipment or target vehicle not found' };
         }
 
-        // Simplified validation - only check for overlaps, skip strict availability window
+        // Allow move without strict sequential validation since UI handles reorganization
+        // Basic overlap check only (for safety)
         const existingShipments = state.shipments.filter(s => s.vehicleId === toVehicleId && s.id !== shipmentId);
         
-        // Check for time overlaps only
         const hasOverlap = existingShipments.some(existingShipment => {
           const existingStart = new Date(existingShipment.start);
           const existingEnd = new Date(existingShipment.end);
@@ -164,10 +164,12 @@ export const useSchedulerStore = create<SchedulerState>()(
           return { success: false, error: 'Vehicle not found' };
         }
 
-        // Simplified validation - only check for overlaps, skip strict availability window
+        // For resize, we need to maintain sequential integrity
+        // For now, allow resize but warn that it might break sequential scheduling
+        // A full implementation would need to adjust all subsequent shipments
         const existingShipments = state.shipments.filter(s => s.vehicleId === shipment.vehicleId && s.id !== shipmentId);
         
-        // Check for time overlaps only
+        // Check for time overlaps only (basic validation)
         const hasOverlap = existingShipments.some(existingShipment => {
           const existingStart = new Date(existingShipment.start);
           const existingEnd = new Date(existingShipment.end);
@@ -224,23 +226,27 @@ export const useSchedulerStore = create<SchedulerState>()(
           deliveryAddress: order.deliveryAddress
         };
 
-        // Simplified validation - only check for overlaps, skip strict availability window
-        const existingShipments = state.shipments.filter(s => s.vehicleId === vehicleId);
-        
-        // Check for time overlaps only
-        const hasOverlap = existingShipments.some(existingShipment => {
-          const existingStart = new Date(existingShipment.start);
-          const existingEnd = new Date(existingShipment.end);
-          return start < existingEnd && end > existingStart;
-        });
+        // Sequential scheduling validation
+        const existingShipments = state.shipments
+          .filter(s => s.vehicleId === vehicleId)
+          .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-        if (hasOverlap) {
-          const conflictingShipment = existingShipments.find(existingShipment => {
-            const existingStart = new Date(existingShipment.start);
-            const existingEnd = new Date(existingShipment.end);
-            return start < existingEnd && end > existingStart;
-          });
-          return { success: false, error: `Time slot conflicts with shipment: ${conflictingShipment?.orderId}` };
+        if (existingShipments.length === 0) {
+          // First shipment - must start at vehicle availability start
+          const vehicleAvailStart = new Date(start);
+          vehicleAvailStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+          
+          if (start.getTime() !== vehicleAvailStart.getTime()) {
+            return { success: false, error: `First shipment must start at vehicle availability time (${vehicleAvailStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` };
+          }
+        } else {
+          // Subsequent shipments - must start at the end of the last shipment
+          const lastShipment = existingShipments[existingShipments.length - 1];
+          const expectedStart = new Date(lastShipment.end);
+          
+          if (start.getTime() !== expectedStart.getTime()) {
+            return { success: false, error: `Shipment must start immediately after previous shipment ends (${expectedStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` };
+          }
         }
 
         // Skip compartment allocation for drag and drop - create shipment without compartment details
