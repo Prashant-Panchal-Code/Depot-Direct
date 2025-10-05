@@ -183,8 +183,9 @@ export default function DayPilotSchedulerView({
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
     // Get vehicle availability start time for the selected date
+    const vehicleAvailabilityStart = new Date(vehicle.availabilityStart);
     const availabilityStart = new Date(selectedDate);
-    availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+    availabilityStart.setHours(vehicleAvailabilityStart.getHours(), vehicleAvailabilityStart.getMinutes(), 0, 0);
 
     if (vehicleShipments.length === 0) {
       // First shipment - must start at availability start
@@ -216,8 +217,9 @@ export default function DayPilotSchedulerView({
     if (vehicleShipments.length === 0) return;
 
     // Get vehicle availability start time for the selected date
+    const vehicleAvailabilityStart = new Date(vehicle.availabilityStart);
     const availabilityStart = new Date(selectedDate);
-    availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+    availabilityStart.setHours(vehicleAvailabilityStart.getHours(), vehicleAvailabilityStart.getMinutes(), 0, 0);
 
     let currentTime = availabilityStart;
 
@@ -272,6 +274,10 @@ export default function DayPilotSchedulerView({
               const trailer = getTrailerByVehicleId(vehicle.id);
               const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
               
+              // Ensure availability times are Date objects
+              const availabilityStart = new Date(vehicle.availabilityStart);
+              const availabilityEnd = new Date(vehicle.availabilityEnd);
+              
               // Calculate utilization (not used in display currently)
               const totalAllocated = vehicleShipments.reduce((sum, s) => sum + s.quantity, 0);
               const totalCapacity = trailer?.totalCapacity || 1;
@@ -307,9 +313,9 @@ export default function DayPilotSchedulerView({
                   </td>
                   {/* Time slot cells */}
                   {Array.from({ length: 24 }, (_, hour) => {
-                    const isAvailableHour = hour >= vehicle.availabilityStart.getHours() && hour < vehicle.availabilityEnd.getHours();
-                    const isFirstAvailableHour = hour === vehicle.availabilityStart.getHours();
-                    const isLastAvailableHour = hour === vehicle.availabilityEnd.getHours() - 1;
+                    const isAvailableHour = hour >= availabilityStart.getHours() && hour < availabilityEnd.getHours();
+                    const isFirstAvailableHour = hour === availabilityStart.getHours();
+                    const isLastAvailableHour = hour === availabilityEnd.getHours() - 1;
                     
                     return (
                       <td
@@ -332,13 +338,13 @@ export default function DayPilotSchedulerView({
                         {/* Show drag message only in the center of availability window */}
                         {dragOverVehicle === vehicle.id && isFirstAvailableHour && (
                           <div className="absolute inset-0 flex items-center justify-center z-10" style={{ 
-                            width: `${differenceInMinutes(vehicle.availabilityEnd, vehicle.availabilityStart) / 60 * 100}%`
+                            width: `${differenceInMinutes(availabilityEnd, availabilityStart) / 60 * 100}%`
                           }}>
                             <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
                               {(() => {
                                 const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
                                 if (vehicleShipments.length === 0) {
-                                  return `Drop to start at ${format(vehicle.availabilityStart, 'HH:mm')}`;
+                                  return `Drop to start at ${format(availabilityStart, 'HH:mm')}`;
                                 } else {
                                   const sortedShipments = vehicleShipments.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
                                   const lastShipment = sortedShipments[sortedShipments.length - 1];
