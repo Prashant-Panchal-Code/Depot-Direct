@@ -29,6 +29,7 @@ export interface Vehicle {
   availabilityStart: Date;
   availabilityEnd: Date;
   driver?: string;
+  baseLocation?: string;
 }
 
 export interface Shipment {
@@ -44,6 +45,8 @@ export interface Shipment {
   status: 'pending' | 'assigned' | 'in-transit' | 'delivered';
   customerName: string;
   deliveryAddress: string;
+  siteName?: string;
+  depotName?: string;
 }
 
 export interface UnassignedOrder {
@@ -52,6 +55,8 @@ export interface UnassignedOrder {
   productType: string;
   quantity: number; // liters
   priority: 'high' | 'medium' | 'low';
+  siteName?: string;
+  depotName?: string;
   etaWindow: { start: Date; end: Date };
   customerName: string;
   deliveryAddress: string;
@@ -143,118 +148,130 @@ const today = startOfToday();
 export const mockVehicles: Vehicle[] = [
   {
     id: 'vehicle-1',
-    name: 'Truck Alpha',
+    name: 'TRK-001',
     type: 'truck',
     status: 'active',
     trailerId: 'trailer-1',
     availabilityStart: addHours(today, 6),
     availabilityEnd: addHours(today, 18),
-    driver: 'John Smith'
+    driver: 'John Smith',
+    baseLocation: 'London Depot'
   },
   {
     id: 'vehicle-2',
-    name: 'Truck Beta',
+    name: 'TRK-002',
     type: 'truck',
     status: 'active',
     trailerId: 'trailer-2',
     availabilityStart: addHours(today, 7),
     availabilityEnd: addHours(today, 19),
-    driver: 'Jane Doe'
+    driver: 'Jane Doe',
+    baseLocation: 'Manchester Depot'
   },
   {
     id: 'vehicle-3',
-    name: 'Truck Gamma',
+    name: 'TRK-003',
     type: 'truck',
     status: 'maintenance',
     trailerId: 'trailer-3',
     availabilityStart: addHours(today, 14),
     availabilityEnd: addHours(today, 20),
-    driver: 'Mike Johnson'
+    driver: 'Mike Johnson',
+    baseLocation: 'Birmingham Depot'
   },
   {
     id: 'vehicle-4',
-    name: 'Van Delta',
+    name: 'VAN-001',
     type: 'van',
     status: 'active',
     availabilityStart: addHours(today, 8),
     availabilityEnd: addHours(today, 16),
-    driver: 'Sarah Wilson'
+    driver: 'Sarah Wilson',
+    baseLocation: 'Leeds Depot'
   },
   {
     id: 'vehicle-5',
-    name: 'Truck Echo',
+    name: 'TRK-004',
     type: 'truck',
     status: 'active',
     trailerId: 'trailer-1',
     availabilityStart: addHours(today, 9),
     availabilityEnd: addHours(today, 17),
-    driver: 'David Brown'
+    driver: 'David Brown',
+    baseLocation: 'Liverpool Depot'
   },
   {
     id: 'vehicle-6',
-    name: 'Van Foxtrot',
+    name: 'VAN-002',
     type: 'van',
     status: 'offline',
     availabilityStart: addHours(today, 10),
     availabilityEnd: addHours(today, 18),
-    driver: 'Lisa Garcia'
+    driver: 'Lisa Garcia',
+    baseLocation: 'Newcastle Depot'
   },
   {
     id: 'vehicle-7',
-    name: 'Truck Golf',
+    name: 'TRK-005',
     type: 'truck',
     status: 'active',
     trailerId: 'trailer-2',
     availabilityStart: addHours(today, 5),
     availabilityEnd: addHours(today, 15),
-    driver: 'Michael Torres'
+    driver: 'Michael Torres',
+    baseLocation: 'Sheffield Depot'
   },
   {
     id: 'vehicle-8',
-    name: 'Van Hotel',
+    name: 'VAN-003',
     type: 'van',
     status: 'active',
     availabilityStart: addHours(today, 7),
     availabilityEnd: addHours(today, 19),
-    driver: 'Jennifer Lee'
+    driver: 'Jennifer Lee',
+    baseLocation: 'Bristol Depot'
   },
   {
     id: 'vehicle-9',
-    name: 'Truck India',
+    name: 'TRK-006',
     type: 'truck',
     status: 'maintenance',
     trailerId: 'trailer-3',
     availabilityStart: addHours(today, 12),
     availabilityEnd: addHours(today, 22),
-    driver: 'Robert Kim'
+    driver: 'Robert Kim',
+    baseLocation: 'Cardiff Depot'
   },
   {
     id: 'vehicle-10',
-    name: 'Van Juliet',
+    name: 'VAN-004',
     type: 'van',
     status: 'active',
     availabilityStart: addHours(today, 6),
     availabilityEnd: addHours(today, 14),
-    driver: 'Amanda Rodriguez'
+    driver: 'Amanda Rodriguez',
+    baseLocation: 'Edinburgh Depot'
   },
   {
     id: 'vehicle-11',
-    name: 'Truck Kilo',
+    name: 'TRK-007',
     type: 'truck',
     status: 'active',
     trailerId: 'trailer-1',
     availabilityStart: addHours(today, 8),
     availabilityEnd: addHours(today, 20),
-    driver: 'Christopher Davis'
+    driver: 'Christopher Davis',
+    baseLocation: 'Glasgow Depot'
   },
   {
     id: 'vehicle-12',
-    name: 'Van Lima',
+    name: 'VAN-005',
     type: 'van',
     status: 'offline',
     availabilityStart: addHours(today, 9),
     availabilityEnd: addHours(today, 17),
-    driver: 'Patricia Martinez'
+    driver: 'Patricia Martinez',
+    baseLocation: 'Aberdeen Depot'
   }
 ];
 
@@ -272,7 +289,9 @@ export const mockShipments: Shipment[] = [
     compartmentAllocations: [{ compartmentId: 'comp-1a', quantity: 7500 }],
     status: 'assigned',
     customerName: 'Shell Station A',
-    deliveryAddress: '123 Main St, City A'
+    deliveryAddress: '123 Main St, City A',
+    siteName: 'SH-LHR',
+    depotName: 'LON-T1'
   },
   {
     id: 'shipment-2',
@@ -286,7 +305,9 @@ export const mockShipments: Shipment[] = [
     compartmentAllocations: [{ compartmentId: 'comp-1b', quantity: 5000 }],
     status: 'assigned',
     customerName: 'BP Station B',
-    deliveryAddress: '456 Oak Ave, City B'
+    deliveryAddress: '456 Oak Ave, City B',
+    siteName: 'BP-GTW',
+    depotName: 'LON-T1'
   },
   {
     id: 'shipment-3',
@@ -300,7 +321,9 @@ export const mockShipments: Shipment[] = [
     compartmentAllocations: [{ compartmentId: 'comp-2a', quantity: 9000 }],
     status: 'assigned',
     customerName: 'Texaco Station C',
-    deliveryAddress: '789 Pine Rd, City C'
+    deliveryAddress: '789 Pine Rd, City C',
+    siteName: 'TX-MAN',
+    depotName: 'MAN-T1'
   },
   {
     id: 'shipment-4',
@@ -314,7 +337,9 @@ export const mockShipments: Shipment[] = [
     compartmentAllocations: [{ compartmentId: 'comp-2b', quantity: 6000 }],
     status: 'assigned',
     customerName: 'Mobil Station D',
-    deliveryAddress: '321 Elm St, City D'
+    deliveryAddress: '321 Elm St, City D',
+    siteName: 'MB-BHM',
+    depotName: 'MAN-T1'
   },
   {
     id: 'shipment-5',
@@ -328,7 +353,9 @@ export const mockShipments: Shipment[] = [
     compartmentAllocations: [{ compartmentId: 'comp-1a', quantity: 8000 }],
     status: 'assigned',
     customerName: 'Exxon Station E',
-    deliveryAddress: '654 Birch Ln, City E'
+    deliveryAddress: '654 Birch Ln, City E',
+    siteName: 'EX-LPL',
+    depotName: 'LPL-T1'
   }
 ];
 
@@ -346,7 +373,9 @@ export const mockUnassignedOrders: UnassignedOrder[] = [
     },
     customerName: 'Chevron Station F',
     deliveryAddress: '987 Cedar Ave, City F',
-    createdAt: addMinutes(today, -30)
+    createdAt: addMinutes(today, -30),
+    siteName: 'CH-LED',
+    depotName: 'LED-T1'
   },
   {
     id: 'unassigned-2',
@@ -360,7 +389,9 @@ export const mockUnassignedOrders: UnassignedOrder[] = [
     },
     customerName: 'Marathon Station G',
     deliveryAddress: '147 Maple Dr, City G',
-    createdAt: addMinutes(today, -15)
+    createdAt: addMinutes(today, -15),
+    siteName: 'MR-SHF',
+    depotName: 'SHF-T1'
   },
   {
     id: 'unassigned-3',
@@ -374,7 +405,9 @@ export const mockUnassignedOrders: UnassignedOrder[] = [
     },
     customerName: 'Sunoco Station H',
     deliveryAddress: '258 Spruce St, City H',
-    createdAt: addMinutes(today, -45)
+    createdAt: addMinutes(today, -45),
+    siteName: 'SU-BRS',
+    depotName: 'BRS-T1'
   },
   {
     id: 'unassigned-4',

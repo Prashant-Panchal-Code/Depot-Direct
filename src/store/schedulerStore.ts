@@ -223,7 +223,9 @@ export const useSchedulerStore = create<SchedulerState>()(
           compartmentAllocations: [],
           status: 'assigned',
           customerName: order.customerName,
-          deliveryAddress: order.deliveryAddress
+          deliveryAddress: order.deliveryAddress,
+          siteName: order.siteName,
+          depotName: order.depotName
         };
 
         // Sequential scheduling validation

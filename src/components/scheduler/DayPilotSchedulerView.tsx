@@ -293,24 +293,27 @@ export default function DayPilotSchedulerView({
           };
 
           return (
-            <div key={vehicle.id} className="flex min-h-20">
+            <div key={vehicle.id} className="flex min-h-12">
               {/* Vehicle Info */}
-              <div className="w-48 flex-shrink-0 border-r border-gray-200 p-3 bg-gray-50">
-                <div className="text-sm font-semibold text-gray-900">{vehicle.name}</div>
-                <div className="text-xs text-gray-500">{vehicle.driver || 'No driver'}</div>
-                {trailer && (
-                  <div className="text-xs text-gray-400">{trailer.registration}</div>
-                )}
-                <div className="flex items-center justify-between mt-2">
-                  <span className={`px-2 py-1 rounded-full text-xs ${statusColors[vehicle.status]}`}>
-                    {vehicle.status}
-                  </span>
-                  <span className="text-xs text-gray-600">{utilization}%</span>
+              <div className="w-48 flex-shrink-0 border-r border-gray-200 p-2 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">{vehicle.name}</div>
+                    <div className="text-xs text-gray-500">{vehicle.baseLocation || 'Base Location'}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-medium text-gray-700">
+                      {trailer ? `${Math.round(trailer.totalCapacity / 1000)}T` : 'N/A'}
+                    </div>
+                    <span className={`px-1 py-0.5 rounded text-xs ${statusColors[vehicle.status]}`}>
+                      {vehicle.status}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Time Grid */}
-              <div className="flex-1 relative grid grid-cols-24 gap-0 min-h-20"
+              <div className="flex-1 relative grid grid-cols-24 gap-0 min-h-12"
                    onDragOver={(e) => handleDragOver(e, vehicle.id)}
                    onDragLeave={(e) => handleDragLeave(e, vehicle.id)}>
                 {/* Availability Window */}
@@ -348,7 +351,7 @@ export default function DayPilotSchedulerView({
                 {Array.from({ length: 24 }, (_, hour) => (
                   <div
                     key={hour}
-                    className="border-r border-gray-100 relative h-20 cursor-pointer hover:bg-gray-50"
+                    className="border-r border-gray-100 relative h-12 cursor-pointer hover:bg-gray-50"
                     onDrop={(e) => handleDrop(e, vehicle.id, addHours(startOfDay(selectedDate), hour))}
                     onDragOver={(e) => handleDragOver(e, vehicle.id)}
                     style={{ zIndex: 2 }}
@@ -365,10 +368,13 @@ export default function DayPilotSchedulerView({
                   const left = (startMinutes / (24 * 60)) * 100;
                   const width = (duration / (24 * 60)) * 100;
 
+                  // Calculate individual shipment utilization
+                  const shipmentUtilization = trailer ? Math.round((shipment.quantity / trailer.totalCapacity) * 100) : 0;
+
                   return (
                     <div
                       key={shipment.id}
-                      className={`absolute top-1 bottom-1 rounded px-2 py-1 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
+                      className={`absolute top-0.5 bottom-0.5 rounded px-1 py-0.5 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
                         isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''
                       }`}
                       style={{
@@ -383,12 +389,12 @@ export default function DayPilotSchedulerView({
                       onDragEnd={handleDragEnd}
                       onClick={() => handleEventClick(shipment.id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">{shipment.orderId}</span>
-                        <span>{shipment.quantity}L</span>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold truncate">{shipment.orderId}</span>
+                        <span className="text-xs">{shipmentUtilization}%</span>
                       </div>
-                      <div className="text-xs opacity-90">
-                        {format(start, 'HH:mm')} - {format(end, 'HH:mm')}
+                      <div className="text-xs opacity-90 truncate">
+                        {(shipment.siteName || 'SITE')} | {(shipment.depotName || 'DEPOT')}
                       </div>
                     </div>
                   );
