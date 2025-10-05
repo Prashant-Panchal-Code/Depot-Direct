@@ -255,155 +255,192 @@ export default function DayPilotSchedulerView({
 
   return (
     <div className="h-full bg-white rounded-lg border border-gray-200 flex flex-col overflow-hidden">
-      {/* Time Headers */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 z-10">
-        <div className="flex">
-          <div className="w-48 flex-shrink-0 border-r border-gray-200 bg-gray-50">
-            <div className="p-2 text-sm font-semibold text-gray-700">
-              {format(selectedDate, 'MMMM d, yyyy')}
-            </div>
-          </div>
-          <div className="flex-1 grid grid-cols-24 gap-0 text-xs text-gray-600">
-            {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="border-r border-gray-100 p-1 text-center">
-                {format(addHours(startOfDay(selectedDate), hour), 'HH:mm')}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Vehicle Rows */}
+      {/* Single Table with Sticky Header */}
       <div className="flex-1 custom-scrollbar" style={{ overflowY: 'scroll' }}>
-        <div className="divide-y divide-gray-100">
-        {vehicles.map(vehicle => {
-          const trailer = getTrailerByVehicleId(vehicle.id);
-          const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '192px' }} />
+            {Array.from({ length: 24 }, (_, i) => (
+              <col key={i} style={{ width: `calc((100% - 192px) / 24)` }} />
+            ))}
+          </colgroup>
           
-          // Calculate utilization
-          const totalAllocated = vehicleShipments.reduce((sum, s) => sum + s.quantity, 0);
-          const totalCapacity = trailer?.totalCapacity || 1;
-          const utilization = Math.round((totalAllocated / totalCapacity) * 100);
-
-          // Status colors
-          const statusColors = {
-            active: 'bg-green-100 text-green-800',
-            maintenance: 'bg-yellow-100 text-yellow-800',
-            offline: 'bg-red-100 text-red-800'
-          };
-
-          return (
-            <div key={vehicle.id} className="flex min-h-12">
-              {/* Vehicle Info */}
-              <div className="w-48 flex-shrink-0 border-r border-gray-200 p-2 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">{vehicle.name}</div>
-                    <div className="text-xs text-gray-500">{vehicle.baseLocation || 'Base Location'}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-medium text-gray-700">
-                      {trailer ? `${Math.round(trailer.totalCapacity / 1000)}T` : 'N/A'}
-                    </div>
-                    <span className={`px-1 py-0.5 rounded text-xs ${statusColors[vehicle.status]}`}>
-                      {vehicle.status}
-                    </span>
-                  </div>
+          {/* Sticky Header */}
+          <thead className="sticky top-0 z-10 bg-white border-b border-gray-200">
+            <tr>
+              <th className="border-r border-gray-200 bg-gray-50 p-2 text-left" style={{ width: '192px', minWidth: '192px', maxWidth: '192px' }}>
+                <div className="text-sm font-semibold text-gray-700">
+                  {format(selectedDate, 'MMMM d, yyyy')}
                 </div>
-              </div>
-
-              {/* Time Grid */}
-              <div className="flex-1 relative grid grid-cols-24 gap-0 min-h-12"
-                   onDragOver={(e) => handleDragOver(e, vehicle.id)}
-                   onDragLeave={(e) => handleDragLeave(e, vehicle.id)}>
-                {/* Availability Window */}
-                <div 
-                  className={`absolute inset-0 border rounded transition-all duration-200 ${
-                    dragOverVehicle === vehicle.id 
-                      ? 'bg-green-100 border-green-300 border-2' 
-                      : 'bg-blue-50 border-blue-200'
-                  }`}
-                  style={{
-                    left: `${(vehicle.availabilityStart.getHours() * 60 + vehicle.availabilityStart.getMinutes()) / (24 * 60) * 100}%`,
-                    width: `${differenceInMinutes(vehicle.availabilityEnd, vehicle.availabilityStart) / (24 * 60) * 100}%`,
-                    zIndex: 1
-                  }}
+              </th>
+              {Array.from({ length: 24 }, (_, hour) => (
+                <th
+                  key={hour}
+                  className="border-r border-gray-100 text-xs text-gray-600 text-center p-1 bg-white"
                 >
-                  {dragOverVehicle === vehicle.id && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
-                        {(() => {
-                          const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
-                          if (vehicleShipments.length === 0) {
-                            return `Drop to start at ${format(vehicle.availabilityStart, 'HH:mm')}`;
-                          } else {
-                            const sortedShipments = vehicleShipments.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-                            const lastShipment = sortedShipments[sortedShipments.length - 1];
-                            return `Drop to start at ${format(new Date(lastShipment.end), 'HH:mm')}`;
-                          }
-                        })()}
+                  {format(addHours(startOfDay(selectedDate), hour), 'HH:mm')}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          
+          {/* Vehicle Rows */}
+          <tbody>
+            {vehicles.map((vehicle, index) => {
+              const trailer = getTrailerByVehicleId(vehicle.id);
+              const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
+              
+              // Calculate utilization
+              const totalAllocated = vehicleShipments.reduce((sum, s) => sum + s.quantity, 0);
+              const totalCapacity = trailer?.totalCapacity || 1;
+              const utilization = Math.round((totalAllocated / totalCapacity) * 100);
+
+              // Status colors
+              const statusColors = {
+                active: 'bg-green-100 text-green-800',
+                maintenance: 'bg-yellow-100 text-yellow-800',
+                offline: 'bg-red-100 text-red-800'
+              };
+
+              return (
+                <tr key={vehicle.id} className="relative" style={{ 
+                  height: '48px',
+                  borderBottom: index < vehicles.length - 1 ? '2px solid #f3f4f6' : undefined
+                }}>
+                  <td className="border-r border-gray-200 p-2 bg-gray-50 align-middle" style={{ width: '192px', minWidth: '192px', maxWidth: '192px' }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">{vehicle.name}</div>
+                        <div className="text-xs text-gray-500">{vehicle.baseLocation || 'Base Location'}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium text-gray-700">
+                          {trailer ? `${Math.round(trailer.totalCapacity / 1000)}T` : 'N/A'}
+                        </div>
+                        <span className={`px-1 py-0.5 rounded text-xs ${statusColors[vehicle.status]}`}>
+                          {vehicle.status}
+                        </span>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </td>
+                  {/* Time slot cells */}
+                  {Array.from({ length: 24 }, (_, hour) => {
+                    const isAvailableHour = hour >= vehicle.availabilityStart.getHours() && hour < vehicle.availabilityEnd.getHours();
+                    const isFirstAvailableHour = hour === vehicle.availabilityStart.getHours();
+                    const isLastAvailableHour = hour === vehicle.availabilityEnd.getHours() - 1;
+                    
+                    return (
+                      <td
+                        key={hour}
+                        className={`relative cursor-pointer hover:bg-gray-50 border-r border-gray-100 p-0 ${
+                          isAvailableHour ? (dragOverVehicle === vehicle.id ? 'bg-green-100' : 'bg-blue-50') : ''
+                        }`}
+                        style={{
+                          boxShadow: isAvailableHour ? [
+                            isFirstAvailableHour ? 'inset 1px 0 0 0 #2563eb' : '',
+                            isLastAvailableHour ? 'inset -1px 0 0 0 #2563eb' : '',
+                            'inset 0 1px 0 0 #2563eb',
+                            'inset 0 -1px 0 0 #2563eb'
+                          ].filter(Boolean).join(', ') : undefined
+                        }}
+                        onDrop={(e) => handleDrop(e, vehicle.id, addHours(startOfDay(selectedDate), hour))}
+                        onDragOver={(e) => handleDragOver(e, vehicle.id)}
+                        onDragLeave={(e) => handleDragLeave(e, vehicle.id)}
+                      >
+                        {/* Show drag message only in the center of availability window */}
+                        {dragOverVehicle === vehicle.id && isFirstAvailableHour && (
+                          <div className="absolute inset-0 flex items-center justify-center z-10" style={{ 
+                            width: `${differenceInMinutes(vehicle.availabilityEnd, vehicle.availabilityStart) / 60 * 100}%`
+                          }}>
+                            <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                              {(() => {
+                                const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
+                                if (vehicleShipments.length === 0) {
+                                  return `Drop to start at ${format(vehicle.availabilityStart, 'HH:mm')}`;
+                                } else {
+                                  const sortedShipments = vehicleShipments.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+                                  const lastShipment = sortedShipments[sortedShipments.length - 1];
+                                  return `Drop to start at ${format(new Date(lastShipment.end), 'HH:mm')}`;
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                        {/* Shipments positioned in this cell */}
+                        {vehicleShipments
+                          .filter(shipment => {
+                            const start = new Date(shipment.start);
+                            const end = new Date(shipment.end);
+                            const shipmentStartHour = start.getHours();
+                            const shipmentEndHour = end.getHours();
+                            // Show shipment in cells it spans
+                            return hour >= shipmentStartHour && hour < shipmentEndHour + (end.getMinutes() > 0 ? 1 : 0);
+                          })
+                          .map(shipment => {
+                            const start = new Date(shipment.start);
+                            const end = new Date(shipment.end);
+                            const shipmentStartHour = start.getHours();
+                            const shipmentStartMinutes = start.getMinutes();
+                            const duration = differenceInMinutes(end, start);
+                            
+                            // Only show the shipment content in the first cell it appears in
+                            if (hour !== shipmentStartHour) {
+                              return (
+                                <div
+                                  key={shipment.id}
+                                  className="absolute inset-0"
+                                  style={{
+                                    backgroundColor: productColors[shipment.productType] || '#6B7280',
+                                    borderLeft: hour === shipmentStartHour ? `4px solid ${priorityColors[shipment.priority]}` : 'none',
+                                    zIndex: 5,
+                                    opacity: 0.8
+                                  }}
+                                />
+                              );
+                            }
 
-                {/* Time Slots */}
-                {Array.from({ length: 24 }, (_, hour) => (
-                  <div
-                    key={hour}
-                    className="border-r border-gray-100 relative h-12 cursor-pointer hover:bg-gray-50"
-                    onDrop={(e) => handleDrop(e, vehicle.id, addHours(startOfDay(selectedDate), hour))}
-                    onDragOver={(e) => handleDragOver(e, vehicle.id)}
-                    style={{ zIndex: 2 }}
-                  />
-                ))}
-
-                {/* Shipments */}
-                {vehicleShipments.map(shipment => {
-                  const start = new Date(shipment.start);
-                  const end = new Date(shipment.end);
-                  const startMinutes = differenceInMinutes(start, startOfDay(selectedDate));
-                  const duration = differenceInMinutes(end, start);
-                  
-                  const left = (startMinutes / (24 * 60)) * 100;
-                  const width = (duration / (24 * 60)) * 100;
-
-                  // Calculate individual shipment utilization
-                  const shipmentUtilization = trailer ? Math.round((shipment.quantity / trailer.totalCapacity) * 100) : 0;
-
-                  return (
-                    <div
-                      key={shipment.id}
-                      className={`absolute top-0.5 bottom-0.5 rounded px-1 py-0.5 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
-                        isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''
-                      }`}
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        backgroundColor: productColors[shipment.productType] || '#6B7280',
-                        borderLeft: `4px solid ${priorityColors[shipment.priority]}`,
-                        zIndex: 10
-                      }}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, shipment.id)}
-                      onDragEnd={handleDragEnd}
-                      onClick={() => handleEventClick(shipment.id)}
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold truncate">{shipment.orderId}</span>
-                        <span className="text-xs">{shipmentUtilization}%</span>
-                      </div>
-                      <div className="text-xs opacity-90 truncate">
-                        {(shipment.siteName || 'SITE')} | {(shipment.depotName || 'DEPOT')}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-        </div>
+                            // Calculate individual shipment utilization
+                            const shipmentUtilization = trailer ? Math.round((shipment.quantity / trailer.totalCapacity) * 100) : 0;
+                            
+                            // Calculate how many cells this shipment spans
+                            const durationInHours = duration / 60;
+                            const cellsSpanned = Math.ceil(durationInHours);
+                            
+                            return (
+                              <div
+                                key={shipment.id}
+                                className={`absolute inset-0 rounded px-1 py-0.5 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
+                                  isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''
+                                }`}
+                                style={{
+                                  backgroundColor: productColors[shipment.productType] || '#6B7280',
+                                  borderLeft: `4px solid ${priorityColors[shipment.priority]}`,
+                                  zIndex: 10,
+                                  width: `${cellsSpanned * 100}%`
+                                }}
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, shipment.id)}
+                                onDragEnd={handleDragEnd}
+                                onClick={() => handleEventClick(shipment.id)}
+                              >
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold truncate">{shipment.orderId}</span>
+                                  <span className="text-xs">{shipmentUtilization}%</span>
+                                </div>
+                                <div className="text-xs opacity-90 truncate">
+                                  {(shipment.siteName || 'SITE')} | {(shipment.depotName || 'DEPOT')}
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Legend */}
