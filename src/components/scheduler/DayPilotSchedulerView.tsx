@@ -29,11 +29,13 @@ export default function DayPilotSchedulerView({
     vehicles,
     shipments,
     moveShipment,
+    createShipmentFromUnassigned,
     setSelectedShipment,
   } = useSchedulerStore();
 
   const [draggedEvent, setDraggedEvent] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [dragOverVehicle, setDragOverVehicle] = useState<string | null>(null);
 
   const handleEventClick = (shipmentId: string) => {
     if (DEBUG) console.debug('Event clicked:', shipmentId);
@@ -50,34 +52,148 @@ export default function DayPilotSchedulerView({
   const handleDragEnd = () => {
     setDraggedEvent(null);
     setIsDragging(false);
+    setDragOverVehicle(null);
   };
 
   const handleDrop = async (e: React.DragEvent, vehicleId: string, timeSlot: Date) => {
     e.preventDefault();
+    
+    // Find the vehicle to check availability
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) {
+      toast.error('Vehicle not found');
+      setDraggedEvent(null);
+      setIsDragging(false);
+      setDragOverVehicle(null);
+      return;
+    }
+    
+    // Try to get shipment data first (for existing shipments)
     const shipmentId = e.dataTransfer.getData('text/plain');
     
-    if (shipmentId && shipmentId !== '') {
+    // Try to get unassigned order data (from UnassignedOrdersPanel)
+    let orderData = null;
+    try {
+      const orderDataString = e.dataTransfer.getData('application/json');
+      if (orderDataString) {
+        orderData = JSON.parse(orderDataString);
+      }
+    } catch (error) {
+      if (DEBUG) console.debug('No JSON data found in drag event');
+    }
+    
+    if (orderData && orderData.orderId) {
+      // Handle unassigned order drop - create new shipment
+      if (DEBUG) console.debug('Creating shipment from unassigned order:', orderData);
+      
+      // Calculate estimated duration based on quantity (1 hour per 1000L)
+      const estimatedDuration = Math.max(60, Math.ceil(orderData.quantity / 1000) * 60); // minimum 1 hour
+      const endTime = addMinutes(timeSlot, estimatedDuration);
+      
+      // Only check if start time is after availability start
+      const availabilityStart = new Date(selectedDate);
+      availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
+      
+      if (timeSlot < availabilityStart) {
+        toast.error(`Cannot schedule before vehicle availability starts (${format(availabilityStart, 'HH:mm')})`);
+      } else {
+        // Check for overlapping shipments
+        const overlapCheck = checkForOverlappingShipments(vehicleId, timeSlot, endTime);
+        
+        if (overlapCheck.hasOverlap) {
+          toast.error(`Cannot schedule: conflicts with existing shipment ${overlapCheck.conflictingShipment?.orderId}`);
+        } else {
+          const result = await createShipmentFromUnassigned(
+            orderData.orderId,
+            vehicleId,
+            timeSlot,
+            endTime
+          );
+          
+          if (!result.success) {
+            toast.error(result.error || 'Failed to create shipment');
+          } else {
+            toast.success(`Shipment created for order ${orderData.orderId}`);
+          }
+        }
+      }
+    } else if (shipmentId && shipmentId !== '') {
+      // Handle existing shipment drop - move shipment
       const shipment = shipments.find(s => s.id === shipmentId);
       if (shipment) {
         const duration = differenceInMinutes(shipment.end, shipment.start);
         const newEnd = addMinutes(timeSlot, duration);
         
-        const result = await moveShipment(shipmentId, vehicleId, timeSlot, newEnd);
+        // Only check if start time is after availability start
+        const availabilityStart = new Date(selectedDate);
+        availabilityStart.setHours(vehicle.availabilityStart.getHours(), vehicle.availabilityStart.getMinutes(), 0, 0);
         
-        if (!result.success) {
-          toast.error(result.error || 'Failed to move shipment');
+        if (timeSlot < availabilityStart) {
+          toast.error(`Cannot schedule before vehicle availability starts (${format(availabilityStart, 'HH:mm')})`);
         } else {
-          toast.success('Shipment moved successfully');
+          // Check for overlapping shipments (excluding the current shipment being moved)
+          const overlapCheck = checkForOverlappingShipments(vehicleId, timeSlot, newEnd, shipmentId);
+          
+          if (overlapCheck.hasOverlap) {
+            toast.error(`Cannot move shipment: conflicts with existing shipment ${overlapCheck.conflictingShipment?.orderId}`);
+          } else {
+            const result = await moveShipment(shipmentId, vehicleId, timeSlot, newEnd);
+            
+            if (!result.success) {
+              toast.error(result.error || 'Failed to move shipment');
+            } else {
+              toast.success('Shipment moved successfully');
+            }
+          }
         }
       }
     }
     
     setDraggedEvent(null);
     setIsDragging(false);
+    setDragOverVehicle(null);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, vehicleId?: string) => {
     e.preventDefault();
+    if (vehicleId && vehicleId !== dragOverVehicle) {
+      setDragOverVehicle(vehicleId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, vehicleId?: string) => {
+    // Only clear if we're leaving the vehicle row entirely
+    if (vehicleId && dragOverVehicle === vehicleId) {
+      // Check if we're still within the vehicle row
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+      
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+        setDragOverVehicle(null);
+      }
+    }
+  };
+
+  const checkForOverlappingShipments = (vehicleId: string, startTime: Date, endTime: Date, excludeShipmentId?: string) => {
+    const vehicleShipments = shipments.filter(s => 
+      s.vehicleId === vehicleId && s.id !== excludeShipmentId
+    );
+    
+    for (const shipment of vehicleShipments) {
+      const shipmentStart = new Date(shipment.start);
+      const shipmentEnd = new Date(shipment.end);
+      
+      // Check if there's any overlap
+      if (startTime < shipmentEnd && endTime > shipmentStart) {
+        return {
+          hasOverlap: true,
+          conflictingShipment: shipment
+        };
+      }
+    }
+    
+    return { hasOverlap: false };
   };
 
   return (
@@ -138,16 +254,29 @@ export default function DayPilotSchedulerView({
 
               {/* Time Grid */}
               <div className="flex-1 relative grid grid-cols-24 gap-0 min-h-20"
-                   onDragOver={handleDragOver}>
+                   onDragOver={(e) => handleDragOver(e, vehicle.id)}
+                   onDragLeave={(e) => handleDragLeave(e, vehicle.id)}>
                 {/* Availability Window */}
                 <div 
-                  className="absolute inset-0 bg-blue-50 border border-blue-200 rounded"
+                  className={`absolute inset-0 border rounded transition-all duration-200 ${
+                    dragOverVehicle === vehicle.id 
+                      ? 'bg-green-100 border-green-300 border-2' 
+                      : 'bg-blue-50 border-blue-200'
+                  }`}
                   style={{
                     left: `${(vehicle.availabilityStart.getHours() * 60 + vehicle.availabilityStart.getMinutes()) / (24 * 60) * 100}%`,
                     width: `${differenceInMinutes(vehicle.availabilityEnd, vehicle.availabilityStart) / (24 * 60) * 100}%`,
                     zIndex: 1
                   }}
-                />
+                >
+                  {dragOverVehicle === vehicle.id && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
+                        Drop to create shipment
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Time Slots */}
                 {Array.from({ length: 24 }, (_, hour) => (
@@ -155,7 +284,7 @@ export default function DayPilotSchedulerView({
                     key={hour}
                     className="border-r border-gray-100 relative h-20 cursor-pointer hover:bg-gray-50"
                     onDrop={(e) => handleDrop(e, vehicle.id, addHours(startOfDay(selectedDate), hour))}
-                    onDragOver={handleDragOver}
+                    onDragOver={(e) => handleDragOver(e, vehicle.id)}
                     style={{ zIndex: 2 }}
                   />
                 ))}
@@ -170,14 +299,12 @@ export default function DayPilotSchedulerView({
                   const left = (startMinutes / (24 * 60)) * 100;
                   const width = (duration / (24 * 60)) * 100;
 
-                  const hasErrors = !trailer || shipment.compartmentAllocations.length === 0;
-
                   return (
                     <div
                       key={shipment.id}
                       className={`absolute top-1 bottom-1 rounded px-2 py-1 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
-                        hasErrors ? 'ring-2 ring-red-500' : ''
-                      } ${isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''}`}
+                        isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''
+                      }`}
                       style={{
                         left: `${left}%`,
                         width: `${width}%`,
