@@ -31,6 +31,7 @@ export default function DayPilotSchedulerView({
     moveShipment,
     createShipmentFromUnassigned,
     setSelectedShipment,
+    selectedShipmentId,
   } = useSchedulerStore();
 
   const [draggedEvent, setDraggedEvent] = useState<string | null>(null);
@@ -411,11 +412,13 @@ export default function DayPilotSchedulerView({
                                 key={shipment.id}
                                 className={`absolute inset-0 rounded px-1 py-0.5 text-xs text-white font-medium cursor-pointer hover:shadow-lg transition-all ${
                                   isDragging && draggedEvent === shipment.id ? 'opacity-50' : ''
+                                } ${
+                                  selectedShipmentId === shipment.id ? 'ring-2 ring-yellow-400 ring-offset-1' : ''
                                 }`}
                                 style={{
                                   backgroundColor: productColors[shipment.productType] || '#6B7280',
                                   borderLeft: `4px solid ${priorityColors[shipment.priority]}`,
-                                  zIndex: 10,
+                                  zIndex: selectedShipmentId === shipment.id ? 15 : 10,
                                   width: `${cellsSpanned * 100}%`
                                 }}
                                 draggable

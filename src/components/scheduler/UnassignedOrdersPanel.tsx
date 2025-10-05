@@ -1,7 +1,7 @@
 'use client';
 
-// Unassigned Orders Panel Component
-// Shows unassigned orders with drag support
+// Orders Panel Component
+// Shows both assigned and unassigned orders with different styling
 
 import React, { useState } from 'react';
 import { useSchedulerStore } from '@/store/schedulerStore';
@@ -20,22 +20,57 @@ export default function UnassignedOrdersPanel({
   isCollapsed,
   onToggle
 }: UnassignedOrdersPanelProps) {
-  const { unassignedOrders } = useSchedulerStore();
+  const { unassignedOrders, shipments, setSelectedShipment } = useSchedulerStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  // Filter orders based on search and priority
-  const filteredOrders = unassignedOrders.filter(order => {
+  // Convert shipments to assigned orders format
+  const assignedOrders = shipments.map(shipment => ({
+    id: shipment.id,
+    orderId: shipment.orderId,
+    productType: shipment.productType,
+    quantity: shipment.quantity,
+    priority: shipment.priority,
+    siteName: shipment.siteName,
+    depotName: shipment.depotName,
+    customerName: shipment.customerName,
+    deliveryAddress: shipment.deliveryAddress,
+    isAssigned: true,
+    vehicleId: shipment.vehicleId
+  }));
+
+  // Convert unassigned orders to common format
+  const unassignedOrdersFormatted = unassignedOrders.map(order => ({
+    ...order,
+    isAssigned: false,
+    vehicleId: undefined
+  }));
+
+  // Combine all orders
+  const allOrders = [...assignedOrders, ...unassignedOrdersFormatted];
+
+  // Filter orders based on search, priority, and status
+  const filteredOrders = allOrders.filter(order => {
     const matchesSearch = order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.productType.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesPriority = filterPriority === 'all' || order.priority === filterPriority;
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'assigned' && order.isAssigned) ||
+                         (filterStatus === 'unassigned' && !order.isAssigned);
     
-    return matchesSearch && matchesPriority;
+    return matchesSearch && matchesPriority && matchesStatus;
   });
 
-  const handleDragStart = (e: React.DragEvent, order: { orderId: string; productType: string; quantity: number; priority: string; customerName: string; deliveryAddress: string; etaWindow: { start: Date; end: Date; }; }) => {
+  const handleDragStart = (e: React.DragEvent, order: any) => {
+    // Only allow dragging unassigned orders
+    if (order.isAssigned) {
+      e.preventDefault();
+      return;
+    }
+    
     if (DEBUG) console.debug('Order drag started:', order.orderId);
     e.dataTransfer.setData('application/json', JSON.stringify({
       orderId: order.orderId,
@@ -44,9 +79,20 @@ export default function UnassignedOrdersPanel({
       priority: order.priority,
       customerName: order.customerName,
       deliveryAddress: order.deliveryAddress,
-      etaWindow: order.etaWindow
+      etaWindow: order.etaWindow || { start: new Date(), end: new Date() }
     }));
     e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleAssignedOrderClick = (order: any) => {
+    if (order.isAssigned) {
+      // Find the corresponding shipment and select it
+      const shipment = shipments.find(s => s.orderId === order.orderId);
+      if (shipment) {
+        setSelectedShipment(shipment.id);
+        if (DEBUG) console.debug('Selected shipment for order:', order.orderId, 'shipment:', shipment.id);
+      }
+    }
   };
 
   const getPriorityClass = (priority: string) => {
@@ -64,23 +110,25 @@ export default function UnassignedOrdersPanel({
         <button
           onClick={onToggle}
           className="flex-shrink-0 p-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          title="Show Unassigned Orders"
+          title="Show Orders"
         >
           <div className="transform rotate-90 text-xs font-medium">ORDERS</div>
         </button>
         <div className="flex-1 flex flex-col items-center justify-start space-y-2 pt-4 custom-scrollbar" style={{ overflowY: 'scroll', minHeight: '200px' }}>
-          {unassignedOrders.slice(0, 6).map(order => (
+          {allOrders.slice(0, 6).map(order => (
             <div
               key={order.id}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                order.isAssigned ? 'opacity-60' : ''
+              }`}
               style={{ backgroundColor: productColors[order.productType] || '#6B7280' }}
-              title={`${order.orderId} - ${order.quantity}L ${order.productType}`}
+              title={`${order.orderId} - ${order.quantity}L ${order.productType} ${order.isAssigned ? '(Assigned)' : ''}`}
             >
               {order.quantity > 1000 ? `${Math.round(order.quantity/1000)}k` : order.quantity}
             </div>
           ))}
-          {unassignedOrders.length > 6 && (
-            <div className="text-xs text-gray-500">+{unassignedOrders.length - 6}</div>
+          {allOrders.length > 6 && (
+            <div className="text-xs text-gray-500">+{allOrders.length - 6}</div>
           )}
         </div>
       </div>
@@ -92,7 +140,7 @@ export default function UnassignedOrdersPanel({
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">Unassigned Orders</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Orders</h2>
           <button
             onClick={onToggle}
             className="p-1 text-gray-400 hover:text-gray-600"
@@ -114,17 +162,28 @@ export default function UnassignedOrdersPanel({
           />
         </div>
 
-        {/* Priority Filter */}
-        <select
-          className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value)}
-        >
-          <option value="all">All Priorities</option>
-          <option value="high">High Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="low">Low Priority</option>
-        </select>
+        {/* Filters */}
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            className="p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="all">All Orders</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="assigned">Assigned</option>
+          </select>
+          <select
+            className="p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+          >
+            <option value="all">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
       </div>
 
       {/* Orders List */}
@@ -132,67 +191,66 @@ export default function UnassignedOrdersPanel({
         {filteredOrders.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <div className="text-2xl mb-2">📋</div>
-            <p className="text-sm">No unassigned orders</p>
+            <p className="text-sm">No orders found</p>
             {searchTerm && (
               <p className="text-xs mt-1">Try adjusting your search</p>
             )}
           </div>
         ) : (
           filteredOrders.map(order => {
-            const etaHours = differenceInHours(order.etaWindow.end, order.etaWindow.start);
-            const isUrgent = differenceInHours(order.etaWindow.start, new Date()) < 4;
-
+            const isAssigned = order.isAssigned;
+            const isUnassigned = !order.isAssigned;
+            
             return (
               <div
                 key={order.id}
-                className={`p-3 border rounded-lg cursor-grab hover:shadow-md transition-all ${
-                  isUrgent ? 'ring-2 ring-red-200 bg-red-50' : 'bg-gray-50 hover:bg-gray-100'
+                className={`p-3 border rounded-lg transition-all ${
+                  isAssigned 
+                    ? 'bg-gray-100 border-gray-300 opacity-75 cursor-pointer hover:opacity-90 hover:shadow-sm' 
+                    : 'bg-gray-50 hover:bg-gray-100 cursor-grab hover:shadow-md'
                 }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, order)}
-                title="Drag to scheduler to assign"
+                draggable={isUnassigned}
+                onDragStart={isUnassigned ? (e) => handleDragStart(e, order as any) : undefined}
+                onClick={isAssigned ? () => handleAssignedOrderClick(order) : undefined}
+                title={isAssigned ? "Click to select shipment in scheduler" : "Drag to scheduler to assign"}
               >
-                {/* Order Header */}
+                {/* Order Header - Compact */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-sm text-gray-900">{order.orderId}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityClass(order.priority)}`}>
-                      {order.priority}
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${getPriorityClass(order.priority)}`}>
+                      {order.priority.charAt(0).toUpperCase()}
                     </span>
+                    {isAssigned && (
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border-blue-200">
+                        ASSIGNED
+                      </span>
+                    )}
                   </div>
-                  {isUrgent && (
-                    <span className="text-red-500 text-xs font-medium">URGENT</span>
-                  )}
-                </div>
-
-                {/* Product Info */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: productColors[order.productType] || '#6B7280' }}
                     />
-                    <span className="text-sm text-gray-700 capitalize">{order.productType}</span>
+                    <span className="text-xs font-medium text-gray-900">{order.quantity}L</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">{order.quantity}L</span>
                 </div>
 
-                {/* Customer */}
-                <div className="text-xs text-gray-600 mb-2">
-                  <div className="font-medium">{order.customerName}</div>
-                  <div className="truncate">{order.deliveryAddress}</div>
+                {/* Site and Depot Info - Compact */}
+                <div className="text-xs text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">
+                      {order.siteName || 'SITE'} | {order.depotName || 'DEPOT'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* ETA Window */}
-                <div className="text-xs text-gray-500">
-                  <div>ETA: {format(order.etaWindow.start, 'MMM d, HH:mm')} - {format(order.etaWindow.end, 'HH:mm')}</div>
-                  <div>Window: {etaHours}h</div>
-                </div>
-
-                {/* Drag Handle */}
-                <div className="mt-2 text-center text-gray-400">
-                  <div className="text-xs">⋮⋮⋮</div>
-                </div>
+                {/* Drag Handle - Only for unassigned */}
+                {isUnassigned && (
+                  <div className="mt-2 text-center text-gray-400">
+                    <div className="text-xs">⋮⋮⋮</div>
+                  </div>
+                )}
               </div>
             );
           })
@@ -202,10 +260,16 @@ export default function UnassignedOrdersPanel({
       {/* Footer */}
       <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between text-xs text-gray-600">
-          <span>{filteredOrders.length} of {unassignedOrders.length} orders</span>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            <span>Urgent</span>
+          <span>{filteredOrders.length} of {allOrders.length} orders</span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-gray-50 border border-gray-300 rounded-full"></div>
+              <span>Unassigned</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span>Assigned</span>
+            </div>
           </div>
         </div>
       </div>
