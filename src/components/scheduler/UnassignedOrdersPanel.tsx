@@ -6,10 +6,25 @@
 import React, { useState } from 'react';
 import { useSchedulerStore } from '@/store/schedulerStore';
 import { productColors } from '@/data/mock-scheduler';
-import { format, differenceInHours } from 'date-fns';
 // Using simple icons instead of heroicons
 
 const DEBUG = false;
+
+// Type for combined order (assigned or unassigned)
+interface CombinedOrder {
+  id: string;
+  orderId: string;
+  productType: string;
+  quantity: number;
+  priority: 'high' | 'medium' | 'low';
+  siteName?: string;
+  depotName?: string;
+  customerName: string;
+  deliveryAddress: string;
+  isAssigned: boolean;
+  vehicleId?: string;
+  etaWindow?: { start: Date; end: Date };
+}
 
 interface UnassignedOrdersPanelProps {
   isCollapsed: boolean;
@@ -64,7 +79,7 @@ export default function UnassignedOrdersPanel({
     return matchesSearch && matchesPriority && matchesStatus;
   });
 
-  const handleDragStart = (e: React.DragEvent, order: any) => {
+  const handleDragStart = (e: React.DragEvent, order: CombinedOrder) => {
     // Only allow dragging unassigned orders
     if (order.isAssigned) {
       e.preventDefault();
@@ -84,7 +99,7 @@ export default function UnassignedOrdersPanel({
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  const handleAssignedOrderClick = (order: any) => {
+  const handleAssignedOrderClick = (order: CombinedOrder) => {
     if (order.isAssigned) {
       // Find the corresponding shipment and select it
       const shipment = shipments.find(s => s.orderId === order.orderId);
@@ -210,7 +225,7 @@ export default function UnassignedOrdersPanel({
                     : 'bg-gray-50 hover:bg-gray-100 cursor-grab hover:shadow-md'
                 }`}
                 draggable={isUnassigned}
-                onDragStart={isUnassigned ? (e) => handleDragStart(e, order as any) : undefined}
+                onDragStart={isUnassigned ? (e) => handleDragStart(e, order) : undefined}
                 onClick={isAssigned ? () => handleAssignedOrderClick(order) : undefined}
                 title={isAssigned ? "Click to select shipment in scheduler" : "Drag to scheduler to assign"}
               >

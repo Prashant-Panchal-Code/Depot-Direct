@@ -22,7 +22,7 @@ interface DayPilotSchedulerViewProps {
 
 export default function DayPilotSchedulerView({
   selectedDate,
-  zoomLevel,
+  zoomLevel: _zoomLevel,
   onEventClick
 }: DayPilotSchedulerViewProps) {
   const {
@@ -56,7 +56,7 @@ export default function DayPilotSchedulerView({
     setDragOverVehicle(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, vehicleId: string, timeSlot: Date) => {
+  const handleDrop = async (e: React.DragEvent, vehicleId: string, _timeSlot: Date) => {
     e.preventDefault();
     
     // Find the vehicle to check availability
@@ -79,7 +79,7 @@ export default function DayPilotSchedulerView({
       if (orderDataString) {
         orderData = JSON.parse(orderDataString);
       }
-    } catch (error) {
+    } catch (_error) {
       if (DEBUG) console.debug('No JSON data found in drag event');
     }
     
@@ -172,26 +172,7 @@ export default function DayPilotSchedulerView({
     }
   };
 
-  const checkForOverlappingShipments = (vehicleId: string, startTime: Date, endTime: Date, excludeShipmentId?: string) => {
-    const vehicleShipments = shipments.filter(s => 
-      s.vehicleId === vehicleId && s.id !== excludeShipmentId
-    );
-    
-    for (const shipment of vehicleShipments) {
-      const shipmentStart = new Date(shipment.start);
-      const shipmentEnd = new Date(shipment.end);
-      
-      // Check if there's any overlap
-      if (startTime < shipmentEnd && endTime > shipmentStart) {
-        return {
-          hasOverlap: true,
-          conflictingShipment: shipment
-        };
-      }
-    }
-    
-    return { hasOverlap: false };
-  };
+
 
   const getNextAvailableSlot = (vehicleId: string, duration: number, excludeShipmentId?: string) => {
     const vehicle = vehicles.find(v => v.id === vehicleId);
@@ -223,7 +204,7 @@ export default function DayPilotSchedulerView({
     }
   };
 
-  const reorganizeVehicleShipments = async (vehicleId: string, movedShipmentId?: string) => {
+  const reorganizeVehicleShipments = async (vehicleId: string, _movedShipmentId?: string) => {
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (!vehicle) return;
 
@@ -291,10 +272,10 @@ export default function DayPilotSchedulerView({
               const trailer = getTrailerByVehicleId(vehicle.id);
               const vehicleShipments = shipments.filter(s => s.vehicleId === vehicle.id);
               
-              // Calculate utilization
+              // Calculate utilization (not used in display currently)
               const totalAllocated = vehicleShipments.reduce((sum, s) => sum + s.quantity, 0);
               const totalCapacity = trailer?.totalCapacity || 1;
-              const utilization = Math.round((totalAllocated / totalCapacity) * 100);
+              const _utilization = Math.round((totalAllocated / totalCapacity) * 100);
 
               // Status colors
               const statusColors = {
@@ -381,7 +362,7 @@ export default function DayPilotSchedulerView({
                             const start = new Date(shipment.start);
                             const end = new Date(shipment.end);
                             const shipmentStartHour = start.getHours();
-                            const shipmentStartMinutes = start.getMinutes();
+                            const _shipmentStartMinutes = start.getMinutes();
                             const duration = differenceInMinutes(end, start);
                             
                             // Only show the shipment content in the first cell it appears in
