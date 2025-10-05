@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppContext } from '@/app/contexts/AppContext';
 import { useUser, logoutUser } from '@/hooks/useUser';
-import { PresentationChart, Kanban, Users } from "@phosphor-icons/react";
+import { PresentationChart, Users } from "@phosphor-icons/react";
 
 export default function AdminSidebar() {
   const pathname = usePathname();

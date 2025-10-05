@@ -6,8 +6,9 @@ import { ColDef, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
 import { CheckSquare, XCircle, Rows, MapPin, Users } from "@phosphor-icons/react"
+import { PageLoading, LoadingOverlay } from '@/components/ui/loading-spinner'
 import { showToast } from '@/components/ui/toast-placeholder'
-import AdminApiService, { User, Company } from '@/lib/api/admin'
+import AdminApiService, { User } from '@/lib/api/admin'
 import UserForm from './UserForm'
 import UserRegionAssignmentModal from './UserRegionAssignmentModal'
 
@@ -66,6 +67,7 @@ const mockUsers: User[] = [
 export default function UsersGrid({ filterCompanyId, filterRegionId, filterCountryId }: UsersGridProps) {
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [operationLoading, setOperationLoading] = useState(false)
   const [showUserForm, setShowUserForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -177,7 +179,7 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       headerName: 'Name',
       flex: 1,
       minWidth: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: { value: string }) => (
         <span className="font-medium text-gray-900">{params.value}</span>
       )
     },
@@ -192,7 +194,7 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       headerName: 'Role',
       flex: 0.8,
       minWidth: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: { value: string }) => (
         <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
           {params.value}
         </span>
@@ -211,39 +213,11 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
       minWidth: 130
     },
     {
-      field: 'assignedRegions',
-      headerName: 'Regions',
-      flex: 1,
-      minWidth: 150,
-      cellRenderer: (params: any) => {
-        const regions = params.value || []
-        if (regions.length === 0) {
-          return (
-            <span className="text-gray-400 text-xs italic">No regions assigned</span>
-          )
-        }
-        return (
-          <div className="flex flex-wrap gap-1">
-            {regions.slice(0, 2).map((region: any, index: number) => (
-              <span key={index} className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                {region.name}
-              </span>
-            ))}
-            {regions.length > 2 && (
-              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                +{regions.length - 2} more
-              </span>
-            )}
-          </div>
-        )
-      }
-    },
-    {
       field: 'active',
       headerName: 'Status',
       flex: 0.6,
       minWidth: 100,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: { value: boolean }) => (
         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
           params.value 
             ? 'bg-green-100 text-green-800' 
@@ -270,12 +244,19 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     setShowUserForm(true)
   }
 
-  const handleFormSuccess = () => {
-    // Refresh the users data after successful create/edit
-    fetchUsers()
-    setShowUserForm(false)
-    setEditingUser(null)
-    showToast('User saved successfully', 'success')
+  const handleFormSuccess = async () => {
+    setOperationLoading(true)
+    try {
+      // Refresh the users data after successful create/edit
+      await fetchUsers()
+      setShowUserForm(false)
+      setEditingUser(null)
+      showToast('User saved successfully', 'success')
+    } catch {
+      showToast('Failed to refresh data', 'error')
+    } finally {
+      setOperationLoading(false)
+    }
   }
 
   const handleFormClose = () => {
@@ -283,11 +264,18 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
     setEditingUser(null)
   }
 
-  const handleRegionAssignmentSuccess = () => {
-    // Refresh users data to reflect any changes
-    fetchUsers()
-    setShowRegionAssignmentModal(false)
-    setSelectedUserForRegions(null)
+  const handleRegionAssignmentSuccess = async () => {
+    setOperationLoading(true)
+    try {
+      // Refresh users data to reflect any changes
+      await fetchUsers()
+      setShowRegionAssignmentModal(false)
+      setSelectedUserForRegions(null)
+    } catch {
+      showToast('Failed to refresh data', 'error')
+    } finally {
+      setOperationLoading(false)
+    }
   }
 
   const handleRegionAssignmentClose = () => {
@@ -296,13 +284,13 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-40">Loading users...</div>
+    return <PageLoading text="Loading users..." />
   }
 
   const displayUsers = filteredUsers
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex gap-2">
           <div className="bg-gray-50 px-2 py-1 rounded text-xs flex items-center gap-1">
@@ -372,6 +360,12 @@ export default function UsersGrid({ filterCompanyId, filterRegionId, filterCount
         onClose={handleRegionAssignmentClose}
         onSuccess={handleRegionAssignmentSuccess}
         user={selectedUserForRegions}
+      />
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay 
+        isVisible={operationLoading} 
+        text="Processing..." 
       />
     </div>
   )

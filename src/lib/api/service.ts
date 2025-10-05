@@ -1,4 +1,4 @@
-import { API_CONFIG, getAuthHeaders, buildUrl } from './config'
+import { getAuthHeaders, buildUrl } from './config'
 
 // Generic API response wrapper
 export interface ApiResponse<T> {
@@ -13,7 +13,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 // API request options
 export interface ApiRequestOptions {
   method?: HttpMethod
-  body?: any
+  body?: unknown
   headers?: Record<string, string>
   token?: string
 }
@@ -139,11 +139,11 @@ export class ApiService {
     return this.request<T>(endpoint, { method: 'GET', token })
   }
 
-  async post<T>(endpoint: string, body: any, token?: string): Promise<T> {
+  async post<T>(endpoint: string, body: unknown, token?: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'POST', body, token })
   }
 
-  async put<T>(endpoint: string, body: any, token?: string): Promise<T> {
+  async put<T>(endpoint: string, body: unknown, token?: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'PUT', body, token })
   }
 

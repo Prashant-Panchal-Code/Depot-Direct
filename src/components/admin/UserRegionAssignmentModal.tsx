@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CheckSquare, Square, Users, MapPin } from '@phosphor-icons/react'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { showToast } from '@/components/ui/toast-placeholder'
 import AdminApiService, { User, Region } from '@/lib/api/admin'
 
@@ -21,6 +22,7 @@ export default function UserRegionAssignmentModal({
   onSuccess 
 }: UserRegionAssignmentModalProps) {
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [availableRegions, setAvailableRegions] = useState<Region[]>([])
   const [assignedRegions, setAssignedRegions] = useState<Region[]>([])
   const [selectedRegions, setSelectedRegions] = useState<Set<number>>(new Set())
@@ -53,7 +55,7 @@ export default function UserRegionAssignmentModal({
         const assignedRegionData = userWithRegions.regions || []
         setAssignedRegions(assignedRegionData)
         setSelectedRegions(new Set(assignedRegionData.map(r => r.id)))
-      } catch (error) {
+      } catch {
         // If user has no region assignments yet, start with empty
         setAssignedRegions([])
         setSelectedRegions(new Set())
@@ -80,7 +82,7 @@ export default function UserRegionAssignmentModal({
   const handleSave = async () => {
     if (!user) return
 
-    setLoading(true)
+    setSaving(true)
     try {
       const currentlyAssigned = new Set(assignedRegions.map(r => r.id))
       const newlySelected = selectedRegions
@@ -109,7 +111,7 @@ export default function UserRegionAssignmentModal({
       const errorMessage = error instanceof Error ? error.message : 'Failed to update region assignments'
       showToast(errorMessage, 'error')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -242,16 +244,21 @@ export default function UserRegionAssignmentModal({
 
         {/* Footer Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t flex-shrink-0">
-          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={loading || saving}>
             Cancel
           </Button>
           <Button 
             type="button" 
             onClick={handleSave} 
-            disabled={loading || availableRegions.length === 0}
+            disabled={loading || saving || availableRegions.length === 0}
             className="bg-primary-custom hover:bg-primary-custom/90"
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {saving ? (
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" />
+                Saving...
+              </div>
+            ) : 'Save Changes'}
           </Button>
         </div>
       </DialogContent>

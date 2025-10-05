@@ -95,7 +95,14 @@ const mockCountries: Country[] = [
 ]
 
 // Map API response to Company interface
-const mapApiResponseToCompany = (apiResponse: any): Company => {
+const mapApiResponseToCompany = (apiResponse: {
+  id: number;
+  companyCode?: string;
+  name: string;
+  countryId: number;
+  country?: { name: string };
+  description?: string;
+}): Company => {
   return {
     id: apiResponse.id,
     company_code: apiResponse.companyCode || '',
@@ -247,12 +254,26 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
 
       if (isEdit) {
         // Update existing company using admin API service
-        const result = await adminApi.put(`/Companies/${company.id}`, submitData) as any
-        savedCompany = mapApiResponseToCompany(result)
+        const result = await adminApi.put(`/Companies/${company.id}`, submitData)
+        savedCompany = mapApiResponseToCompany(result as {
+          id: number;
+          companyCode?: string;
+          name: string;
+          countryId: number;
+          country?: { name: string };
+          description?: string;
+        })
       } else {
         // Create new company using admin API service
-        const result = await adminApi.post('/Companies', submitData) as any
-        savedCompany = mapApiResponseToCompany(result)
+        const result = await adminApi.post('/Companies', submitData)
+        savedCompany = mapApiResponseToCompany(result as {
+          id: number;
+          companyCode?: string;
+          name: string;
+          countryId: number;
+          country?: { name: string };
+          description?: string;
+        })
       }
 
       // Show success message and close form

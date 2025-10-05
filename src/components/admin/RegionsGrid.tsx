@@ -19,7 +19,8 @@ import { AgGridReact } from 'ag-grid-react'
 import { ColDef, GridApi, GridReadyEvent, RowClickedEvent, RowClassParams, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
-import { CheckSquare, XCircle, Rows } from "@phosphor-icons/react"
+import { Rows } from "@phosphor-icons/react"
+import { PageLoading, LoadingOverlay } from '@/components/ui/loading-spinner'
 import { showToast } from '@/components/ui/toast-placeholder'
 
 // Register AG Grid modules
@@ -117,23 +118,30 @@ const mockRegions: Region[] = [
   }
 ]
 
-// Map API response to Region interface
-const mapApiResponseToRegion = (apiResponse: any): Region => {
-  return {
-    id: apiResponse.id,
-    region_code: apiResponse.regionCode || '',
-    name: apiResponse.name,
-    company_id: apiResponse.companyId,
-    company_name: apiResponse.companyName || 'Unknown',
-    // Note: API response doesn't include country info, using defaults
-    country_id: 0,
-    country_name: 'N/A'
-  }
-}
+// Map API response to Region interface (commented out as not currently used)
+// const mapApiResponseToRegion = (apiResponse: {
+//   id: number;
+//   regionCode?: string;
+//   name: string;
+//   companyId: number;
+//   companyName?: string;
+// }): Region => {
+//   return {
+//     id: apiResponse.id,
+//     region_code: apiResponse.regionCode || '',
+//     name: apiResponse.name,
+//     company_id: apiResponse.companyId,  
+//     company_name: apiResponse.companyName || 'Unknown',
+//     // Note: API response doesn't include country info, using defaults
+//     country_id: 0,
+//     country_name: 'N/A'
+//   }
+// }
 
 export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionId }: RegionsGridProps) {
   const [allRegions, setAllRegions] = useState<Region[]>([])
   const [loading, setLoading] = useState(true)
+  const [operationLoading, setOperationLoading] = useState(false)
   const [showRegionForm, setShowRegionForm] = useState(false)
   const [editingRegion, setEditingRegion] = useState<Region | null>(null)
   const gridRef = useRef<AgGridReact>(null)
@@ -154,31 +162,25 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
       setShowRegionForm(true)
     }
 
-    const handleDelete = async (e: React.MouseEvent) => {
-      e.stopPropagation()
-      
-      if (!confirm(`Are you sure you want to delete region "${region.name}"?`)) {
-        return
-      }
-
-      try {
-        // Delete region using real API
-        await adminApi.delete(`/Regions/${region.id}`)
-        
-        setAllRegions(prev => prev.filter(r => r.id !== region.id))
-        showToast('Region deleted successfully', 'success')
-        
-        if (selectedRegionId === region.id) {
-          onSelect(null)
-        }
-      } catch (error) {
-        console.error('Delete region failed:', error)
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : 'Failed to delete region'
-        showToast(errorMessage, 'error')
-      }
-    }
+    // TODO: Implement delete functionality  
+    // const handleDelete = async (e: React.MouseEvent) => {
+    //   e.stopPropagation()
+    //   if (!confirm(`Are you sure you want to delete region "${region.name}"?`)) {
+    //     return
+    //   }
+    //   try {
+    //     await adminApi.delete(`/Regions/${region.id}`)
+    //     setAllRegions(prev => prev.filter(r => r.id !== region.id))
+    //     showToast('Region deleted successfully', 'success')
+    //     if (selectedRegionId === region.id) {
+    //       onSelect(null)
+    //     }
+    //   } catch (error) {
+    //     console.error('Delete region failed:', error)
+    //     const errorMessage = error instanceof Error ? error.message : 'Failed to delete region'
+    //     showToast(errorMessage, 'error')
+    //   }
+    // }
 
     return (
       <div className="flex gap-2">
@@ -201,21 +203,28 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
   }
 
   // Handle form save
-  const handleFormSave = (savedRegion: Region) => {
-    if (editingRegion) {
-      // Update existing
-      setAllRegions(prev => 
-        prev.map(r => r.id === savedRegion.id ? savedRegion : r)
-      )
-      showToast('Region updated successfully', 'success')
-    } else {
-      // Add new
-      setAllRegions(prev => [...prev, savedRegion])
-      showToast('Region created successfully', 'success')
+  const handleFormSave = async (savedRegion: Region) => {
+    setOperationLoading(true)
+    try {
+      if (editingRegion) {
+        // Update existing
+        setAllRegions(prev => 
+          prev.map(r => r.id === savedRegion.id ? savedRegion : r)
+        )
+        showToast('Region updated successfully', 'success')
+      } else {
+        // Add new
+        setAllRegions(prev => [...prev, savedRegion])
+        showToast('Region created successfully', 'success')
+      }
+      
+      setShowRegionForm(false)
+      setEditingRegion(null)
+    } catch {
+      showToast('Operation failed', 'error')
+    } finally {
+      setOperationLoading(false)
     }
-    
-    setShowRegionForm(false)
-    setEditingRegion(null)
   }
 
   // Handle form close
@@ -342,15 +351,11 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <div className="text-gray-500">Loading regions...</div>
-      </div>
-    )
+    return <PageLoading text="Loading regions..." />
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       {/* Compact Stats Row */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex gap-2">
@@ -410,6 +415,12 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
           } : undefined}
         />
       )}
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay 
+        isVisible={operationLoading} 
+        text={editingRegion ? "Updating region..." : "Creating region..."} 
+      />
     </div>
   )
 }

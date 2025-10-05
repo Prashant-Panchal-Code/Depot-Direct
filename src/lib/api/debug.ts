@@ -10,7 +10,7 @@ export const testApiAuth = async () => {
     console.log('Testing server connectivity to:', baseUrl)
     
     try {
-      const pingResponse = await fetch(baseUrl, {
+      await fetch(baseUrl, {
         method: 'GET',
         mode: 'no-cors' // Use no-cors to bypass CORS for connectivity test
       })

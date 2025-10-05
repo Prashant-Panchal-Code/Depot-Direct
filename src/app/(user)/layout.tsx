@@ -20,7 +20,7 @@ interface UserLayoutProps {
 export default async function UserLayout({ children }: UserLayoutProps) {
   // Get user info from headers set by middleware
   const headersList = await headers()
-  const _user = getUserFromHeaders(headersList)
+  getUserFromHeaders(headersList)
 
   return (
     <div className="bg-gray-50 text-gray-900 min-h-screen" style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}>

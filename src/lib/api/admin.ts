@@ -9,7 +9,7 @@ export interface Country {
   companiesCount: number
   regionsCount: number
   depotsCount: number
-  metadata: any
+  metadata: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
   createdBy: string | null
@@ -22,7 +22,7 @@ export interface Company {
   companyCode: string
   countryId: number
   description: string
-  metadata: any
+  metadata: Record<string, unknown> | null
   createdBy: string | null
   lastUpdatedBy: number | null
   createdAt: string
@@ -32,7 +32,7 @@ export interface Company {
     id: number
     name: string
     isoCode: string
-    metadata: any
+    metadata: Record<string, unknown> | null
     createdAt: string
     updatedAt: string
     createdBy: string | null
@@ -53,7 +53,7 @@ export interface Region {
   companyName?: string
   countryId?: number
   countryName?: string
-  metadata?: any
+  metadata?: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
   createdBy?: string | null
@@ -80,7 +80,7 @@ export interface UpdateUserDTO {
   fullName?: string
   phone?: string
   active?: boolean
-  metadata?: any
+  metadata?: Record<string, unknown> | null
 }
 
 export interface User {
@@ -91,7 +91,7 @@ export interface User {
   fullName: string
   phone?: string
   active: boolean
-  metadata?: any
+  metadata?: Record<string, unknown> | null
   createdAt: string
   updatedAt: string
   createdBy?: string | null
@@ -108,7 +108,7 @@ export interface UserRegionAssignment {
   id: number
   userId: number
   regionId: number
-  metadata: any
+  metadata: Record<string, unknown> | null
   createdBy: number
   createdAt: string
   updatedAt: string

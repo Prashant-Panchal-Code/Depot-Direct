@@ -67,7 +67,7 @@ import { ColDef, GridApi, GridReadyEvent, RowClickedEvent, RowClassParams, Modul
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
 import { Rows } from "@phosphor-icons/react"
-
+import { PageLoading, LoadingOverlay } from '@/components/ui/loading-spinner'
 import { showToast } from '@/components/ui/toast-placeholder'
 
 // Register AG Grid modules
@@ -75,6 +75,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 import CompanyForm from './CompanyForm'
 import { adminApi } from '@/lib/api/service'
+import AdminApiService from '@/lib/api/admin'
 
 // Company data interface for this component
 interface Company {
@@ -94,7 +95,14 @@ interface CompaniesGridProps {
 }
 
 // Map API response to Company interface
-const mapApiResponseToCompany = (apiResponse: any): Company => {
+const mapApiResponseToCompany = (apiResponse: { 
+  id: number; 
+  companyCode?: string; 
+  name: string; 
+  countryId: number; 
+  countryName?: string; 
+  description?: string 
+}): Company => {
   return {
     id: apiResponse.id,
     company_code: apiResponse.companyCode || '',
@@ -136,6 +144,7 @@ const mockCompanies: Company[] = [
 export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = false, selectedCountry }: CompaniesGridProps) {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
+  const [operationLoading, setOperationLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const gridRef = useRef<AgGridReact>(null)
@@ -151,33 +160,25 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
       setShowForm(true)
     }
 
-    const handleDelete = async (e: React.MouseEvent) => {
-      e.stopPropagation() // Prevent row selection
-      
-      if (!confirm(`Are you sure you want to delete "${company.name}"?`)) {
-        return
-      }
-
-      try {
-        // Delete company using real API
-        await adminApi.delete(`/Companies/${company.id}`)
-        
-        // Remove from local state
-        setCompanies(prev => prev.filter(c => c.id !== company.id))
-        showToast('Company deleted successfully', 'success')
-        
-        // Clear selection if deleted company was selected
-        if (selectedCompanyId === company.id) {
-          onSelect(null)
-        }
-      } catch (error) {
-        console.error('Delete company failed:', error)
-        const errorMessage = error instanceof Error 
-          ? error.message 
-          : 'Failed to delete company'
-        showToast(errorMessage, 'error')
-      }
-    }
+    // TODO: Implement delete functionality
+    // const handleDelete = async (e: React.MouseEvent) => {
+    //   e.stopPropagation()
+    //   if (!confirm(`Are you sure you want to delete "${company.name}"?`)) {
+    //     return
+    //   }
+    //   try {
+    //     await adminApi.delete(`/Companies/${company.id}`)
+    //     setCompanies(prev => prev.filter(c => c.id !== company.id))
+    //     showToast('Company deleted successfully', 'success')
+    //     if (selectedCompanyId === company.id) {
+    //       onSelect(null)
+    //     }
+    //   } catch (error) {
+    //     console.error('Delete company failed:', error)
+    //     const errorMessage = error instanceof Error ? error.message : 'Failed to delete company'
+    //     showToast(errorMessage, 'error')
+    //   }
+    // }
 
     return (
       <div className="flex gap-2">
@@ -242,10 +243,15 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
       
       if (selectedCountry) {
         // Fetch companies for specific country using real API
-        const apiResponse = await adminApi.get(`/Companies/by-country/${selectedCountry.id}`)
-        companies = Array.isArray(apiResponse) 
-          ? apiResponse.map(mapApiResponseToCompany)
-          : [mapApiResponseToCompany(apiResponse)]
+        const apiCompanies = await AdminApiService.getCompanies(selectedCountry.id)
+        companies = apiCompanies.map(apiCompany => ({
+          id: apiCompany.id,
+          company_code: apiCompany.companyCode || '',
+          name: apiCompany.name,
+          country_id: apiCompany.countryId,
+          country_name: apiCompany.country?.name || 'Unknown',
+          description: apiCompany.description || ''
+        }))
       } else {
         // Fetch all companies - fallback to mock data for now
         // TODO: Implement get all companies API endpoint
@@ -312,21 +318,28 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
   }
 
   // Handle form save
-  const handleFormSave = (savedCompany: Company) => {
-    if (editingCompany) {
-      // Update existing
-      setCompanies(prev => 
-        prev.map(c => c.id === savedCompany.id ? savedCompany : c)
-      )
-      showToast('Company updated successfully', 'success')
-    } else {
-      // Add new
-      setCompanies(prev => [...prev, savedCompany])
-      showToast('Company created successfully', 'success')
+  const handleFormSave = async (savedCompany: Company) => {
+    setOperationLoading(true)
+    try {
+      if (editingCompany) {
+        // Update existing
+        setCompanies(prev => 
+          prev.map(c => c.id === savedCompany.id ? savedCompany : c)
+        )
+        showToast('Company updated successfully', 'success')
+      } else {
+        // Add new
+        setCompanies(prev => [...prev, savedCompany])
+        showToast('Company created successfully', 'success')
+      }
+      
+      setShowForm(false)
+      setEditingCompany(null)
+    } catch {
+      showToast('Operation failed', 'error')
+    } finally {
+      setOperationLoading(false)
     }
-    
-    setShowForm(false)
-    setEditingCompany(null)
   }
 
   // Handle form close
@@ -342,29 +355,25 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
     resizable: true
   }
 
-  // Grid options
-  const _gridOptions = {
-    rowSelection: 'single' as const,
-    suppressRowClickSelection: false,
-    rowHeight: 50,
-    headerHeight: 40,
-    pagination: true,
-    paginationPageSize: 20,
-    suppressPaginationPanel: false
-  }
+  // Grid options (for future use)
+  // const gridOptions = {
+  //   rowSelection: 'single' as const,
+  //   suppressRowClickSelection: false,
+  //   rowHeight: 50,
+  //   headerHeight: 40,
+  //   pagination: true,
+  //   paginationPageSize: 20,
+  //   suppressPaginationPanel: false
+  // }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <div className="text-gray-500">Loading companies...</div>
-      </div>
-    )
+    return <PageLoading text="Loading companies..." />
   }
 
   if (compact) {
     // Compact layout for 3-pane org-setup
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col relative">
         {/* Compact Stats Row */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div className="flex gap-2">
@@ -419,13 +428,19 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
             selectedCountry={selectedCountry}
           />
         )}
+        
+        {/* Loading Overlay */}
+        <LoadingOverlay 
+          isVisible={operationLoading} 
+          text={editingCompany ? "Updating company..." : "Creating company..."} 
+        />
       </div>
     )
   }
 
   // Full layout for standalone pages
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {/* Header with Stats and Add Button */}
       <div className="flex justify-between items-center mb-4">
         {/* Stats Cards */}
@@ -495,6 +510,12 @@ export default function CompaniesGrid({ onSelect, selectedCompanyId, compact = f
           selectedCountry={selectedCountry}
         />
       )}
+      
+      {/* Loading Overlay */}
+      <LoadingOverlay 
+        isVisible={operationLoading} 
+        text={editingCompany ? "Updating company..." : "Creating company..."} 
+      />
     </div>
   )
 }

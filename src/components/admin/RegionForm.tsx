@@ -37,7 +37,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -92,14 +91,22 @@ const mockCompanies: Company[] = [
 ]
 
 // Map API response to Region interface
-const mapApiResponseToRegion = (apiResponse: any): Region => {
+const mapApiResponseToRegion = (apiResponse: {
+  id: number;
+  regionCode?: string;
+  name: string;
+  companyId: number;
+  companyName?: string;
+  countryId?: number;
+  countryName?: string;
+}): Region => {
   return {
     id: apiResponse.id,
     region_code: apiResponse.regionCode || '',
     name: apiResponse.name,
     company_id: apiResponse.companyId,
     company_name: apiResponse.companyName || 'Unknown',
-    country_id: apiResponse.countryId,
+    country_id: apiResponse.countryId || 0,
     country_name: apiResponse.countryName || 'Unknown'
   }
 }
@@ -219,12 +226,28 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
 
       if (isEdit) {
         // Update existing region using admin API service
-        const result = await adminApi.put(`/Regions/${region.id}`, submitData) as any
-        savedRegion = mapApiResponseToRegion(result)
+        const result = await adminApi.put(`/Regions/${region.id}`, submitData)
+        savedRegion = mapApiResponseToRegion(result as {
+          id: number;
+          regionCode?: string;
+          name: string;
+          companyId: number;
+          companyName?: string;
+          countryId?: number;
+          countryName?: string;
+        })
       } else {
         // Create new region using admin API service
-        const result = await adminApi.post('/Regions', submitData) as any
-        savedRegion = mapApiResponseToRegion(result)
+        const result = await adminApi.post('/Regions', submitData)
+        savedRegion = mapApiResponseToRegion(result as {
+          id: number;
+          regionCode?: string;
+          name: string;
+          companyId: number;
+          companyName?: string;
+          countryId?: number;
+          countryName?: string;
+        })
       }
 
       // Show success message and close form

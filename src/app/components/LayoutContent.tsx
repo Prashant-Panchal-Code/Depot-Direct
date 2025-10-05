@@ -8,9 +8,6 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   // Root LayoutContent now only handles auth pages and root page
   // Admin pages use (admin)/layout.tsx
   // User pages use (user)/layout.tsx
-  const isAuthPage = pathname === '/login' || 
-                     pathname === '/login-test' || 
-                     pathname === '/unauthorized';
   
   // All pages get the basic styling, but no header/sidebar
   // Those are handled by the specific (admin) and (user) layouts

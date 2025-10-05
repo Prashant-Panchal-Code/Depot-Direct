@@ -90,7 +90,7 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
         fullName: user.fullName,
         phone: user.phone || '',
         active: user.active,
-        metadata: user.metadata || ''
+        metadata: typeof user.metadata === 'string' ? user.metadata : ''
       })
     } else if (mode === 'create') {
       // Reset form for create mode
@@ -152,7 +152,7 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
           fullName: formData.fullName,
           phone: formData.phone || undefined,
           active: formData.active,
-          metadata: formData.metadata || undefined
+          metadata: formData.metadata ? { value: formData.metadata } : undefined
         }
         
         // Only include password if it was provided
@@ -175,7 +175,7 @@ export default function UserForm({ open, onClose, onSuccess, user, mode, filterC
     }
   }
 
-  const handleInputChange = (field: keyof typeof formData, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | number | boolean | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

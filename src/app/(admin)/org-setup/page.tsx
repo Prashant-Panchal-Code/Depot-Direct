@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
 import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
@@ -11,12 +10,11 @@ import AdminLayoutWrapper from '../../components/AdminLayoutWrapper'
 import AdminApiService, { Country } from '@/lib/api/admin'
 import { AgGridReact } from 'ag-grid-react'
 import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community'
+import { PageLoading } from '@/components/ui/loading-spinner'
 
 
 // Updated Country interface to match API response
-interface CountryDisplay extends Country {
-  // No additional properties needed, using API response as-is
-}
+type CountryDisplay = Country
 
 // Types for the selected entities
 interface SelectedCompany {
@@ -180,9 +178,7 @@ export default function OrgSetupPage() {
 
           {/* Loading and Error States */}
           {loading && (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-gray-500">Loading countries...</div>
-            </div>
+            <PageLoading text="Loading countries..." />
           )}
 
           {error && (
@@ -221,7 +217,7 @@ export default function OrgSetupPage() {
                       cellClass: 'text-sm text-gray-600 flex items-center'
                     }}
                     rowClass="hover:bg-gray-50 cursor-pointer"
-                    getRowStyle={(params) => {
+                    getRowStyle={() => {
                       return { 
                         borderBottom: '1px solid #e5e7eb',
                         cursor: 'pointer'
