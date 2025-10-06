@@ -6,6 +6,17 @@ import { useAppContext } from '../contexts/AppContext';
 import { useUser, logoutUser } from '@/hooks/useUser';
 import { GasPump,PresentationChart ,CalendarDots, TruckTrailer, Warehouse, LetterCircleP, Users, Kanban, CheckSquareOffset   } from "@phosphor-icons/react";
 
+// Simple role colors - matches the 4 exact roles from .NET API
+const getRoleColor = (role: string) => {
+  const colors = {
+    'Admin': 'bg-red-100 text-red-800',
+    'Data Manager': 'bg-blue-100 text-blue-800', 
+    'Planner': 'bg-green-100 text-green-800',
+    'Viewer': 'bg-gray-100 text-gray-800'
+  };
+  return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed } = useAppContext();
@@ -114,9 +125,23 @@ export default function Sidebar() {
                 <p className="font-semibold text-gray-900 truncate">
                   {user?.name || user?.email?.split('@')[0] || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.role || 'User'} {isAdmin && '(Admin)'}
-                </p>
+                
+                {/* Role Badge */}
+                {user?.role && (
+                  <div className="flex items-center gap-2 mt-1 mb-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Company Info */}
+                {user?.companyName && (
+                  <p className="text-xs text-gray-500 truncate mb-1">
+                    {user.companyName}
+                  </p>
+                )}
+                
                 <button 
                   onClick={handleSignOut}
                   className="text-sm text-gray-500 hover:text-primary-custom cursor-pointer transition-colors"
@@ -127,12 +152,21 @@ export default function Sidebar() {
             )}
           </div>
           
-          {/* Tooltip for collapsed user section */}
+          {/* Enhanced Tooltip for collapsed user section */}
           {sidebarCollapsed && (
-            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 min-w-48">
               <div>
-                <p>{user?.name || user?.email?.split('@')[0] || 'User'}</p>
-                <p className="text-xs text-gray-300">{user?.role}</p>
+                <p className="font-medium">{user?.name || user?.email?.split('@')[0] || 'User'}</p>
+                {user?.role && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </div>
+                )}
+                {user?.companyName && (
+                  <p className="text-xs text-gray-300 mt-1">{user.companyName}</p>
+                )}
               </div>
               <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
             </div>

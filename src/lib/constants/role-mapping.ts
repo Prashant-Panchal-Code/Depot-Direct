@@ -7,20 +7,20 @@
 
 import { ALL_ROLES, type AllRole } from './roles'
 
-// Role ID mapping (for backwards compatibility with API)
+// Role ID mapping (matches your database exactly)
 export const ROLE_ID_MAP: Record<AllRole, number> = {
-  [ALL_ROLES.ADMIN]: 1,
-  [ALL_ROLES.DATA_MANAGER]: 2,
-  [ALL_ROLES.PLANNER]: 3,
-  [ALL_ROLES.VIEWER]: 4
+  [ALL_ROLES.ADMIN]: 1,        // ID: 1
+  [ALL_ROLES.PLANNER]: 2,      // ID: 2  
+  [ALL_ROLES.DATA_MANAGER]: 3, // ID: 3
+  [ALL_ROLES.VIEWER]: 4        // ID: 4
 }
 
 // Reverse mapping (ID to role name)
 export const ID_ROLE_MAP: Record<number, AllRole> = {
-  1: ALL_ROLES.ADMIN,
-  2: ALL_ROLES.DATA_MANAGER,
-  3: ALL_ROLES.PLANNER,
-  4: ALL_ROLES.VIEWER
+  1: ALL_ROLES.ADMIN,        // "Admin"
+  2: ALL_ROLES.PLANNER,      // "Planner"
+  3: ALL_ROLES.DATA_MANAGER, // "Data Manager"
+  4: ALL_ROLES.VIEWER        // "Viewer"
 }
 
 // Helper functions

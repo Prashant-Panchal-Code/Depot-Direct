@@ -49,14 +49,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
       return NextResponse.json({ user: null })
     }
 
-    // Extract user data from .NET API JWT token
-    // Your .NET API uses different claim names
+    // Extract user data from .NET API JWT token based on your actual payload
     const user: User = {
-      id: payload.nameid || payload.sub, // .NET API uses 'nameid' for user ID
+      id: payload.nameid, // .NET API uses 'nameid' for user ID  
       email: payload.email,
-      role: payload.role,
-      name: payload.unique_name || payload.name, // .NET API uses 'unique_name'
-      company_id: parseInt(payload.CompanyId) || 0 // .NET API uses 'CompanyId'
+      role: payload.role, // Use role directly from JWT (should be "Admin", etc.)
+      name: payload.unique_name, // .NET API uses 'unique_name'
+      company_id: parseInt(payload.CompanyId) || 0, // .NET API uses 'CompanyId'
+      roleId: parseInt(payload.RoleId) || 0
     }
 
     console.log('🔍 SESSION - Extracted user:', user)

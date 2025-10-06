@@ -17,12 +17,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ALL_ROLES, type AllRole, isAdminRole, hasPermissionLevel } from '@/lib/constants/roles'
 
 export interface User {
   id: number | string
   email: string
-  role: AllRole
+  role: string
   name: string
   company_id: number
   companyName?: string
@@ -38,8 +37,6 @@ export interface UseUserReturn {
   mutate: () => Promise<void>
   isAdmin: boolean
   isAuthenticated: boolean
-  hasRole: (role: AllRole) => boolean
-  hasPermission: (requiredRole: AllRole) => boolean
 }
 
 /**
@@ -86,18 +83,9 @@ export function useUser(): UseUserReturn {
     await fetchUser()
   }
 
-  // Helper computed values
-  const isAdmin = user ? isAdminRole(user.role) : false
+  // Helper computed values - simple role check
+  const isAdmin = user?.role === 'Admin'
   const isAuthenticated = !!user
-
-  // Helper functions
-  const hasRole = (role: AllRole): boolean => {
-    return user?.role === role
-  }
-
-  const hasPermission = (requiredRole: AllRole): boolean => {
-    return user ? hasPermissionLevel(user.role, requiredRole) : false
-  }
 
   return {
     user,
@@ -105,9 +93,7 @@ export function useUser(): UseUserReturn {
     error,
     mutate,
     isAdmin,
-    isAuthenticated,
-    hasRole,
-    hasPermission
+    isAuthenticated
   }
 }
 

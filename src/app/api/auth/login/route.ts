@@ -116,10 +116,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
     }
 
     // Transform .NET user data to our format
+    // Since your .NET API already returns "Admin" which matches our role constants, use it directly
     const user = {
       id: dotNetData.user.id,
       email: dotNetData.user.email,
-      role: dotNetData.user.roleName, // Keep original case from .NET API
+      role: dotNetData.user.roleName, // Use role directly from .NET API
       name: dotNetData.user.fullName,
       company_id: dotNetData.user.companyId,
       companyName: dotNetData.user.companyName,
