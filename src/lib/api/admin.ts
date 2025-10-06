@@ -1,5 +1,7 @@
 import { api } from './client'
 import { API_CONFIG } from './config'
+import { type AllRole } from '@/lib/constants/roles'
+import { getRolesForDropdown } from '@/lib/constants/role-mapping'
 
 // Types based on the API response you provided
 export interface Country {
@@ -98,7 +100,7 @@ export interface User {
   lastUpdatedBy?: string | null
   deletedAt?: string | null
   // Additional fields for display
-  roleName?: string
+  roleName?: AllRole
   companyName?: string
   assignedRegions?: Region[]
 }
@@ -155,9 +157,8 @@ export class AdminApiService {
 
   // Get roles for user form dropdown
   static async getRoles(): Promise<Role[]> {
-    const { data, error } = await api.get<Role[]>('ADMIN', API_CONFIG.ADMIN.ENDPOINTS.ROLES)
-    if (error) throw new Error(error)
-    return data || []
+    // Return predefined roles instead of making API call
+    return getRolesForDropdown()
   }
 
   // Get regions for a specific company

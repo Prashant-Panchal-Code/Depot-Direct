@@ -18,12 +18,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
 // Token expiration time
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d'
 
+import { ALL_ROLES, type AllRole } from '@/lib/constants/roles'
+
 /**
  * JWT Token Payload Interface
  */
 export interface TokenPayload {
   sub: string         // Subject (user ID)
-  role: string        // User role (admin, planner, etc.)
+  role: AllRole       // User role (Admin, Viewer, Planner, Data Manager)
   email: string       // User email
   company_id?: number // Optional company ID
   iat: number         // Issued at
@@ -134,7 +136,7 @@ Generate test tokens for local development:
 // Admin token
 const adminToken = signToken({
   sub: '1',
-  role: 'admin',
+  role: ALL_ROLES.ADMIN,
   email: 'admin@example.com',
   company_id: 1
 })
@@ -142,7 +144,7 @@ const adminToken = signToken({
 // Regular user token
 const userToken = signToken({
   sub: '2', 
-  role: 'planner',
+  role: ALL_ROLES.PLANNER,
   email: 'user@example.com',
   company_id: 1
 })
