@@ -14,9 +14,9 @@
 
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { ColDef, GridApi, GridReadyEvent, RowClickedEvent, RowClassParams, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
+import { ColDef, GridApi, GridReadyEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
 import { Rows } from "@phosphor-icons/react"
@@ -137,7 +137,7 @@ const mockRegions: Region[] = [
 //   }
 // }
 
-export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionId }: RegionsGridProps) {
+function RegionsGrid({ selectedCompany, onSelect, selectedRegionId }: RegionsGridProps) {
   const [allRegions, setAllRegions] = useState<Region[]>([])
   const [loading, setLoading] = useState(true)
   const [operationLoading, setOperationLoading] = useState(false)
@@ -193,7 +193,7 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
         </Button>
       </div>
     )
-  }, [selectedRegionId, onSelect])
+  }, [])
 
   // Handle create region
   const handleCreateRegion = () => {
@@ -232,29 +232,27 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     setEditingRegion(null)
   }
 
-  // Column definitions
-  const columnDefs: ColDef[] = [
+  // Column definitions - memoized to prevent recreation on each render
+  const columnDefs: ColDef[] = useMemo(() => [
     {
       field: 'region_code',
       headerName: 'Code',
-      pinned: 'left'
+      pinned: 'left' as const
     },
     {
       field: 'name',
       headerName: 'Region Name',
-
-      pinned: 'left'
+      pinned: 'left' as const
     },
     {
       field: 'actions',
       headerName: 'Actions',
-
       cellRenderer: ActionsRenderer,
       sortable: false,
       filter: false,
-      pinned: 'right'
+      pinned: 'right' as const
     }
-  ]
+  ], [ActionsRenderer])
 
   // Fetch regions data
   const fetchRegions = useCallback(async () => {
@@ -296,17 +294,7 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     }
   }, [selectedCompany])
 
-  // Auto-select first region when company changes or regions load
-  useEffect(() => {
-    if (selectedCompany && filteredRegions.length > 0 && !selectedRegionId) {
-      const firstRegion = filteredRegions[0]
-      onSelect({
-        id: firstRegion.id,
-        name: firstRegion.name,
-        country_id: firstRegion.country_id
-      })
-    }
-  }, [selectedCompany, filteredRegions, selectedRegionId, onSelect])
+
 
   // Initialize data
   useEffect(() => {
@@ -314,40 +302,20 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
   }, [fetchRegions])
 
   // Handle grid ready
-  const onGridReady = (params: GridReadyEvent) => {
+  const onGridReady = useCallback((params: GridReadyEvent) => {
     gridApiRef.current = params.api
-  }
+  }, [])
 
-  // Effect to select row in AG-Grid when selectedRegionId changes
-  useEffect(() => {
-    if (gridApiRef.current && selectedRegionId) {
-      gridApiRef.current.forEachNode((node) => {
-        if (node.data?.id === selectedRegionId) {
-          node.setSelected(true)
-          gridApiRef.current?.ensureNodeVisible(node)
-        } else {
-          node.setSelected(false)
-        }
-      })
-    }
-  }, [selectedRegionId, filteredRegions])
 
-  // Handle row click for selection
-  const onRowClicked = (event: RowClickedEvent) => {
-    const region = event.data as Region
-    onSelect({
-      id: region.id,
-      name: region.name,
-      country_id: region.country_id
-    })
-  }
 
-  // Default grid options
-  const defaultColDef = {
+
+
+  // Default grid options - memoized to prevent recreation
+  const defaultColDef = useMemo(() => ({
     sortable: true,
     filter: true,
     resizable: true
-  }
+  }), [])
 
   if (loading) {
     return <PageLoading text="Loading regions..." />
@@ -382,21 +350,19 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
           rowData={filteredRegions}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          animateRows={true}
+          animateRows={false}
           pagination={false}
           rowHeight={40}
           headerHeight={35}
           suppressMenuHide={true}
           theme={themeQuartz}
-          rowSelection="single"
-          suppressRowClickSelection={false}
+          rowSelection={undefined}
+          suppressRowClickSelection={true}
           onGridReady={onGridReady}
-          onRowClicked={onRowClicked}
-          rowClassRules={{
-            'ag-row-selected bg-blue-100 border-l-4 border-l-blue-500': (params: RowClassParams<Region>) => params.data?.id === selectedRegionId
-          }}
           suppressPaginationPanel={true}
           domLayout="normal"
+          suppressRowTransform={true}
+          suppressColumnVirtualisation={true}
         />
       </div>
 
@@ -423,3 +389,5 @@ export default function RegionsGrid({ selectedCompany, onSelect, selectedRegionI
     </div>
   )
 }
+
+export default React.memo(RegionsGrid)
