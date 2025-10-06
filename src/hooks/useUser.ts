@@ -19,11 +19,15 @@
 import { useEffect, useState } from 'react'
 
 export interface User {
-  id: string
-  email?: string
-  role?: string
-  name?: string
-  company_id?: number
+  id: number | string
+  email: string
+  role: string
+  name: string
+  company_id: number
+  companyName?: string
+  roleId?: number
+  phone?: string
+  active?: boolean
 }
 
 export interface UseUserReturn {
@@ -79,8 +83,8 @@ export function useUser(): UseUserReturn {
     await fetchUser()
   }
 
-  // Helper computed values
-  const isAdmin = user?.role === 'admin'
+  // Helper computed values (case-insensitive admin check)
+  const isAdmin = user?.role?.toLowerCase() === 'admin'
   const isAuthenticated = !!user
 
   return {
@@ -165,7 +169,7 @@ export function useUser() {
     loading: !error && !data,
     error,
     mutate,
-    isAdmin: data?.user?.role === 'admin',
+    isAdmin: data?.user?.role?.toLowerCase() === 'admin',
     isAuthenticated: !!data?.user
   }
 }
@@ -188,7 +192,7 @@ export function useUser() {
     loading: isLoading,
     error,
     mutate: refetch,
-    isAdmin: data?.user?.role === 'admin',
+    isAdmin: data?.user?.role?.toLowerCase() === 'admin',
     isAuthenticated: !!data?.user
   }
 }
@@ -206,7 +210,7 @@ export function useUser() {
     loading: status === 'loading',
     error: null,
     mutate: () => {}, // NextAuth handles this internally
-    isAdmin: session?.user?.role === 'admin',
+    isAdmin: session?.user?.role?.toLowerCase() === 'admin',
     isAuthenticated: !!session?.user
   }
 }

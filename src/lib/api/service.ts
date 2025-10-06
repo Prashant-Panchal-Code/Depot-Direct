@@ -1,3 +1,4 @@
+
 import { getAuthHeaders, buildUrl } from './config'
 
 // Generic API response wrapper
@@ -54,6 +55,7 @@ export class ApiService {
     }
 
     try {
+
       const response = await fetch(url, requestOptions)
       
       if (!response.ok) {
@@ -136,6 +138,8 @@ export class ApiService {
 
   // Convenience methods
   async get<T>(endpoint: string, token?: string): Promise<T> {
+    console.log(`GET ${endpoint}`);
+    console.log(`Token: ${token ? '***' : 'No token'}`);
     return this.request<T>(endpoint, { method: 'GET', token })
   }
 

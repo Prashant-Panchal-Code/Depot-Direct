@@ -6,8 +6,9 @@ export const API_CONFIG = {
     BASE_URL: 'http://localhost:5204/api/admin',
     PROXY_BASE_URL: '/api/proxy', // Next.js API route for proxying
     AUTH: {
-      type: 'Basic' as const,
-      credentials: 'YWRtaW46YWRtaW4xMjM='
+      type: 'Bearer' as const,
+      // Token will be set dynamically after login
+      credentials: ''
     },
     ENDPOINTS: {
       COUNTRIES_WITH_STATS: '/countries/with-stats',
@@ -53,21 +54,12 @@ export const getAuthHeaders = (module: 'ADMIN' | 'USER', token?: string) => {
 
   const config = API_CONFIG[module]
   
-  let headers: Record<string, string>
-  
-  if (config.AUTH.type === 'Basic') {
-    headers = {
-      'Authorization': `Basic ${config.AUTH.credentials}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  } else {
-    const authToken = token || config.AUTH.credentials
-    headers = {
-      'Authorization': `Bearer ${authToken}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
+  // Both ADMIN and USER modules now use Bearer tokens
+  const authToken = token || config.AUTH.credentials
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${authToken}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
   
   return headers

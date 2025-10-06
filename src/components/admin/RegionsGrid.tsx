@@ -27,7 +27,6 @@ import { showToast } from '@/components/ui/toast-placeholder'
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 import RegionForm from './RegionForm'
-import { adminApi } from '@/lib/api/service'
 import AdminApiService, { Region as ApiRegion } from '@/lib/api/admin'
 
 // Region data interface - updated to reflect company connection

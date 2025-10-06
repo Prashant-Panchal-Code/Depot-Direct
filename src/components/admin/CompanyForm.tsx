@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { showToast } from '@/components/ui/toast-placeholder'
-import { adminApi } from '@/lib/api/service'
+import { api } from '@/lib/api/client'
 
 
 // Company form validation schema
@@ -254,7 +254,8 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
 
       if (isEdit) {
         // Update existing company using admin API service
-        const result = await adminApi.put(`/Companies/${company.id}`, submitData)
+        const { data: result, error } = await api.put('ADMIN', `/Companies/${company.id}`, submitData)
+        if (error) throw new Error(error)
         savedCompany = mapApiResponseToCompany(result as {
           id: number;
           companyCode?: string;
@@ -265,7 +266,8 @@ export default function CompanyForm({ company, onSaved, onClose, selectedCountry
         })
       } else {
         // Create new company using admin API service
-        const result = await adminApi.post('/Companies', submitData)
+        const { data: result, error } = await api.post('ADMIN', '/Companies', submitData)
+        if (error) throw new Error(error)
         savedCompany = mapApiResponseToCompany(result as {
           id: number;
           companyCode?: string;

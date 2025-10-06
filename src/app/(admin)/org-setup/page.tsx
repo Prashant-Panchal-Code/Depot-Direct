@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { showToast } from '@/components/ui/toast-placeholder'
 import { useAppContext } from '@/app/contexts/AppContext'
+import { useUser } from '@/hooks/useUser'
 import CompaniesGrid from '@/components/admin/CompaniesGrid'
 import RegionsGrid from '@/components/admin/RegionsGrid'
 import UsersGrid from '@/components/admin/UsersGrid'
@@ -32,6 +33,7 @@ interface SelectedRegion {
 
 export default function OrgSetupPage() {
   const { setSidebarCollapsed } = useAppContext()
+  const { user, loading: userLoading, isAuthenticated, isAdmin } = useUser()
   const [currentView, setCurrentView] = useState<'countries' | 'detailed'>('countries')
   const [selectedCountry, setSelectedCountry] = useState<CountryDisplay | null>(null)
   const [countries, setCountries] = useState<CountryDisplay[]>([])
@@ -81,11 +83,24 @@ export default function OrgSetupPage() {
 
   // Load countries data from API
   const loadCountries = useCallback(async () => {
+    if (!isAuthenticated || !isAdmin) {
+      console.log('🔍 User not authenticated or not admin, skipping API call')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
       
       console.log('Loading countries from API...')
+      console.log('🔍 User authenticated:', { 
+        isAuthenticated, 
+        isAdmin, 
+        userRole: user?.role,
+        userName: user?.name 
+      })
+      
       const countriesData = await AdminApiService.getCountriesWithStats()
       
       console.log('Successfully loaded countries:', countriesData.length)
@@ -97,7 +112,7 @@ export default function OrgSetupPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isAuthenticated, isAdmin, user])
 
   useEffect(() => {
     loadCountries()
@@ -154,6 +169,48 @@ export default function OrgSetupPage() {
     // Auto-size columns to fit content
     params.api.sizeColumnsToFit()
   }, [])
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <AdminLayoutWrapper>
+        <div className="flex items-center justify-center min-h-96">
+          <PageLoading text="Checking authentication..." />
+        </div>
+      </AdminLayoutWrapper>
+    )
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AdminLayoutWrapper>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to access this page.</p>
+            <a href="/login" className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+              Go to Login
+            </a>
+          </div>
+        </div>
+      </AdminLayoutWrapper>
+    )
+  }
+
+  // Show error if not admin
+  if (!isAdmin) {
+    return (
+      <AdminLayoutWrapper>
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Admin Access Required</h2>
+            <p className="text-gray-600">You need admin privileges to access this page.</p>
+          </div>
+        </div>
+      </AdminLayoutWrapper>
+    )
+  }
 
   return (
     <AdminLayoutWrapper>

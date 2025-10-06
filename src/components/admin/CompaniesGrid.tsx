@@ -74,7 +74,6 @@ import { showToast } from '@/components/ui/toast-placeholder'
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 import CompanyForm from './CompanyForm'
-import { adminApi } from '@/lib/api/service'
 import AdminApiService from '@/lib/api/admin'
 
 // Company data interface for this component

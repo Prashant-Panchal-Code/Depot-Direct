@@ -1,20 +1,15 @@
 /**
- * Next.js App Router API: Development Login Endpoint
+ * Next.js App Router API: .NET API Login Integration
  * 
  * POST /api/auth/login
- * Simple development-only login endpoint for testing authentication flow.
+ * Integrates with .NET API for authentication and stores JWT token.
  * 
- * ⚠️  WARNING: This is for development only! Not suitable for production.
- * 
- * TODO: Replace with proper authentication provider (NextAuth.js, Auth0, etc.)
- * TODO: Implement proper password hashing and verification
- * TODO: Add rate limiting and brute force protection
- * TODO: Add proper input validation and sanitization
- * TODO: Implement secure session management
+ * This endpoint calls the .NET API login endpoint and stores the returned
+ * JWT token in an HTTP-only cookie for secure client-side access.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { signToken, createTokenCookie } from '@/lib/auth'
+import { createTokenCookie } from '@/lib/auth'
 
 interface LoginRequest {
   email: string
@@ -24,13 +19,44 @@ interface LoginRequest {
 interface LoginResponse {
   ok: boolean
   user?: {
-    id: string
+    id: number
     email: string
     role: string
     name: string
     company_id: number
+    companyName: string
+    roleId: number
+    phone: string
+    active: boolean
   }
+  token?: string
   error?: string
+}
+
+// .NET API Response interface
+interface DotNetLoginResponse {
+  success: boolean
+  message: string
+  token: string
+  tokenType: string
+  expiresAt: string
+  user: {
+    id: number
+    companyId: number
+    companyName: string
+    roleId: number
+    roleName: string
+    email: string
+    fullName: string
+    phone: string
+    active: boolean
+    metadata: string
+    createdBy: string | null
+    lastUpdatedBy: string | null
+    createdAt: string
+    updatedAt: string
+    deletedAt: string | null
+  }
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<LoginResponse>> {
@@ -50,53 +76,73 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
       )
     }
 
-    // 🚨 DEVELOPMENT ONLY: Simple role assignment based on email
-    // TODO: Replace with actual database user lookup and password verification
-    const isAdmin = email.toLowerCase().includes('admin')
-    const userId = isAdmin ? '1' : '2'
-    const role = isAdmin ? 'admin' : 'planner'
-    const companyId = 1 // TODO: Get from database
-
-    // TODO: In production, verify password against hashed password in database
-    // Example: const isValidPassword = await bcrypt.compare(password, user.hashedPassword)
+    console.log('� LOGIN API - Calling .NET API...')
     
-    // For demo purposes, accept any password
-    console.log(`🚨 DEV LOGIN: ${email} with password: ${password}`)
-
-    console.log('🚀 LOGIN API - About to generate JWT token...')
-    
-    // Generate JWT token
-    const token = signToken({
-      sub: userId,
-      role: role,
-      email: email,
-      company_id: companyId
+    // Call .NET API login endpoint
+    const dotNetResponse = await fetch('http://localhost:5204/api/Auth/login', {
+      method: 'POST',
+      headers: {
+        'accept': 'text/plain',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
     })
-    console.log('🚀 LOGIN API - Generated token:', token.substring(0, 20) + '...')
 
-    // Create user object for response
-    const user = {
-      id: userId,
-      email: email,
-      role: role,
-      name: email.split('@')[0], // Simple name extraction
-      company_id: companyId
+    console.log('🚀 LOGIN API - .NET API response status:', dotNetResponse.status)
+
+    if (!dotNetResponse.ok) {
+      const errorText = await dotNetResponse.text()
+      console.log('🚀 LOGIN API - .NET API error:', errorText)
+      return NextResponse.json(
+        { ok: false, error: 'Invalid credentials' },
+        { status: 401 }
+      )
     }
-    console.log('🚀 LOGIN API - Created user object:', user)
 
-    // Create response with cookie
-    const response = NextResponse.json({ ok: true, user })
+    const dotNetData: DotNetLoginResponse = await dotNetResponse.json()
+    console.log('🚀 LOGIN API - .NET API response data:', {
+      success: dotNetData.success,
+      message: dotNetData.message,
+      tokenType: dotNetData.tokenType,
+      userEmail: dotNetData.user.email,
+      userRole: dotNetData.user.roleName
+    })
+
+    if (!dotNetData.success) {
+      return NextResponse.json(
+        { ok: false, error: dotNetData.message || 'Login failed' },
+        { status: 401 }
+      )
+    }
+
+    // Transform .NET user data to our format
+    const user = {
+      id: dotNetData.user.id,
+      email: dotNetData.user.email,
+      role: dotNetData.user.roleName, // Keep original case from .NET API
+      name: dotNetData.user.fullName,
+      company_id: dotNetData.user.companyId,
+      companyName: dotNetData.user.companyName,
+      roleId: dotNetData.user.roleId,
+      phone: dotNetData.user.phone,
+      active: dotNetData.user.active
+    }
+    console.log('🚀 LOGIN API - Transformed user object:', user)
+    console.log('🚀 LOGIN API - Role from .NET API:', dotNetData.user.roleName)
+
+    // Create response with user data and token
+    const response = NextResponse.json({ 
+      ok: true, 
+      user,
+      token: dotNetData.token 
+    })
     console.log('🚀 LOGIN API - Created response object')
     
-    // Set HTTP-only cookie with token
-    // TODO: In production, use secure cookie settings
-    console.log('🚀 LOGIN API - About to create cookie...')
-    const cookieString = createTokenCookie(token)
-    console.log('🚀 LOGIN API - Setting cookie:', cookieString)
+    // Store the JWT token from .NET API in HTTP-only cookie
+    console.log('🚀 LOGIN API - Setting JWT token cookie...')
+    const cookieString = `token=${dotNetData.token}; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax`
     response.headers.set('Set-Cookie', cookieString)
-    console.log('🚀 LOGIN API - Cookie set in response headers')
-
-    return response
+    console.log('🚀 LOGIN API - JWT token cookie set')
 
     return response
 

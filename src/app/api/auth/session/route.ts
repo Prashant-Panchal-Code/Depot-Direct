@@ -13,11 +13,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
 export interface User {
-  id: string
-  email?: string
-  role?: string
-  name?: string
-  company_id?: number
+  id: number | string
+  email: string
+  role: string
+  name: string
+  company_id: number
+  companyName?: string
+  roleId?: number
+  phone?: string
+  active?: boolean
 }
 
 export interface SessionResponse {
@@ -33,19 +37,29 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
       return NextResponse.json({ user: null })
     }
 
-    // Verify the token
-    const payload = verifyToken(token)
+    // Decode JWT token payload (from .NET API)
+    // Note: We're not verifying the signature here as it was signed by .NET API
+    // In production, you might want to verify against .NET API's public key
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    console.log('🔍 SESSION - Token payload:', payload)
 
-    // TODO: In production, fetch additional user data from database
-    // For now, return data from token payload
-    const user: User = {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      name: payload.email?.split('@')[0], // Simple name extraction for demo
-      company_id: payload.company_id
+    // Check if token is expired
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      console.log('🚫 SESSION - Token expired')
+      return NextResponse.json({ user: null })
     }
 
+    // Extract user data from .NET API JWT token
+    // Your .NET API uses different claim names
+    const user: User = {
+      id: payload.nameid || payload.sub, // .NET API uses 'nameid' for user ID
+      email: payload.email,
+      role: payload.role,
+      name: payload.unique_name || payload.name, // .NET API uses 'unique_name'
+      company_id: parseInt(payload.CompanyId) || 0 // .NET API uses 'CompanyId'
+    }
+
+    console.log('🔍 SESSION - Extracted user:', user)
     return NextResponse.json({ user })
 
   } catch (error: unknown) {

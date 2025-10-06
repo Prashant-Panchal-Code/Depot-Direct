@@ -1,4 +1,4 @@
-import { adminApi } from './service'
+import { api } from './client'
 import { API_CONFIG } from './config'
 
 // Types based on the API response you provided
@@ -131,12 +131,16 @@ export interface UserWithRegions extends User {
 export class AdminApiService {
   // Get all countries with statistics
   static async getCountriesWithStats(): Promise<Country[]> {
-    return adminApi.get<Country[]>(API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES_WITH_STATS)
+    const { data, error } = await api.get<Country[]>('ADMIN', API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES_WITH_STATS)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Get countries (without stats)
   static async getCountries(): Promise<Country[]> {
-    return adminApi.get<Country[]>(API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES)
+    const { data, error } = await api.get<Country[]>('ADMIN', API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Get companies for a specific country
@@ -144,12 +148,16 @@ export class AdminApiService {
     const endpoint = countryId 
       ? `${API_CONFIG.ADMIN.ENDPOINTS.COMPANIES}/by-country/${countryId}`
       : API_CONFIG.ADMIN.ENDPOINTS.COMPANIES
-    return adminApi.get<Company[]>(endpoint)
+    const { data, error } = await api.get<Company[]>('ADMIN', endpoint)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Get roles for user form dropdown
   static async getRoles(): Promise<Role[]> {
-    return adminApi.get<Role[]>(API_CONFIG.ADMIN.ENDPOINTS.ROLES)
+    const { data, error } = await api.get<Role[]>('ADMIN', API_CONFIG.ADMIN.ENDPOINTS.ROLES)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Get regions for a specific company
@@ -157,7 +165,9 @@ export class AdminApiService {
     const endpoint = companyId 
       ? `${API_CONFIG.ADMIN.ENDPOINTS.REGIONS_BY_COMPANY}/${companyId}`
       : API_CONFIG.ADMIN.ENDPOINTS.REGIONS
-    return adminApi.get<Region[]>(endpoint)
+    const { data, error } = await api.get<Region[]>('ADMIN', endpoint)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Get users with optional filtering
@@ -165,7 +175,9 @@ export class AdminApiService {
     // If countryId is provided, use the by-country endpoint
     if (filters?.countryId) {
       const byCountryEndpoint = `${API_CONFIG.ADMIN.ENDPOINTS.USERS_BY_COUNTRY}/${filters.countryId}`
-      return adminApi.get<User[]>(byCountryEndpoint)
+      const { data, error } = await api.get<User[]>('ADMIN', byCountryEndpoint)
+      if (error) throw new Error(error)
+      return data || []
     }
     
     // Otherwise use the general users endpoint with filters
@@ -181,47 +193,63 @@ export class AdminApiService {
       }
     }
     
-    return adminApi.get<User[]>(endpoint)
+    const { data, error } = await api.get<User[]>('ADMIN', endpoint)
+    if (error) throw new Error(error)
+    return data || []
   }
 
   // Create a new user
   static async createUser(userData: AddUserDTO): Promise<User> {
-    return adminApi.post<User>(API_CONFIG.ADMIN.ENDPOINTS.USERS, userData)
+    const { data, error } = await api.post<User>('ADMIN', API_CONFIG.ADMIN.ENDPOINTS.USERS, userData)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Update an existing user
   static async updateUser(userId: number, userData: UpdateUserDTO): Promise<User> {
-    return adminApi.put<User>(`${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`, userData)
+    const { data, error } = await api.put<User>('ADMIN', `${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`, userData)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Delete a user
   static async deleteUser(userId: number): Promise<void> {
-    return adminApi.delete<void>(`${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`)
+    const { error } = await api.delete<void>('ADMIN', `${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`)
+    if (error) throw new Error(error)
   }
 
   // Get a single user by ID
   static async getUser(userId: number): Promise<User> {
-    return adminApi.get<User>(`${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`)
+    const { data, error } = await api.get<User>('ADMIN', `${API_CONFIG.ADMIN.ENDPOINTS.USERS}/${userId}`)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Toggle country status (if the API supports it)
   static async toggleCountryStatus(countryId: number, active: boolean): Promise<Country> {
-    return adminApi.put<Country>(`${API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES}/${countryId}`, { active })
+    const { data, error } = await api.put<Country>('ADMIN', `${API_CONFIG.ADMIN.ENDPOINTS.COUNTRIES}/${countryId}`, { active })
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Assign a region to a user (using the real API endpoint)
   static async assignUserToRegion(userId: number, regionId: number): Promise<UserRegionAssignment> {
-    return adminApi.post<UserRegionAssignment>(`/UserRegions/user/${userId}/regions`, { regionId })
+    const { data, error } = await api.post<UserRegionAssignment>('ADMIN', `/UserRegions/user/${userId}/regions`, { regionId })
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Remove a user from a region
   static async removeUserFromRegion(userId: number, regionId: number): Promise<void> {
-    return adminApi.delete<void>(`/UserRegions/user/${userId}/regions/${regionId}`)
+    const { error } = await api.delete<void>('ADMIN', `/UserRegions/user/${userId}/regions/${regionId}`)
+    if (error) throw new Error(error)
   }
 
   // Get user's assigned regions
   static async getUserRegions(userId: number): Promise<UserWithRegions> {
-    return adminApi.get<UserWithRegions>(`/UserRegions/user/${userId}/regions`)
+    const { data, error } = await api.get<UserWithRegions>('ADMIN', `/UserRegions/user/${userId}/regions`)
+    if (error) throw new Error(error)
+    return data!
   }
 }
 

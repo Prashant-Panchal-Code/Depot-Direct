@@ -49,11 +49,11 @@ function LoginForm() {
             const userData = await userResponse.json()
             console.log('🔍 User data after login:', userData)
             
-            // Determine redirect URL based on role
+            // Determine redirect URL based on role (case-insensitive)
             let redirectUrl = callbackUrl
             if (callbackUrl === '/dashboard') {
               // Only change default redirect if it's the default dashboard
-              redirectUrl = userData.user?.role === 'admin' ? '/admin' : '/dashboard'
+              redirectUrl = userData.user?.role?.toLowerCase() === 'admin' ? '/admin' : '/dashboard'
             }
             
             console.log('🔍 Redirecting to:', redirectUrl)

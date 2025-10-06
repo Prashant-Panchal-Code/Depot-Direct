@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { showToast } from '@/components/ui/toast-placeholder'
-import { adminApi } from '@/lib/api/service'
+import { api } from '@/lib/api/client'
 
 // Region form validation schema
 const regionSchema = z.object({
@@ -226,7 +226,8 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
 
       if (isEdit) {
         // Update existing region using admin API service
-        const result = await adminApi.put(`/Regions/${region.id}`, submitData)
+        const { data: result, error } = await api.put('ADMIN', `/Regions/${region.id}`, submitData)
+        if (error) throw new Error(error)
         savedRegion = mapApiResponseToRegion(result as {
           id: number;
           regionCode?: string;
@@ -238,7 +239,8 @@ export default function RegionForm({ region, onSaved, onClose, selectedCompany }
         })
       } else {
         // Create new region using admin API service
-        const result = await adminApi.post('/Regions', submitData)
+        const { data: result, error } = await api.post('ADMIN', '/Regions', submitData)
+        if (error) throw new Error(error)
         savedRegion = mapApiResponseToRegion(result as {
           id: number;
           regionCode?: string;
