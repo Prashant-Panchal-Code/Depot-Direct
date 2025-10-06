@@ -240,12 +240,12 @@ export default function DayPilotSchedulerView({
   return (
     <div className="h-full bg-white rounded-lg border border-gray-200 flex flex-col overflow-hidden">
       {/* Single Table with Sticky Header */}
-      <div className="flex-1 custom-scrollbar" style={{ overflowY: 'scroll' }}>
-        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+      <div className="flex-1 custom-scrollbar overflow-auto">
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', minWidth: '1200px' }}>
           <colgroup>
             <col style={{ width: '192px' }} />
             {Array.from({ length: 24 }, (_, i) => (
-              <col key={i} style={{ width: `calc((100% - 192px) / 24)` }} />
+              <col key={i} style={{ width: `calc((100% - 192px) / 24)`, minWidth: '40px' }} />
             ))}
           </colgroup>
           
@@ -254,15 +254,33 @@ export default function DayPilotSchedulerView({
             <tr>
               <th className="border-r border-gray-200 bg-gray-50 p-2 text-left" style={{ width: '192px', minWidth: '192px', maxWidth: '192px' }}>
                 <div className="text-sm font-semibold text-gray-700">
-                  {format(selectedDate, 'MMMM d, yyyy')}
+                  {/* Show full date on larger screens, abbreviated on smaller screens */}
+                  <span className="hidden sm:inline">
+                    {format(selectedDate, 'MMMM d, yyyy')}
+                  </span>
+                  <span className="sm:hidden">
+                    {format(selectedDate, 'MMM d')}
+                  </span>
                 </div>
               </th>
               {Array.from({ length: 24 }, (_, hour) => (
                 <th
                   key={hour}
                   className="border-r border-gray-100 text-xs text-gray-600 text-center p-1 bg-white"
+                  style={{ minWidth: '40px' }}
                 >
-                  {format(addHours(startOfDay(selectedDate), hour), 'HH:mm')}
+                  <div className="flex flex-col items-center">
+                    {/* Show full time on larger screens, abbreviated on smaller screens */}
+                    <span className="hidden sm:inline">
+                      {format(addHours(startOfDay(selectedDate), hour), 'HH:mm')}
+                    </span>
+                    <span className="sm:hidden text-xs">
+                      {hour === 0 ? '12a' : 
+                       hour < 12 ? `${hour}a` : 
+                       hour === 12 ? '12p' : 
+                       `${hour - 12}p`}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>
@@ -297,11 +315,11 @@ export default function DayPilotSchedulerView({
                 }}>
                   <td className="border-r border-gray-200 p-2 bg-gray-50 align-middle" style={{ width: '192px', minWidth: '192px', maxWidth: '192px' }}>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">{vehicle.name}</div>
-                        <div className="text-xs text-gray-500">{vehicle.baseLocation || 'Base Location'}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-gray-900 truncate">{vehicle.name}</div>
+                        <div className="text-xs text-gray-500 truncate">{vehicle.baseLocation || 'Base Location'}</div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-2 flex-shrink-0">
                         <div className="text-xs font-medium text-gray-700">
                           {trailer ? `${Math.round(trailer.totalCapacity / 1000)}T` : 'N/A'}
                         </div>
@@ -463,6 +481,7 @@ export default function DayPilotSchedulerView({
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 12px;
+          height: 12px;
           display: block;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -481,10 +500,12 @@ export default function DayPilotSchedulerView({
         .custom-scrollbar::-webkit-scrollbar-thumb:active {
           background: #475569;
         }
+        .custom-scrollbar::-webkit-scrollbar-corner {
+          background: #e2e8f0;
+        }
         .custom-scrollbar {
           scrollbar-width: auto;
           scrollbar-color: #94a3b8 #e2e8f0;
-          overflow-y: scroll !important;
         }
       `}</style>
     </div>
