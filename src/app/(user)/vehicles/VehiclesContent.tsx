@@ -25,6 +25,7 @@ import AddVehicleDialog, { Vehicle, NewVehicle } from "@/app/components/AddVehic
 import TrailerDetailsPage, { TrailerDetails } from "@/app/components/TrailerDetailsPage";
 import TruckDetailsPage, { TruckDetails } from "@/app/components/TruckDetailsPage";
 import VehicleDetailsPage, { VehicleDetails } from "@/app/components/VehicleDetailsPage";
+import { DataManagerOnly } from "@/components/shared/RoleBasedComponents";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -1016,18 +1017,26 @@ export default function VehiclesContent() {
 
   const stats = getStats();
 
-  // Render Add Button based on active tab
+  // Render Add Button based on active tab - Only for Data Managers
   const renderAddButton = () => {
-    switch (activeTab) {
-      case 'vehicles':
-        return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
-      case 'trucks':
-        return <AddTruckDialog onSave={handleAddTruck} />;
-      case 'trailers':
-        return <AddTrailerDialog onSave={handleAddTrailer} />;
-      default:
-        return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
-    }
+    const getAddDialog = () => {
+      switch (activeTab) {
+        case 'vehicles':
+          return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
+        case 'trucks':
+          return <AddTruckDialog onSave={handleAddTruck} />;
+        case 'trailers':
+          return <AddTrailerDialog onSave={handleAddTrailer} />;
+        default:
+          return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
+      }
+    };
+
+    return (
+      <DataManagerOnly>
+        {getAddDialog()}
+      </DataManagerOnly>
+    );
   };
 
   return (
