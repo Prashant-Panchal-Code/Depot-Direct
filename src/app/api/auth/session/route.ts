@@ -80,6 +80,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
       role: normalizeRole(payload.role), // Normalize role casing
       name: payload.unique_name, // .NET API uses 'unique_name'
       company_id: parseInt(payload.CompanyId) || 0, // .NET API uses 'CompanyId'
+      companyName: payload.CompanyName || 'Unknown Company', // .NET API now includes 'CompanyName'
       roleId: parseInt(payload.RoleId) || 0
     }
 

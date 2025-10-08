@@ -24,8 +24,8 @@ export interface User {
   role: string
   name: string
   company_id: number
-  companyName?: string
-  roleId?: number
+  companyName: string  // Make required since .NET API always provides it
+  roleId: number
   phone?: string
   active?: boolean
 }
