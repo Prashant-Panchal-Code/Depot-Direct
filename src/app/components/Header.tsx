@@ -3,16 +3,20 @@
 import { useAppContext } from '../contexts/AppContext';
 import { Button } from "@/components/ui/button";
 import { useUser } from '@/hooks/useUser';
+import { useDataManagerContext } from '@/contexts/RoleBasedContext';
+import RegionSelector from '@/components/shared/RegionSelector';
+import { normalizeRole, UserRole } from '@/utils/roleUtils';
 
 // Simple role styles - matches the 4 exact roles from .NET API
 const getRoleStyle = (role: string) => {
-  const styles = {
+  const normalizedRole = normalizeRole(role);
+  const styles: Record<UserRole, string> = {
     'Admin': 'bg-red-100 text-red-800 border-red-200',
     'Data Manager': 'bg-blue-100 text-blue-800 border-blue-200',
     'Planner': 'bg-green-100 text-green-800 border-green-200',
     'Viewer': 'bg-gray-100 text-gray-800 border-gray-200'
   };
-  return styles[role as keyof typeof styles] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return styles[normalizedRole] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
 
 export default function Header() {
@@ -48,20 +52,28 @@ export default function Header() {
           <h1 className="text-2xl font-bold text-primary-custom">Depot Direct</h1>
         </div>
 
-        {/* Right side - User role and info */}
+        {/* Right side - Region selector, User role and info */}
         <div className="flex items-center gap-4">
+          {/* Region Selector for Planner/Viewer roles */}
+          <RegionSelector />
+          
           {!loading && user && (
             <div className="flex items-center gap-3">
               {/* Role Badge */}
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleStyle(user.role)}`}>
-                {user.role}
+                {normalizeRole(user.role)}
               </span>
               
-              {/* User Name */}
+              {/* User Name and Context */}
               <div className="text-sm text-gray-700">
                 <span className="font-medium">{user.name || user.email?.split('@')[0]}</span>
                 {user.companyName && (
-                  <div className="text-xs text-gray-500">{user.companyName}</div>
+                  <div className="text-xs text-gray-500">
+                    {normalizeRole(user.role) === 'Data Manager' 
+                      ? `Company: ${user.companyName}`
+                      : user.companyName
+                    }
+                  </div>
                 )}
               </div>
             </div>

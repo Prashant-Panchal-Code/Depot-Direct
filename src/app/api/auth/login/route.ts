@@ -115,12 +115,35 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
       )
     }
 
+    // Helper function to normalize role names from .NET API
+    const normalizeRole = (role: string): string => {
+      if (!role) return role;
+      
+      // Handle specific case inconsistencies from .NET API
+      const roleLower = role.toLowerCase();
+      
+      switch (roleLower) {
+        case 'data manager':
+          return 'Data Manager';
+        case 'admin':
+          return 'Admin';
+        case 'planner':
+          return 'Planner';
+        case 'viewer':
+          return 'Viewer';
+        default:
+          // Fallback: capitalize first letter of each word
+          return role.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ');
+      }
+    };
+
     // Transform .NET user data to our format
-    // Since your .NET API already returns "Admin" which matches our role constants, use it directly
     const user = {
       id: dotNetData.user.id,
       email: dotNetData.user.email,
-      role: dotNetData.user.roleName, // Use role directly from .NET API
+      role: normalizeRole(dotNetData.user.roleName), // Normalize role casing
       name: dotNetData.user.fullName,
       company_id: dotNetData.user.companyId,
       companyName: dotNetData.user.companyName,

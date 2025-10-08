@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { useDataManagerContext, useRegionContext } from "@/contexts/RoleBasedContext";
+import { filterEntitiesByRole, assignMockRegions } from "@/utils/roleBasedFiltering";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -19,8 +21,16 @@ import SiteDetailsPage from "@/app/components/SiteDetailsPage";
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// Extended site type with region information
+interface SiteWithRegion extends Site {
+  regionId: number;
+  regionName: string;
+}
+
 export default function SitesContent() {
   const { sidebarCollapsed } = useAppContext();
+  const { canAddEntities, isDataManager, companyId } = useDataManagerContext();
+  const { selectedRegions, shouldFilterByRegion } = useRegionContext();
   const [selectedSite, setSelectedSite] = useState<SiteDetails | null>(null);
   const [showSiteDetails, setShowSiteDetails] = useState(false);
   // Define depots for reference
@@ -43,7 +53,8 @@ export default function SitesContent() {
     return depot ? depot.depotName : "Unknown Depot";
   };
 
-  const [sites, setSites] = useState<Site[]>([
+  // All sites data with regions assigned
+  const allSites = assignMockRegions([
     { id: 1, siteCode: "WC001", siteName: "Downtown Gas Station", latitude: "34.0522", longitude: "-118.2437", street: "123 Main Street", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", depotId: 1 },
     { id: 2, siteCode: "WC002", siteName: "Airport Fuel Hub", latitude: "34.0522", longitude: "-118.2437", street: "456 Airport Blvd", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", depotId: 3 },
     { id: 3, siteCode: "WC003", siteName: "Industrial District Station", latitude: "34.0194", longitude: "-118.4108", street: "789 Industrial Way", postalCode: "90401", town: "Santa Monica", active: true, priority: "Medium", depotId: 6 },
@@ -96,10 +107,37 @@ export default function SitesContent() {
     { id: 50, siteCode: "WC050", siteName: "Chula Vista Station", latitude: "32.6401", longitude: "-117.0842", street: "789 Broadway", postalCode: "91910", town: "Chula Vista", active: true, priority: "Medium", depotId: null },
   ]);
 
+  // Filter sites based on role and selected regions
+  const getFilteredSites = (): SiteWithRegion[] => {
+    return filterEntitiesByRole(allSites, {
+      shouldFilterByRegion,
+      selectedRegions,
+      companyId,
+      isDataManager
+    });
+  };
+
+  const [sites, setSites] = useState<SiteWithRegion[]>(getFilteredSites());
+
+  // Update sites when selected regions change
+  useEffect(() => {
+    setSites(getFilteredSites());
+  }, [selectedRegions, shouldFilterByRegion]);
+
   const handleAddSite = (newSite: NewSite) => {
-    const site: Site = {
+    // For new site, assign to first selected region or default region
+    const defaultRegionId = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].id 
+      : 1;
+    const defaultRegionName = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].name 
+      : "West Coast";
+      
+    const site: SiteWithRegion = {
       ...newSite,
-      id: sites.length + 1,
+      id: allSites.length + sites.length + 1,
+      regionId: defaultRegionId,
+      regionName: defaultRegionName,
     };
     setSites([...sites, site]);
   };
@@ -129,7 +167,7 @@ export default function SitesContent() {
 
   const handleSaveSite = (updatedSite: SiteDetails) => {
     // Convert SiteDetails back to Site format for the sites array
-    const updatedSiteData: Site = {
+    const updatedSiteData: SiteWithRegion = {
       id: updatedSite.id!,  // Non-null assertion since we know it exists when saving
       siteCode: updatedSite.siteCode,
       siteName: updatedSite.siteName,
@@ -141,9 +179,11 @@ export default function SitesContent() {
       active: updatedSite.active,
       priority: updatedSite.priority,
       depotId: updatedSite.depotId || null, // Include depot ID from the updated site
+      regionId: sites.find(s => s.id === updatedSite.id)?.regionId || 1,
+      regionName: sites.find(s => s.id === updatedSite.id)?.regionName || "West Coast",
     };
     
-    setSites(sites.map(site => 
+    setSites(sites.map((site: SiteWithRegion) => 
       site.id === updatedSite.id ? updatedSiteData : site
     ));
   };
@@ -325,8 +365,8 @@ export default function SitesContent() {
                 </div>
               </div>
 
-              {/* Add New Site Button */}
-              <AddSiteDialog onSave={handleAddSite} />
+              {/* Add New Site Button - Only for Data Managers */}
+              {canAddEntities && <AddSiteDialog onSave={handleAddSite} />}
             </div>
 
             {/* Sites Table - Takes remaining space */}

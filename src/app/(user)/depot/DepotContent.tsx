@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { useDataManagerContext, useRegionContext } from "@/contexts/RoleBasedContext";
+import { filterEntitiesByRole, assignMockRegions } from "@/utils/roleBasedFiltering";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -19,11 +21,21 @@ import DepotDetailsPage, { DepotDetails } from "@/app/components/DepotDetailsPag
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// Extended depot type with region information
+interface DepotWithRegion extends DepotDetails {
+  regionId: number;
+  regionName: string;
+}
+
 export default function DepotContent() {
   const { sidebarCollapsed } = useAppContext();
+  const { canAddEntities, isDataManager, companyId } = useDataManagerContext();
+  const { selectedRegions, shouldFilterByRegion } = useRegionContext();
   const [selectedDepot, setSelectedDepot] = useState<DepotDetails | null>(null);
   const [showDepotDetails, setShowDepotDetails] = useState(false);
-  const [depots, setDepots] = useState<DepotDetails[]>([
+  
+  // All depot data with regions assigned
+  const allDepots = assignMockRegions([
     { id: 1, depotCode: "DP001", depotName: "Main Distribution Center", latLong: "34.0522, -118.2437", latitude: "34.0522", longitude: "-118.2437", street: "100 Industrial Blvd", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isParking: false },
     { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot", latLong: "33.7701, -118.1937", latitude: "33.7701", longitude: "-118.1937", street: "500 Harbor Drive", postalCode: "90731", town: "San Pedro", active: true, priority: "High", isParking: true },
     { id: 3, depotCode: "DP003", depotName: "Airport Fuel Terminal", latLong: "33.9425, -118.4081", latitude: "33.9425", longitude: "-118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isParking: true },
@@ -46,11 +58,38 @@ export default function DepotContent() {
     { id: 20, depotCode: "DP020", depotName: "Point Loma Naval Depot", latLong: "32.6953, -117.2415", latitude: "32.6953", longitude: "-117.2415", street: "2000 Naval Base Rd", postalCode: "92106", town: "Point Loma", active: true, priority: "High", isParking: false },
   ]);
 
+  // Filter depots based on role and selected regions
+  const getFilteredDepots = (): DepotWithRegion[] => {
+    return filterEntitiesByRole(allDepots, {
+      shouldFilterByRegion,
+      selectedRegions,
+      companyId,
+      isDataManager
+    });
+  };
+
+  const [depots, setDepots] = useState<DepotWithRegion[]>(getFilteredDepots());
+
+  // Update depots when selected regions change
+  useEffect(() => {
+    setDepots(getFilteredDepots());
+  }, [selectedRegions, shouldFilterByRegion]);
+
   const handleAddDepot = (newDepot: Depot) => {
-    const depot = {
+    // For new depot, assign to first selected region or default region
+    const defaultRegionId = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].id 
+      : 1;
+    const defaultRegionName = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].name 
+      : "West Coast";
+      
+    const depot: DepotWithRegion = {
       ...newDepot,
-      id: depots.length + 1,
+      id: allDepots.length + depots.length + 1,
       latLong: `${newDepot.latitude}, ${newDepot.longitude}`,
+      regionId: defaultRegionId,
+      regionName: defaultRegionName,
     };
     setDepots([...depots, depot]);
   };
@@ -66,8 +105,12 @@ export default function DepotContent() {
   };
 
   const handleSaveDepot = (updatedDepot: DepotDetails) => {
-    const updatedDepots = depots.map(depot => 
-      depot.id === updatedDepot.id ? updatedDepot : depot
+    const updatedDepots = depots.map((depot: DepotWithRegion) => 
+      depot.id === updatedDepot.id ? {
+        ...updatedDepot,
+        regionId: depot.regionId,
+        regionName: depot.regionName
+      } as DepotWithRegion : depot
     );
     setDepots(updatedDepots);
     setShowDepotDetails(false);
@@ -263,8 +306,8 @@ export default function DepotContent() {
             </div>
           </div>
 
-          {/* Add New Depot Button */}
-          <AddDepotDialog onSave={handleAddDepot} />
+          {/* Add New Depot Button - Only for Data Managers */}
+          {canAddEntities && <AddDepotDialog onSave={handleAddDepot} />}
         </div>
 
         {/* Depots Table - Takes remaining space */}

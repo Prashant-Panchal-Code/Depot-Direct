@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppProvider } from "./contexts/AppContext";
 import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from "@/components/shared/UserProvider";
+import { RoleBasedProvider } from "@/contexts/RoleBasedContext";
 
 // AG Grid imports
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -34,10 +35,12 @@ export default function RootLayout({
       >
         <AppProvider>
           <UserProvider>
-            <LayoutContent>
-              {children}
-            </LayoutContent>
-            <Toaster />
+            <RoleBasedProvider>
+              <LayoutContent>
+                {children}
+              </LayoutContent>
+              <Toaster />
+            </RoleBasedProvider>
           </UserProvider>
         </AppProvider>
       </body>

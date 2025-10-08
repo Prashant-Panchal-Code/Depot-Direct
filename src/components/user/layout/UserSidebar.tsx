@@ -12,6 +12,7 @@ export default function UserSidebar() {
   // Regular user menu items
   const userMenuItems = [
     { href: '/dashboard', icon: <PresentationChart size={25} weight="duotone" />, label: 'Dashboard' },
+    { href: '/role-demo', icon: '🎭', label: 'Role Demo' },
     { href: '/schedule', icon: <CalendarDots size={25} weight="duotone" />, label: 'Schedule' },
     { href: '/vehicles', icon: <TruckTrailer size={25} weight="duotone" />, label: 'Vehicles' },
     { href: '/depot', icon: <Warehouse size={25} weight="duotone" />, label: 'Depot' },

@@ -53,6 +53,7 @@ export default function Sidebar() {
   // Regular user menu items
   const regularMenuItems = [
     { href: '/dashboard', icon: <PresentationChart size={25} weight="duotone" />, label: 'Dashboard' },
+    { href: '/role-demo', icon: <Users size={25} weight="duotone" color="#ff6b35" />, label: '🎭 Role Demo' },
     { href: '/schedule', icon: <CalendarDots size={25} weight="duotone" />, label: 'Schedule' },
     { href: '/vehicles', icon: <TruckTrailer size={25} weight="duotone" />, label: 'Vehicles' },
     { href: '/depot', icon: <Warehouse size={25} weight="duotone" />, label: 'Depot' },
@@ -73,10 +74,20 @@ export default function Sidebar() {
     { href: '/import-export', icon: '📤', label: 'Import/Export' },
     { href: '/data-management', icon: <Kanban size={25} weight="duotone" />, label: 'Data Management' },
     { href: '/users', icon: <Users size={25} weight="duotone" />, label: 'Users' },
+    { href: '/role-demo', icon: '🎭', label: 'Role Demo' },
   ];
 
   // Show different menus based on user role
   const menuItems = isAdmin ? adminMenuItems : regularMenuItems;
+  
+  // Debug: Log which menu is being used
+  console.log('🔍 SIDEBAR DEBUG:', {
+    userRole: user?.role,
+    isAdmin,
+    menuItemsCount: menuItems.length,
+    menuType: isAdmin ? 'admin' : 'regular',
+    hasRoleDemo: menuItems.some(item => item.href === '/role-demo')
+  });
 
   return (
     <aside className={`fixed left-0 top-20 h-[calc(100vh-5rem)] bg-white border-r border-gray-200 flex flex-col justify-between z-10 shadow-sm transition-all duration-300 ${

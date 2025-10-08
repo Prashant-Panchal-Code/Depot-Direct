@@ -49,11 +49,35 @@ export async function GET(request: NextRequest): Promise<NextResponse<SessionRes
       return NextResponse.json({ user: null })
     }
 
+    // Helper function to normalize role names from JWT token
+    const normalizeRole = (role: string): string => {
+      if (!role) return role;
+      
+      // Handle specific case inconsistencies from .NET API
+      const roleLower = role.toLowerCase();
+      
+      switch (roleLower) {
+        case 'data manager':
+          return 'Data Manager';
+        case 'admin':
+          return 'Admin';
+        case 'planner':
+          return 'Planner';
+        case 'viewer':
+          return 'Viewer';
+        default:
+          // Fallback: capitalize first letter of each word
+          return role.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ');
+      }
+    };
+
     // Extract user data from .NET API JWT token based on your actual payload
     const user: User = {
       id: payload.nameid, // .NET API uses 'nameid' for user ID  
       email: payload.email,
-      role: payload.role, // Use role directly from JWT (should be "Admin", etc.)
+      role: normalizeRole(payload.role), // Normalize role casing
       name: payload.unique_name, // .NET API uses 'unique_name'
       company_id: parseInt(payload.CompanyId) || 0, // .NET API uses 'CompanyId'
       roleId: parseInt(payload.RoleId) || 0

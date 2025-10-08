@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { useDataManagerContext, useRegionContext } from "@/contexts/RoleBasedContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -15,40 +16,89 @@ import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/re
 import AddParkingDialog, { Parking } from "@/app/components/AddParkingDialog";
 import ParkingDetailsPage, { ParkingDetails } from "@/app/components/ParkingDetailsPage";
 
+// Extended parking type with region information
+interface ParkingWithRegion {
+  id: number;
+  parkingCode: string;
+  parkingName: string;
+  latLong: string;
+  latitude?: string;
+  longitude?: string;
+  street: string;
+  postalCode: string;
+  town: string;
+  active: boolean;
+  priority: string;
+  isDepot: boolean;
+  regionId: number;
+  regionName: string;
+}
+
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function ParkingContent() {
   const { sidebarCollapsed } = useAppContext();
+  const { canAddEntities, isDataManager, companyId } = useDataManagerContext();
+  const { selectedRegions, shouldFilterByRegion } = useRegionContext();
   const [selectedParking, setSelectedParking] = useState<ParkingDetails | null>(null);
-  const [parkings, setParkings] = useState([
-    { id: 1, parkingCode: "PK001", parkingName: "Central Business District Lot", latLong: "34.0522, -118.2437", street: "100 Downtown Plaza", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isDepot: false },
-    { id: 2, parkingCode: "PK002", parkingName: "Airport Long-term Parking", latLong: "33.9425, -118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isDepot: true },
-    { id: 3, parkingCode: "PK003", parkingName: "Port Terminal Vehicle Lot", latLong: "33.7701, -118.1937", street: "300 Harbor Blvd", postalCode: "90731", town: "San Pedro", active: true, priority: "High", isDepot: true },
-    { id: 4, parkingCode: "PK004", parkingName: "Industrial Fleet Parking", latLong: "33.8358, -118.3406", street: "400 Industrial Ave", postalCode: "90501", town: "Torrance", active: true, priority: "Medium", isDepot: true },
-    { id: 5, parkingCode: "PK005", parkingName: "Beach Visitor Parking", latLong: "33.9850, -118.4695", street: "500 Ocean Front Walk", postalCode: "90291", town: "Venice", active: false, priority: "Low", isDepot: false },
-    { id: 6, parkingCode: "PK006", parkingName: "Shopping Center Garage", latLong: "34.0736, -118.4004", street: "600 Rodeo Drive", postalCode: "90210", town: "Beverly Hills", active: true, priority: "Medium", isDepot: false },
-    { id: 7, parkingCode: "PK007", parkingName: "University Campus Lot", latLong: "33.8839, -117.8850", street: "700 State College Blvd", postalCode: "92831", town: "Fullerton", active: true, priority: "High", isDepot: false },
-    { id: 8, parkingCode: "PK008", parkingName: "Hospital Staff Parking", latLong: "34.1478, -118.1445", street: "800 Medical Center Dr", postalCode: "91101", town: "Pasadena", active: true, priority: "Medium", isDepot: false },
-    { id: 9, parkingCode: "PK009", parkingName: "Transit Hub Parking", latLong: "33.8073, -117.9185", street: "900 Transit Way", postalCode: "92802", town: "Anaheim", active: true, priority: "High", isDepot: true },
-    { id: 10, parkingCode: "PK010", parkingName: "Tech Campus Garage", latLong: "33.6846, -117.8265", street: "1000 Innovation Dr", postalCode: "92612", town: "Irvine", active: true, priority: "Medium", isDepot: false },
-    { id: 11, parkingCode: "PK011", parkingName: "Coastal Recreation Lot", latLong: "33.6553, -117.9988", street: "1100 Beach Blvd", postalCode: "92648", town: "Huntington Beach", active: false, priority: "Low", isDepot: false },
-    { id: 12, parkingCode: "PK012", parkingName: "Marina Boat Launch Parking", latLong: "33.9803, -118.4517", street: "1200 Marina Way", postalCode: "90292", town: "Marina Del Rey", active: true, priority: "Medium", isDepot: false },
-    { id: 13, parkingCode: "PK013", parkingName: "Convention Center Garage", latLong: "32.7157, -117.1611", street: "1300 Convention Blvd", postalCode: "92101", town: "San Diego", active: true, priority: "High", isDepot: true },
-    { id: 14, parkingCode: "PK014", parkingName: "Stadium Event Parking", latLong: "33.1959, -117.3795", street: "1400 Stadium Dr", postalCode: "92054", town: "Oceanside", active: true, priority: "Medium", isDepot: false },
-    { id: 15, parkingCode: "PK015", parkingName: "Research Facility Lot", latLong: "32.8470, -117.2730", street: "1500 Research Pkwy", postalCode: "92037", town: "La Jolla", active: true, priority: "Medium", isDepot: false },
-    { id: 16, parkingCode: "PK016", parkingName: "Resort Guest Parking", latLong: "33.1581, -117.3506", street: "1600 Resort Blvd", postalCode: "92008", town: "Carlsbad", active: false, priority: "Low", isDepot: false },
-    { id: 17, parkingCode: "PK017", parkingName: "Entertainment District Garage", latLong: "34.1022, -118.3406", street: "1700 Hollywood Blvd", postalCode: "90028", town: "Hollywood", active: true, priority: "High", isDepot: false },
-    { id: 18, parkingCode: "PK018", parkingName: "Corporate Headquarters Lot", latLong: "34.0211, -118.3965", street: "1800 Corporate Dr", postalCode: "90232", town: "Culver City", active: true, priority: "Medium", isDepot: true },
-    { id: 19, parkingCode: "PK019", parkingName: "Tourist Attraction Parking", latLong: "33.0370, -117.2920", street: "1900 Coast Hwy 101", postalCode: "92024", town: "Encinitas", active: true, priority: "Low", isDepot: false },
-    { id: 20, parkingCode: "PK020", parkingName: "Government Building Garage", latLong: "32.7341, -117.1449", street: "2000 Government Plaza", postalCode: "92103", town: "San Diego", active: true, priority: "High", isDepot: false },
-  ]);
+  // All parking data with regions
+  const allParkings = [
+    { id: 1, parkingCode: "PK001", parkingName: "Central Business District Lot", latLong: "34.0522, -118.2437", street: "100 Downtown Plaza", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 2, parkingCode: "PK002", parkingName: "Airport Long-term Parking", latLong: "33.9425, -118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isDepot: true, regionId: 1, regionName: "West Coast" },
+    { id: 3, parkingCode: "PK003", parkingName: "Port Terminal Vehicle Lot", latLong: "33.7701, -118.1937", street: "300 Harbor Blvd", postalCode: "90731", town: "San Pedro", active: true, priority: "High", isDepot: true, regionId: 1, regionName: "West Coast" },
+    { id: 4, parkingCode: "PK004", parkingName: "Industrial Fleet Parking", latLong: "33.8358, -118.3406", street: "400 Industrial Ave", postalCode: "90501", town: "Torrance", active: true, priority: "Medium", isDepot: true, regionId: 1, regionName: "West Coast" },
+    { id: 5, parkingCode: "PK005", parkingName: "Beach Visitor Parking", latLong: "33.9850, -118.4695", street: "500 Ocean Front Walk", postalCode: "90291", town: "Venice", active: false, priority: "Low", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 6, parkingCode: "PK006", parkingName: "Shopping Center Garage", latLong: "34.0736, -118.4004", street: "600 Rodeo Drive", postalCode: "90210", town: "Beverly Hills", active: true, priority: "Medium", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 7, parkingCode: "PK007", parkingName: "University Campus Lot", latLong: "33.8839, -117.8850", street: "700 State College Blvd", postalCode: "92831", town: "Fullerton", active: true, priority: "High", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 8, parkingCode: "PK008", parkingName: "Hospital Staff Parking", latLong: "34.1478, -118.1445", street: "800 Medical Center Dr", postalCode: "91101", town: "Pasadena", active: true, priority: "Medium", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 9, parkingCode: "PK009", parkingName: "Transit Hub Parking", latLong: "33.8073, -117.9185", street: "900 Transit Way", postalCode: "92802", town: "Anaheim", active: true, priority: "High", isDepot: true, regionId: 1, regionName: "West Coast" },
+    { id: 10, parkingCode: "PK010", parkingName: "Tech Campus Garage", latLong: "33.6846, -117.8265", street: "1000 Innovation Dr", postalCode: "92612", town: "Irvine", active: true, priority: "Medium", isDepot: false, regionId: 1, regionName: "West Coast" },
+    { id: 11, parkingCode: "PK011", parkingName: "East Side Distribution Hub", latLong: "40.7128, -74.0060", street: "1100 Industrial Blvd", postalCode: "10001", town: "New York", active: true, priority: "High", isDepot: true, regionId: 2, regionName: "East Coast" },
+    { id: 12, parkingCode: "PK012", parkingName: "Downtown Corporate Parking", latLong: "40.7589, -73.9851", street: "1200 Madison Ave", postalCode: "10028", town: "New York", active: true, priority: "Medium", isDepot: false, regionId: 2, regionName: "East Coast" },
+    { id: 13, parkingCode: "PK013", parkingName: "Port Authority Vehicle Lot", latLong: "40.7614, -73.9776", street: "1300 Port Authority", postalCode: "10018", town: "New York", active: true, priority: "High", isDepot: true, regionId: 2, regionName: "East Coast" },
+    { id: 14, parkingCode: "PK014", parkingName: "Brooklyn Logistics Center", latLong: "40.6782, -73.9442", street: "1400 Atlantic Ave", postalCode: "11238", town: "Brooklyn", active: true, priority: "Medium", isDepot: true, regionId: 2, regionName: "East Coast" },
+    { id: 15, parkingCode: "PK015", parkingName: "Queens Distribution Point", latLong: "40.7282, -73.7949", street: "1500 Northern Blvd", postalCode: "11354", town: "Queens", active: true, priority: "Medium", isDepot: false, regionId: 2, regionName: "East Coast" },
+    { id: 16, parkingCode: "PK016", parkingName: "Central Texas Hub", latLong: "30.2672, -97.7431", street: "1600 Interstate 35", postalCode: "78701", town: "Austin", active: true, priority: "High", isDepot: true, regionId: 3, regionName: "Central" },
+    { id: 17, parkingCode: "PK017", parkingName: "Dallas Freight Terminal", latLong: "32.7767, -96.7970", street: "1700 Commerce St", postalCode: "75201", town: "Dallas", active: true, priority: "High", isDepot: true, regionId: 3, regionName: "Central" },
+    { id: 18, parkingCode: "PK018", parkingName: "Houston Port Parking", latLong: "29.7604, -95.3698", street: "1800 Ship Channel", postalCode: "77020", town: "Houston", active: true, priority: "Medium", isDepot: true, regionId: 3, regionName: "Central" },
+    { id: 19, parkingCode: "PK019", parkingName: "San Antonio Depot", latLong: "29.4241, -98.4936", street: "1900 Military Dr", postalCode: "78211", town: "San Antonio", active: true, priority: "Low", isDepot: true, regionId: 3, regionName: "Central" },
+    { id: 20, parkingCode: "PK020", parkingName: "Oklahoma City Terminal", latLong: "35.4676, -97.5164", street: "2000 NW Expressway", postalCode: "73112", town: "Oklahoma City", active: true, priority: "Medium", isDepot: false, regionId: 3, regionName: "Central" },
+  ];
+
+  // Filter parkings based on role and selected regions
+  const getFilteredParkings = () => {
+    if (shouldFilterByRegion && selectedRegions.length > 0) {
+      // Filter by selected regions for non-Data Manager roles
+      const selectedRegionIds = selectedRegions.map(r => r.id);
+      return allParkings.filter(parking => selectedRegionIds.includes(parking.regionId));
+    }
+    // Data Managers see all data (filtered by company in real implementation)
+    return allParkings;
+  };
+
+  const [parkings, setParkings] = useState<ParkingWithRegion[]>(getFilteredParkings());
+
+  // Update parkings when selected regions change
+  useEffect(() => {
+    setParkings(getFilteredParkings());
+  }, [selectedRegions, shouldFilterByRegion]);
 
   const handleAddParking = (newParking: Parking) => {
+    // For new parking, assign to first selected region or default region
+    const defaultRegionId = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].id 
+      : 1; // Default to first region
+    const defaultRegionName = shouldFilterByRegion && selectedRegions.length > 0 
+      ? selectedRegions[0].name 
+      : "West Coast";
+      
     const parking = {
       ...newParking,
-      id: parkings.length + 1,
+      id: allParkings.length + parkings.length + 1,
       latLong: `${newParking.latitude}, ${newParking.longitude}`,
+      regionId: defaultRegionId,
+      regionName: defaultRegionName,
     };
     setParkings([...parkings, parking]);
   };
@@ -64,7 +114,11 @@ export default function ParkingContent() {
   const handleSave = (updatedParking: ParkingDetails) => {
     setParkings(prev => 
       prev.map(p => 
-        p.id === updatedParking.id ? updatedParking : p
+        p.id === updatedParking.id ? {
+          ...updatedParking,
+          regionId: p.regionId,
+          regionName: p.regionName
+        } as ParkingWithRegion : p
       )
     );
     setSelectedParking(null);
@@ -262,8 +316,8 @@ export default function ParkingContent() {
             </div>
           </div>
 
-          {/* Add New Parking Button */}
-          <AddParkingDialog onSave={handleAddParking} />
+          {/* Add New Parking Button - Only for Data Managers */}
+          {canAddEntities && <AddParkingDialog onSave={handleAddParking} />}
         </div>
 
         {/* Parking Table - Takes remaining space */}
