@@ -57,19 +57,17 @@ export interface SiteDetails {
   id: number;
   siteCode: string;
   siteName: string;
-  latLong: string;
+  latLong?: string;
   street: string;
   postalCode: string;
-  town: string;
+  town?: string;
   active: boolean;
   priority: string;
   // Additional details
   contactPerson?: string;
   phone?: string;
   email?: string;
-  operatingHours?: {
-    [key: string]: { open: string; close: string; closed: boolean };
-  };
+  operatingHours?: string;
   tanks?: Tank[];
   history?: HistoryEvent[];
   // New fields for depot and delivery management
@@ -279,7 +277,7 @@ export default function SiteDetailsModal({
     phone: site.phone || "(555) 123-4567",
     email: site.email || `contact@${site.siteName.toLowerCase().replace(/\s+/g, '')}.com`,
     tanks: site.tanks || mockTanks,
-    operatingHours: site.operatingHours || mockOperatingHours,
+    operatingHours: site.operatingHours || "08:00 AM - 10:00 PM",
     history: site.history || mockHistory,
   };
 
@@ -332,11 +330,10 @@ export default function SiteDetailsModal({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
+                className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -412,34 +409,10 @@ export default function SiteDetailsModal({
               {/* Right Column - Operating Hours */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours</h3>
-                <div className="bg-gray-50 rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-3 bg-gray-100 px-4 py-3 text-sm font-medium text-gray-700">
-                    <div>DAY</div>
-                    <div>OPEN</div>
-                    <div>CLOSE</div>
-                  </div>
-                  {weekDays.map((day) => {
-                    const hours = (siteWithDefaults.operatingHours as Record<string, { open: string; close: string; closed: boolean }>)?.[day] || {
-                      open: "08:00 AM",
-                      close: "10:00 PM",
-                      closed: false,
-                    };
-                    return (
-                      <div key={day} className="grid grid-cols-3 px-4 py-3 border-b border-gray-200 last:border-b-0">
-                        <div className="font-medium text-gray-900">{day}</div>
-                        <div className="text-gray-600 flex items-center">
-                          {hours.closed ? (
-                            <span className="text-red-600">Closed</span>
-                          ) : (
-                            hours.open
-                          )}
-                        </div>
-                        <div className="text-gray-600">
-                          {!hours.closed && hours.close}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {siteWithDefaults.operatingHours || "08:00 AM - 05:00 PM (Default)"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -471,7 +444,7 @@ export default function SiteDetailsModal({
                           <CaretDown size={16} className="text-gray-400" />
                         )}
                       </button>
-                      
+
                       {expandedTanks[tank.id] && (
                         <div className="px-6 pb-6 bg-white">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -505,7 +478,7 @@ export default function SiteDetailsModal({
                           <div>
                             <Label className="text-sm font-medium text-gray-700 mb-2 block">Current Tank Volume (gallons)</Label>
                             <Input value={tank.currentVolume.toLocaleString()} className="bg-gray-50" disabled />
-                            
+
                             {/* Tank Fill Visual */}
                             <div className="mt-4">
                               <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -522,7 +495,7 @@ export default function SiteDetailsModal({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex gap-2 mt-6">
                             <Button variant="outline" size="sm">Cancel</Button>
                             <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Save Changes</Button>
@@ -579,7 +552,7 @@ export default function SiteDetailsModal({
                   <div>PRODUCT NAME</div>
                   <div></div>
                 </div>
-                {siteWithDefaults.tanks?.flatMap(tank => 
+                {siteWithDefaults.tanks?.flatMap(tank =>
                   tank.plannedDeliveries.map(delivery => (
                     <div key={delivery.id} className="grid grid-cols-4 px-6 py-4 border-b border-gray-100 last:border-b-0 items-center">
                       <div className="text-gray-900">{delivery.quantity.toLocaleString()} gallons</div>

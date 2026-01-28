@@ -1,4 +1,4 @@
-import { userApi } from './service'
+import { api } from './client'
 import { API_CONFIG } from './config'
 
 // Type definitions for User API responses
@@ -30,16 +30,81 @@ export interface Vehicle {
 }
 
 export interface Site {
-  id: string
-  code: string
-  name: string
-  address: string
-  status: string
-  coordinates?: {
-    lat: number
-    lng: number
-  }
-  metadata?: Record<string, unknown>
+  id: number;
+  siteCode: string;
+  siteName: string;
+  shortcode: string;
+  latitude: number;
+  longitude: number;
+  latLong: string;
+  street: string;
+  postalCode: string;
+  town: string;
+  active: boolean;
+  priority: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  operatingHours: string;
+  depotId: number;
+  deliveryStopped: boolean;
+  pumpedRequired: boolean;
+  countryId: number;
+  companyId: number;
+  metadata: string;
+  createdBy: number;
+  lastUpdatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string;
+  country: {
+    id: number;
+    name: string;
+    isoCode: string;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  };
+  company: {
+    id: number;
+    name: string;
+    companyCode: string;
+    countryId: number;
+    description: string;
+    metadata: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  regions: Array<{
+    id: number;
+    name: string;
+    regionCode: string;
+    companyId: number;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  }>;
+}
+
+export interface SiteSummary {
+  id: number;
+  siteCode: string;
+  siteName: string;
+  town: string;
+  active: boolean;
+  priority: string;
+  companyId: number;
+  companyName: string;
+  countryId: number;
+  countryName: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DepotData {
@@ -50,6 +115,13 @@ export interface DepotData {
   currentLoad: number
   vehicles: Vehicle[]
   metadata?: Record<string, unknown>
+}
+
+export interface Depot {
+  id: number;
+  depotCode: string;
+  depotName: string;
+  regionId?: number;
 }
 
 export interface ParkingData {
@@ -97,37 +169,74 @@ export interface ReportsData {
 export class UserApiService {
   // Get dashboard data
   static async getDashboardData(token?: string): Promise<DashboardData> {
-    return userApi.get<DashboardData>(API_CONFIG.USER.ENDPOINTS.DASHBOARD, token)
+    const { data, error } = await api.get<DashboardData>('USER', API_CONFIG.USER.ENDPOINTS.DASHBOARD)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get vehicles
   static async getVehicles(token?: string): Promise<Vehicle[]> {
-    return userApi.get<Vehicle[]>(API_CONFIG.USER.ENDPOINTS.VEHICLES, token)
+    const { data, error } = await api.get<Vehicle[]>('USER', API_CONFIG.USER.ENDPOINTS.VEHICLES)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get sites
   static async getSites(token?: string): Promise<Site[]> {
-    return userApi.get<Site[]>(API_CONFIG.USER.ENDPOINTS.SITES, token)
+    const { data, error } = await api.get<Site[]>('USER', API_CONFIG.USER.ENDPOINTS.SITES)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get sites by region
+  static async getSitesByRegion(regionId: number, token?: string): Promise<SiteSummary[]> {
+    const { data, error } = await api.get<SiteSummary[]>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get depot data
   static async getDepotData(token?: string): Promise<DepotData> {
-    return userApi.get<DepotData>(API_CONFIG.USER.ENDPOINTS.DEPOT, token)
+    const { data, error } = await api.get<DepotData>('USER', API_CONFIG.USER.ENDPOINTS.DEPOT)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get all depots
+  static async getDepots(token?: string): Promise<Depot[]> {
+    // Assuming /depots endpoint exists or using /depot if it returns a list
+    // Based on typical REST patterns, let's try plural
+    const { data, error } = await api.get<Depot[]>('USER', API_CONFIG.USER.ENDPOINTS.DEPOT + 's')
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get parking data
   static async getParkingData(token?: string): Promise<ParkingData> {
-    return userApi.get<ParkingData>(API_CONFIG.USER.ENDPOINTS.PARKING, token)
+    const { data, error } = await api.get<ParkingData>('USER', API_CONFIG.USER.ENDPOINTS.PARKING)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get schedule data
   static async getScheduleData(token?: string): Promise<ScheduleData> {
-    return userApi.get<ScheduleData>(API_CONFIG.USER.ENDPOINTS.SCHEDULE, token)
+    const { data, error } = await api.get<ScheduleData>('USER', API_CONFIG.USER.ENDPOINTS.SCHEDULE)
+    if (error) throw new Error(error)
+    return data!
   }
 
   // Get reports data
   static async getReportsData(token?: string): Promise<ReportsData> {
-    return userApi.get<ReportsData>(API_CONFIG.USER.ENDPOINTS.REPORTS, token)
+    const { data, error } = await api.get<ReportsData>('USER', API_CONFIG.USER.ENDPOINTS.REPORTS)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Create a new site
+  static async createSite(siteData: { siteCode: string; siteName: string; regionId: number }, token?: string): Promise<Site> {
+    const { data, error } = await api.post<Site>('USER', API_CONFIG.USER.ENDPOINTS.SITES, siteData)
+    if (error) throw new Error(error)
+    return data!
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { Region } from '@/lib/api/admin';
+import { Region, AdminApiService, UserWithRegions } from '@/lib/api/admin';
 import { normalizeRole, UserRole, getRolePermissions } from '@/utils/roleUtils';
 
 // Re-export UserRole for convenience
@@ -13,20 +13,20 @@ interface RoleBasedContextType {
   userRole: UserRole | null;
   isDataManager: boolean;
   canAddEntities: boolean;
-  
+
   // Data filtering context
   selectedRegions: Region[];
   setSelectedRegions: (regions: Region[]) => void;
   availableRegions: Region[];
   setAvailableRegions: (regions: Region[]) => void;
-  
+
   // Company context for Data Managers
   companyName: string | null;
   companyId: number | null;
-  
+
   // Loading states
   regionsLoading: boolean;
-  
+
   // Helper functions
   shouldFilterByRegion: boolean;
   shouldFilterByCompany: boolean;
@@ -37,7 +37,7 @@ const RoleBasedContext = createContext<RoleBasedContextType | undefined>(undefin
 
 export function RoleBasedProvider({ children }: { children: ReactNode }) {
   const { user, loading: userLoading } = useUser();
-  
+
   // State management
   const [selectedRegions, setSelectedRegions] = useState<Region[]>([]);
   const [availableRegions, setAvailableRegions] = useState<Region[]>([]);
@@ -46,46 +46,37 @@ export function RoleBasedProvider({ children }: { children: ReactNode }) {
   // Computed role properties with normalization
   const userRole = user?.role ? normalizeRole(user.role) : null;
   const rolePermissions = userRole ? getRolePermissions(userRole) : null;
-  
+
   const isDataManager = userRole === 'Data Manager';
   const canAddEntities = rolePermissions?.canAddEntities || false;
   const companyName = user?.companyName || null;
   const companyId = user?.company_id || null;
-  
+
   // Filtering logic
   const shouldFilterByRegion = rolePermissions?.needsRegionFiltering || false;
   const shouldFilterByCompany = rolePermissions?.canViewAllCompanyData || false;
 
-  // Fetch user regions for non-Data Manager roles
+  // Fetch user regions
   const fetchUserRegions = async () => {
-    if (!user || isDataManager || userLoading) return;
-    
+    // Only skip if no user or loading
+    if (!user || userLoading) return;
+
     setRegionsLoading(true);
     try {
-      // Fetch user's assigned regions
-      const response = await fetch(`/api/proxy?endpoint=/users/${user.id}/regions`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      // Use the AdminApiService to get regions from the correct endpoint
+      // GET /api/admin/UserRegions/user/{id}/regions
+      const userWithRegions: UserWithRegions = await AdminApiService.getUserRegions(Number(user.id));
+      const regions = userWithRegions.regions || [];
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch user regions');
-      }
-
-      const data = await response.json();
-      const regions = data.data || [];
-      
       setAvailableRegions(regions);
-      
+
       // Set first region as default if none selected
       if (regions.length > 0 && selectedRegions.length === 0) {
         setSelectedRegions([regions[0]]);
       }
     } catch (error) {
       console.error('Error fetching user regions:', error);
+      // Fallback or empty state handled by UI
     } finally {
       setRegionsLoading(false);
     }
@@ -101,35 +92,27 @@ export function RoleBasedProvider({ children }: { children: ReactNode }) {
     if (user && !userLoading) {
       fetchUserRegions();
     }
-  }, [user, userLoading, isDataManager]);
-
-  // Reset regions when user role changes to Data Manager
-  useEffect(() => {
-    if (isDataManager) {
-      setSelectedRegions([]);
-      setAvailableRegions([]);
-    }
-  }, [isDataManager]);
+  }, [user, userLoading]); // Removed isDataManager dependency as we want it for everyone now
 
   const value: RoleBasedContextType = {
     // Role-based visibility
     userRole,
     isDataManager,
     canAddEntities,
-    
+
     // Data filtering context
     selectedRegions,
     setSelectedRegions,
     availableRegions,
     setAvailableRegions,
-    
+
     // Company context for Data Managers
     companyName,
     companyId,
-    
+
     // Loading states
     regionsLoading,
-    
+
     // Helper functions
     shouldFilterByRegion,
     shouldFilterByCompany,

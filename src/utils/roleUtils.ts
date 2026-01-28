@@ -62,7 +62,8 @@ export function canManageEntities(role: UserRole): boolean {
  * Checks if a role should filter data by region
  */
 export function shouldFilterByRegion(role: UserRole): boolean {
-  return role === 'Planner' || role === 'Viewer';
+  // Region filtering should be available for all roles as per requirements
+  return true;
 }
 
 /**

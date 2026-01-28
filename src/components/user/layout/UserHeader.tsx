@@ -4,7 +4,7 @@ import { useAppContext } from '@/app/contexts/AppContext';
 import { Button } from "@/components/ui/button";
 import { useUser, logoutUser } from '@/hooks/useUser';
 import { useState, useEffect } from 'react';
-import { useRoleBasedContext } from '@/contexts/RoleBasedContext';
+import { useRoleBasedContext, useRegionContext } from '@/contexts/RoleBasedContext';
 import { DataManagerOnly, RegionBasedRoles } from '@/components/shared/RoleBasedComponents';
 import RegionSelector from '@/components/shared/RegionSelector';
 
@@ -12,7 +12,7 @@ import RegionSelector from '@/components/shared/RegionSelector';
 const getRoleColor = (role: string) => {
   const colors = {
     'Admin': 'bg-red-100 text-red-800',
-    'Data Manager': 'bg-blue-100 text-blue-800', 
+    'Data Manager': 'bg-blue-100 text-blue-800',
     'Planner': 'bg-green-100 text-green-800',
     'Viewer': 'bg-gray-100 text-gray-800'
   };
@@ -22,7 +22,11 @@ const getRoleColor = (role: string) => {
 export default function UserHeader() {
   const { sidebarCollapsed, setSidebarCollapsed } = useAppContext();
   const { user, loading } = useUser();
+  const { selectedRegions } = useRegionContext();
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Get current location display
+  const locationDisplay = selectedRegions[0]?.countryName || 'Location';
 
   const handleSignOut = async () => {
     try {
@@ -88,7 +92,7 @@ export default function UserHeader() {
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
                 {user.role}
               </span>
-              
+
               {/* Company Info for Data Managers */}
               <DataManagerOnly>
                 {user.companyName && (
@@ -100,7 +104,7 @@ export default function UserHeader() {
                   </div>
                 )}
               </DataManagerOnly>
-              
+
               {/* Region Selector and Country Info for Planner/Viewer */}
               <RegionBasedRoles>
                 <div className="flex items-center gap-3">
@@ -111,15 +115,15 @@ export default function UserHeader() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <span className="text-sm font-medium text-green-700">
-                      USA
+                      {locationDisplay}
                     </span>
                   </div>
-                  
+
                   {/* Region Selector */}
                   <RegionSelector />
                 </div>
               </RegionBasedRoles>
-              
+
               {/* User Menu */}
               <div className="relative">
                 <button
@@ -130,18 +134,18 @@ export default function UserHeader() {
                   <div className="w-8 h-8 bg-primary-custom text-white rounded-full flex items-center justify-center font-semibold text-sm">
                     {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  
+
                   {/* User Name */}
                   <span className="font-medium text-gray-700">
                     {user.name || user.email?.split('@')[0]}
                   </span>
-                  
+
                   {/* Dropdown Arrow */}
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
+
                 {/* Dropdown Menu */}
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
@@ -153,7 +157,7 @@ export default function UserHeader() {
                         <div className="text-xs text-gray-400 mt-1">{user.companyName}</div>
                       )}
                     </div>
-                    
+
                     {/* Sign Out */}
                     <button
                       onClick={handleSignOut}
@@ -169,7 +173,7 @@ export default function UserHeader() {
               </div>
             </div>
           )}
-          
+
           {loading && (
             <div className="flex items-center gap-2">
               <div className="w-16 h-6 bg-gray-200 rounded-full animate-pulse"></div>

@@ -58,18 +58,15 @@ export default function RegionSelector() {
 
   const handleRegionToggle = (region: Region) => {
     const isSelected = selectedRegions.some(r => r.id === region.id);
-    
-    if (isSelected) {
-      // Don't allow deselecting all regions - must have at least one
-      if (selectedRegions.length > 1) {
-        setSelectedRegions(selectedRegions.filter(r => r.id !== region.id));
-      }
-    } else {
-      setSelectedRegions([...selectedRegions, region]);
+
+    // Single select mode
+    if (!isSelected) {
+      setSelectedRegions([region]);
+      setIsOpen(false);
     }
   };
 
-  const displayText = selectedRegions.length === 1 
+  const displayText = selectedRegions.length === 1
     ? selectedRegions[0].name
     : `${selectedRegions.length} regions`;
 
@@ -89,27 +86,26 @@ export default function RegionSelector() {
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
-      
+
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
           <div className="p-2 border-b border-gray-100">
             <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">
-              Select Regions ({selectedRegions.length}/{availableRegions.length})
+              Select Region
             </span>
           </div>
-          
+
           <div className="max-h-60 overflow-y-auto">
             {availableRegions.map((region) => {
               const isSelected = selectedRegions.some(r => r.id === region.id);
               const isLastSelected = selectedRegions.length === 1 && isSelected;
-              
+
               return (
                 <div
                   key={region.id}
                   onClick={() => !isLastSelected && handleRegionToggle(region)}
-                  className={`flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 ${
-                    isLastSelected ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 ${isLastSelected ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">{region.name}</span>
@@ -117,7 +113,7 @@ export default function RegionSelector() {
                       <span className="text-xs text-gray-500">{region.regionCode}</span>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {isSelected && (
                       <>
@@ -131,7 +127,7 @@ export default function RegionSelector() {
                 </div>
               );
             })}
-            
+
             {availableRegions.length === 0 && (
               <div className="p-3 text-center">
                 <span className="text-sm text-gray-500">No regions available</span>
