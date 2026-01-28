@@ -238,6 +238,13 @@ export class UserApiService {
     if (error) throw new Error(error)
     return data!
   }
+
+  // Update an existing site
+  static async updateSite(siteId: number, siteData: Partial<Site>, token?: string): Promise<Site> {
+    const { data, error } = await api.put<Site>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/${siteId}`, siteData)
+    if (error) throw new Error(error)
+    return data!
+  }
 }
 
 export default UserApiService

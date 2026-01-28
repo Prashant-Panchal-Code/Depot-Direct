@@ -117,7 +117,7 @@ export default function SitesContent() {
                 regionName: primaryRegion?.name || "Unknown",
                 // Ensure compatibility
                 active: site.active,
-                priority: site.priority || "Medium",
+                priority: site.priority,
               };
             });
           });
@@ -205,6 +205,7 @@ export default function SitesContent() {
 
       siteCode: updatedSite.siteCode,
       siteName: updatedSite.siteName,
+      shortcode: updatedSite.shortcode || "",
       // Parse lat/long
       latitude: parseFloat(updatedSite.latLong?.split(',')[0]?.trim() || "0"),
       longitude: parseFloat(updatedSite.latLong?.split(',')[1]?.trim() || "0"),
@@ -218,7 +219,7 @@ export default function SitesContent() {
       contactPerson: updatedSite.contactPerson || "",
       phone: updatedSite.phone || "",
       email: updatedSite.email || "",
-      depotId: updatedSite.depotId || 0, // number in new interface
+      depotId: updatedSite.depotId || 0,
 
       // Region info is not usually updated here but preserved
       regionId: sites.find(s => s.id === updatedSite.id)?.regionId || 1,

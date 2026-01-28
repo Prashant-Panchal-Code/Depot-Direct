@@ -7,30 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { UserApiService, Depot } from "@/lib/api/user";
 
 interface BasicInfoTabProps {
   site: SiteDetails;
-  onSave: () => void;
+  onSave: (updatedSite: SiteDetails) => void;
 }
 
 export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
   const weekDays = [
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-  ];
-
-  // Depot list for the dropdown
-  const depots = [
-    { id: 1, depotCode: "DP001", depotName: "Main Distribution Center" },
-    { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot" },
-    { id: 3, depotCode: "DP003", depotName: "Airport Fuel Terminal" },
-    { id: 4, depotCode: "DP004", depotName: "Orange County Hub" },
-    { id: 5, depotCode: "DP005", depotName: "Valley Distribution" },
-    { id: 6, depotCode: "DP006", depotName: "Coastal Storage Facility" },
-    { id: 7, depotCode: "DP007", depotName: "Industrial Park Depot" },
-    { id: 8, depotCode: "DP008", depotName: "South Bay Terminal" },
-    { id: 9, depotCode: "DP009", depotName: "Long Beach Facility" },
-    { id: 10, depotCode: "DP010", depotName: "Irvine Tech Depot" },
   ];
 
   // Time options for the select dropdowns
@@ -45,34 +32,116 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
     "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"
   ];
 
-  const mockOperatingHours = {
-    Monday: { open: "08:00 AM", close: "10:00 PM", closed: false },
-    Tuesday: { open: "08:00 AM", close: "10:00 PM", closed: false },
-    Wednesday: { open: "08:00 AM", close: "10:00 PM", closed: false },
-    Thursday: { open: "08:00 AM", close: "10:00 PM", closed: false },
-    Friday: { open: "08:00 AM", close: "11:00 PM", closed: false },
-    Saturday: { open: "09:00 AM", close: "11:00 PM", closed: false },
-    Sunday: { open: "09:00 AM", close: "09:00 PM", closed: false },
-  };
-
   // Form state for all editable fields
-  const [formData, setFormData] = useState({
-    siteName: site.siteName,
-    siteCode: site.siteCode || "",
-    latitude: site.latLong?.split(',')[0]?.trim() || "",
-    longitude: site.latLong?.split(',')[1]?.trim() || "",
-    street: site.street,
-    postalCode: site.postalCode || "",
-    town: site.town || site.street?.split(',')[1]?.trim() || "",
-    active: site.active !== undefined ? site.active : true,
-    priority: site.priority || "Medium",
-    phone: site.phone || "(555) 123-4567",
-    email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
-    operatingHours: site.operatingHours || mockOperatingHours,
-    depotId: site.depotId || null, // Add depot field
-    deliveryStopped: false, // Add delivery stopped checkbox (default false)
-    pumpedRequired: false, // Add pumped required checkbox (default false)
+  const [formData, setFormData] = useState(() => {
+    // Default operating hours structure
+    const defaultOperatingHours = {
+      Monday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Friday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Saturday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Sunday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    };
+
+    // Helper function to convert 24-hour time to 12-hour format
+    const convertTo12Hour = (time24h: string): string => {
+      const [hours, minutes] = time24h.split(':');
+      let hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+
+      if (hour === 0) {
+        hour = 12;
+      } else if (hour > 12) {
+        hour = hour - 12;
+      }
+
+      return `${hour.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    };
+
+    // Parse operating hours if it's a string, otherwise use the object or default data
+    let parsedOperatingHours = defaultOperatingHours;
+    if (site.operatingHours) {
+      if (typeof site.operatingHours === 'string') {
+        try {
+          const parsed = JSON.parse(site.operatingHours);
+
+          // Check if it's in .NET format (lowercase day abbreviations)
+          if (parsed.mon || parsed.tue || parsed.wed) {
+            // Convert from .NET format to UI format
+            const dayMapping: { [key: string]: string } = {
+              'mon': 'Monday',
+              'tue': 'Tuesday',
+              'wed': 'Wednesday',
+              'thu': 'Thursday',
+              'fri': 'Friday',
+              'sat': 'Saturday',
+              'sun': 'Sunday'
+            };
+
+            const uiFormat: any = {};
+            Object.entries(parsed).forEach(([shortDay, hours]: [string, any]) => {
+              const fullDay = dayMapping[shortDay];
+              if (fullDay) {
+                uiFormat[fullDay] = {
+                  open: convertTo12Hour(hours.open),
+                  close: convertTo12Hour(hours.close),
+                  closed: hours.closed
+                };
+              }
+            });
+
+            parsedOperatingHours = uiFormat;
+          } else {
+            // Already in UI format
+            parsedOperatingHours = parsed;
+          }
+        } catch {
+          parsedOperatingHours = defaultOperatingHours;
+        }
+      } else {
+        parsedOperatingHours = site.operatingHours;
+      }
+    }
+
+    return {
+      siteName: site.siteName,
+      siteCode: site.siteCode || "",
+      shortcode: site.shortcode || "",
+      latitude: site.latLong?.split(',')[0]?.trim() || "",
+      longitude: site.latLong?.split(',')[1]?.trim() || "",
+      street: site.street,
+      postalCode: site.postalCode || "",
+      town: site.town || site.street?.split(',')[1]?.trim() || "",
+      active: site.active !== undefined ? site.active : true,
+      priority: site.priority || "Medium",
+      phone: site.phone || "(555) 123-4567",
+      email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
+      contactPerson: site.contactPerson || "",
+      operatingHours: parsedOperatingHours,
+      depotId: site.depotId || null,
+      deliveryStopped: site.deliveryStopped || false,
+      pumpedRequired: site.pumpedRequired || false,
+    };
   });
+
+  // Fetch depots from API
+  const [depots, setDepots] = useState<Depot[]>([]);
+
+  useEffect(() => {
+    const fetchDepots = async () => {
+      try {
+        const depotsData = await UserApiService.getDepots();
+        setDepots(depotsData);
+      } catch (error) {
+        console.error("Failed to fetch depots:", error);
+        setDepots([]);
+      }
+    };
+
+    fetchDepots();
+  }, []);
 
   const handleInputChange = (field: string, value: string | boolean | number | null) => {
     setFormData(prev => ({
@@ -95,10 +164,82 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
   };
 
   const handleCancel = () => {
+    // Default empty operating hours structure
+    const defaultOperatingHours = {
+      Monday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Friday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Saturday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Sunday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    };
+
+    // Helper function to convert 24-hour time to 12-hour format
+    const convertTo12Hour = (time24h: string): string => {
+      const [hours, minutes] = time24h.split(':');
+      let hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+
+      if (hour === 0) {
+        hour = 12;
+      } else if (hour > 12) {
+        hour = hour - 12;
+      }
+
+      return `${hour.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    };
+
+    // Parse operating hours if it's a string, otherwise use the object or default data
+    let parsedOperatingHours = defaultOperatingHours;
+    if (site.operatingHours) {
+      if (typeof site.operatingHours === 'string') {
+        try {
+          const parsed = JSON.parse(site.operatingHours);
+
+          // Check if it's in .NET format (lowercase day abbreviations)
+          if (parsed.mon || parsed.tue || parsed.wed) {
+            // Convert from .NET format to UI format
+            const dayMapping: { [key: string]: string } = {
+              'mon': 'Monday',
+              'tue': 'Tuesday',
+              'wed': 'Wednesday',
+              'thu': 'Thursday',
+              'fri': 'Friday',
+              'sat': 'Saturday',
+              'sun': 'Sunday'
+            };
+
+            const uiFormat: any = {};
+            Object.entries(parsed).forEach(([shortDay, hours]: [string, any]) => {
+              const fullDay = dayMapping[shortDay];
+              if (fullDay) {
+                uiFormat[fullDay] = {
+                  open: convertTo12Hour(hours.open),
+                  close: convertTo12Hour(hours.close),
+                  closed: hours.closed
+                };
+              }
+            });
+
+            parsedOperatingHours = uiFormat;
+          } else {
+            // Already in UI format
+            parsedOperatingHours = parsed;
+          }
+        } catch {
+          parsedOperatingHours = defaultOperatingHours;
+        }
+      } else {
+        parsedOperatingHours = site.operatingHours;
+      }
+    }
+
     // Reset form data to original site values
     setFormData({
       siteName: site.siteName,
       siteCode: site.siteCode || "",
+      shortcode: site.shortcode || "",
       latitude: site.latLong?.split(',')[0]?.trim() || "",
       longitude: site.latLong?.split(',')[1]?.trim() || "",
       street: site.street,
@@ -108,11 +249,36 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       priority: site.priority || "Medium",
       phone: site.phone || "(555) 123-4567",
       email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
-      operatingHours: site.operatingHours || mockOperatingHours,
-      depotId: site.depotId || null, // Add depot field
-      deliveryStopped: false, // Add delivery stopped checkbox (default false)
-      pumpedRequired: false, // Add pumped required checkbox (default false)
+      contactPerson: site.contactPerson || "",
+      operatingHours: parsedOperatingHours,
+      depotId: site.depotId || null,
+      deliveryStopped: site.deliveryStopped || false,
+      pumpedRequired: site.pumpedRequired || false,
     });
+  };
+
+  const handleSave = () => {
+    // Convert form data back to SiteDetails format
+    const updatedSite: SiteDetails = {
+      ...site,
+      siteName: formData.siteName,
+      siteCode: formData.siteCode,
+      shortcode: formData.shortcode,
+      latLong: `${formData.latitude}, ${formData.longitude}`,
+      street: formData.street,
+      postalCode: formData.postalCode,
+      town: formData.town,
+      active: formData.active,
+      priority: formData.priority,
+      phone: formData.phone,
+      email: formData.email,
+      contactPerson: formData.contactPerson,
+      operatingHours: typeof formData.operatingHours === 'string' ? formData.operatingHours : JSON.stringify(formData.operatingHours),
+      depotId: formData.depotId,
+      deliveryStopped: formData.deliveryStopped,
+      pumpedRequired: formData.pumpedRequired,
+    };
+    onSave(updatedSite);
   };
 
   return (
@@ -120,23 +286,50 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       {/* Main Content - Scrollable Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-4">
-          
+
           {/* Top Section - Site Information and Contact Information */}
           <div className="grid grid-cols-2 gap-6">
-            
+
             {/* Left Column - Basic Site Information */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Site Information</h3>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  formData.active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${formData.active
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
                   {formData.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="siteCode" className="text-sm font-medium text-gray-700">
+                    Site Code
+                  </Label>
+                  <Input
+                    id="siteCode"
+                    value={formData.siteCode}
+                    onChange={(e) => handleInputChange('siteCode', e.target.value)}
+                    placeholder="e.g. SITE001"
+                    className="mt-1"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shortcode" className="text-sm font-medium text-gray-700">
+                    Short Code
+                  </Label>
+                  <Input
+                    id="shortcode"
+                    value={formData.shortcode}
+                    onChange={(e) => handleInputChange('shortcode', e.target.value)}
+                    placeholder="e.g. NYC"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
@@ -287,7 +480,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
             {/* Right Column - Contact Information */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
-              
+
               <div>
                 <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
                   Phone Number
@@ -323,8 +516,8 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                     <MapPin size={32} className="mx-auto mb-2 text-green-600" />
                     <p className="text-gray-600 text-sm">Interactive Map</p>
                     <p className="text-xs text-gray-500">
-                      {formData.latitude && formData.longitude 
-                        ? `${formData.latitude}, ${formData.longitude}` 
+                      {formData.latitude && formData.longitude
+                        ? `${formData.latitude}, ${formData.longitude}`
                         : 'No coordinates set'}
                     </p>
                   </div>
@@ -336,18 +529,17 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
           {/* Bottom Section - Operating Hours */}
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-gray-900">Operating Hours (Delivery Openings)</h3>
-            
+
             <div className="grid grid-cols-4 gap-2">
               {weekDays.map((day) => {
                 const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
                 return (
-                  <div 
-                    key={day} 
-                    className={`border rounded-lg p-2 ${
-                      hours.closed 
-                        ? 'bg-red-50 border-red-200' 
-                        : ''
-                    }`}
+                  <div
+                    key={day}
+                    className={`border rounded-lg p-2 ${hours.closed
+                      ? 'bg-red-50 border-red-200'
+                      : ''
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
@@ -355,14 +547,14 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                         <Checkbox
                           id={`${day}-closed`}
                           checked={hours.closed}
-                          onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}                       
+                          onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}
                         />
                         <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
                           Closed
                         </Label>
                       </div>
                     </div>
-                    
+
                     {!hours.closed && (
                       <div className="space-y-1">
                         <div>
@@ -416,7 +608,7 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
         <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white" onClick={onSave}>
+        <Button className="bg-primary-custom hover:bg-primary-custom/90 text-white" onClick={handleSave}>
           Save Changes
         </Button>
       </div>
