@@ -132,7 +132,32 @@ export interface Depot {
   id: number;
   depotCode: string;
   depotName: string;
+  shortcode?: string;
+  latitude?: number;
+  longitude?: number;
+  latLong?: string;
+  street?: string;
+  postalCode?: string;
+  town?: string;
+  active: boolean;
+  priority?: string;
+  loadingBays?: number;
+  operatingHours?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerEmail?: string;
+  emergencyContact?: string;
+  averageLoadingTime?: number;
+  maxTruckSize?: string;
+  certifications?: string;
   regionId?: number;
+  countryId?: number;
+  companyId?: number;
+  metadata?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
+  isParking?: boolean; // Frontend specific or mapped property
 }
 
 export interface ParkingData {
@@ -362,6 +387,27 @@ export class UserApiService {
     return data!
   }
 
+  // Get depot by ID
+  static async getDepotById(depotId: number, token?: string): Promise<Depot> {
+    const { data, error } = await api.get<Depot>('USER', `${API_CONFIG.USER.ENDPOINTS.DEPOT}s/${depotId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get depots by region
+  static async getDepotsByRegion(regionId: number, token?: string): Promise<Depot[]> {
+    const { data, error } = await api.get<Depot[]>('USER', `${API_CONFIG.USER.ENDPOINTS.DEPOT}s/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Update depot
+  static async updateDepot(depotId: number, depotData: Partial<Depot>, token?: string): Promise<Depot> {
+    const { data, error } = await api.put<Depot>('USER', `${API_CONFIG.USER.ENDPOINTS.DEPOT}s/${depotId}`, depotData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
   // Get parking data
   static async getParkingData(token?: string): Promise<ParkingData> {
     const { data, error } = await api.get<ParkingData>('USER', API_CONFIG.USER.ENDPOINTS.PARKING)
@@ -452,6 +498,12 @@ export class UserApiService {
     return data!
   }
 
+  static async addDepot(depotData: { depotCode: string; depotName: string; regionId: number }, token?: string): Promise<Depot> {
+    const { data, error } = await api.post<Depot>('USER', '/Depots', depotData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
   // Get notes by parking ID
   static async getNotesByParking(parkingId: number, token?: string): Promise<Note[]> {
     const { data, error } = await api.get<Note[]>('USER', `/Notes/by-parking/${parkingId}`)
@@ -475,3 +527,4 @@ export class UserApiService {
 }
 
 export default UserApiService
+// Force rebuild

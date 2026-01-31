@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useAppContext } from "../contexts/AppContext";
-import { Depot } from "./AddDepotDialog";
+import { UserApiService, Depot } from "@/lib/api/user";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 import { SiteDetails } from "./SiteDetailsModal";
 import BasicInfoTab from "./depot-tabs/BasicInfoTab";
 import ProductsTab from "./depot-tabs/ProductsTab";
@@ -22,16 +24,11 @@ import DeliverySitesTab from "./depot-tabs/DeliverySitesTab";
 import NotesTab, { Note } from "./site-tabs/NotesTab";
 import SettingsTab from "./depot-tabs/SettingsTab";
 
-
-// Extended depot interface for internal use
-interface DepotWithId extends Depot {
-  id: number;
-  latLong: string;
-}
-
-export interface DepotDetails extends DepotWithId {
+export interface DepotDetails extends Depot {
   products?: Product[];
   loadings?: Loading[];
+  // Ensure we have latLong as string for UI if needed, though API has it
+  latLong?: string;
 }
 
 export interface Product {
@@ -75,39 +72,77 @@ export default function DepotDetailsPage({
   onSave,
 }: DepotDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
   const [activeTab, setActiveTab] = useState("basic-info");
 
   // Notes state lifted up to manage count properly
   const [notes, setNotes] = useState<Note[]>([
     {
       id: 1,
-      createdDate: "2024-01-15 14:30",
-      createdBy: "John Smith",
+      category: "Maintenance",
+      priority: "Medium",
       comment: "Depot inspection completed. All loading bays operational.",
-      priority: "Medium" as const,
-      category: "Maintenance" as const,
-      status: "Closed" as const,
-      closedDate: "2024-01-16 10:30",
-      closedBy: "John Smith",
-      closingComment: "All issues resolved and documented"
+      status: "Closed",
+      closingComment: "All issues resolved and documented",
+      closedAt: "2024-01-16 10:30",
+      closedBy: 0,
+      siteId: null,
+      depotId: depot.id,
+      parkingId: null,
+      vehicleId: null,
+      companyId: 1,
+      createdBy: 1,
+      createdByName: "John Smith",
+      closedByName: "John Smith",
+      createdAt: "2024-01-15 14:30",
+      createdDate: "2024-01-15 14:30", // Added to satisfy Note interface
+      updatedAt: "2024-01-16 10:30",
+      deletedAt: null
     },
     {
       id: 2,
-      createdDate: "2024-01-12 09:15",
-      createdBy: "Sarah Johnson",
+      category: "Delivery Operations",
+      priority: "High",
       comment: "New product line requires temperature monitoring system upgrade.",
-      priority: "High" as const,
-      category: "Operations" as const,
-      status: "In Review" as const
+      status: "In Review",
+      closingComment: null,
+      closedAt: null,
+      closedBy: null,
+      siteId: null,
+      depotId: depot.id,
+      parkingId: null,
+      vehicleId: null,
+      companyId: 1,
+      createdBy: 2,
+      createdByName: "Sarah Johnson",
+      closedByName: null,
+      createdAt: "2024-01-12 09:15",
+      createdDate: "2024-01-12 09:15", // Added to satisfy Note interface
+      updatedAt: "2024-01-12 09:15",
+      deletedAt: null
     },
     {
       id: 3,
-      createdDate: "2024-01-08 16:45",
-      createdBy: "Mike Davis",
+      category: "Delivery Operations",
+      priority: "Medium",
       comment: "Loading rate optimization completed for Bay 3.",
-      priority: "Medium" as const,
-      category: "Operations" as const,
-      status: "Open" as const
+      status: "Open",
+      closingComment: null,
+      closedAt: null,
+      closedBy: null,
+      siteId: null,
+      depotId: depot.id,
+      parkingId: null,
+      vehicleId: null,
+      companyId: 1,
+      createdBy: 3,
+      createdByName: "Mike Davis",
+      closedByName: null,
+      createdAt: "2024-01-08 16:45",
+      createdDate: "2024-01-08 16:45", // Added to satisfy Note interface
+      updatedAt: "2024-01-08 16:45",
+      deletedAt: null
     }
   ]);
 
@@ -116,14 +151,117 @@ export default function DepotDetailsPage({
   // Collapse sidebar when component mounts, restore when unmounting
   useEffect(() => {
     setSidebarCollapsed(true);
-    
+
     return () => {
       setSidebarCollapsed(false);
     };
   }, [setSidebarCollapsed]);
 
-  const handleSave = () => {
-    onSave(depot);
+  const handleSave = async (updatedDepot?: DepotDetails) => {
+    try {
+      showLoader("Saving depot details...");
+      const finalDepot = updatedDepot || depot;
+
+      // Helper function to convert 12-hour time to 24-hour format
+      const convertTo24Hour = (time12h: string): string => {
+        if (!time12h || !time12h.includes(' ')) return "08:00";
+        const [time, modifier] = time12h.split(' ');
+        let [hours, minutes] = time.split(':');
+
+        if (hours === '12') {
+          hours = '00';
+        }
+
+        if (modifier === 'PM') {
+          hours = String(parseInt(hours, 10) + 12);
+        }
+
+        return `${hours.padStart(2, '0')}:${minutes}`;
+      };
+
+      // Convert operating hours to .NET format
+      let formattedOperatingHours: any = {};
+      if (finalDepot.operatingHours) {
+        let operatingHoursObj: any = {};
+
+        // First, get the operating hours as an object
+        if (typeof finalDepot.operatingHours === 'string') {
+          try {
+            operatingHoursObj = JSON.parse(finalDepot.operatingHours);
+          } catch {
+            operatingHoursObj = {};
+          }
+        } else {
+          operatingHoursObj = finalDepot.operatingHours;
+        }
+
+        // Check if it's already in .NET format (has 'mon', 'tue', etc.)
+        if (operatingHoursObj.mon || operatingHoursObj.tue || operatingHoursObj.wed) {
+          // Already in .NET format, use as-is
+          formattedOperatingHours = operatingHoursObj;
+        } else {
+          // Convert from UI format (Monday, Tuesday, etc.) to .NET format
+          const dayMapping: { [key: string]: string } = {
+            'Monday': 'mon',
+            'Tuesday': 'tue',
+            'Wednesday': 'wed',
+            'Thursday': 'thu',
+            'Friday': 'fri',
+            'Saturday': 'sat',
+            'Sunday': 'sun'
+          };
+
+          Object.entries(operatingHoursObj).forEach(([day, hours]: [string, any]) => {
+            const shortDay = dayMapping[day];
+            if (shortDay && hours) {
+              formattedOperatingHours[shortDay] = {
+                open: convertTo24Hour(hours.open),
+                close: convertTo24Hour(hours.close),
+                closed: hours.closed
+              };
+            }
+          });
+        }
+      }
+
+      // Prepare the data for the API
+      const updateData = {
+        depotCode: finalDepot.depotCode,
+        depotName: finalDepot.depotName,
+        shortcode: finalDepot.shortcode || "",
+        latitude: finalDepot.latitude || 0,
+        longitude: finalDepot.longitude || 0,
+        street: finalDepot.street || "",
+        postalCode: finalDepot.postalCode || "",
+        town: finalDepot.town || "",
+        active: finalDepot.active,
+        priority: finalDepot.priority || "Medium",
+        loadingBays: finalDepot.loadingBays || 0,
+        operatingHours: formattedOperatingHours,
+        managerName: finalDepot.managerName || "",
+        managerPhone: finalDepot.managerPhone || "",
+        managerEmail: finalDepot.managerEmail || "",
+        emergencyContact: finalDepot.emergencyContact || "",
+        averageLoadingTime: finalDepot.averageLoadingTime || 0,
+        maxTruckSize: finalDepot.maxTruckSize || "",
+        certifications: finalDepot.certifications || "",
+        metadata: finalDepot.metadata || "{}"
+      };
+
+      // Call the update API
+      await UserApiService.updateDepot(finalDepot.id, updateData);
+
+      // Call parent's onSave with the updated depot
+      onSave(finalDepot);
+
+      showSuccess("Depot updated successfully", `${finalDepot.depotName} has been updated`);
+    } catch (error) {
+      console.error("Failed to update depot:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update depot";
+      showError("Failed to update depot", errorMessage);
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleBack = () => {
@@ -143,26 +281,24 @@ export default function DepotDetailsPage({
 
   return (
     <div className="h-screen bg-gray-50 overflow-hidden">
-      <div 
-        className={`h-[calc(100vh-5rem)] flex flex-col py-4 mt-20 transition-all duration-300 ${
-          sidebarCollapsed 
-            ? 'ml-16 w-[calc(100vw-4rem)] px-4' 
-            : 'ml-64 w-[calc(100vw-16rem)] px-4'
-        }`}
+      <div
+        className={`h-[calc(100vh-5rem)] flex flex-col py-4 mt-20 transition-all duration-300 ${sidebarCollapsed
+          ? 'ml-16 w-[calc(100vw-4rem)] px-4'
+          : 'ml-64 w-[calc(100vw-16rem)] px-4'
+          }`}
       >
         {/* Depot Header with Name and Code */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">{depot.depotName}-<span className="text-2xl text-gray-600">{depot.depotCode}</span></h2>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              depot.active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${depot.active
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+              }`}>
               {depot.active ? 'Active' : 'Inactive'}
             </span>
           </div>
-          <Button 
+          <Button
             onClick={handleBack}
             variant="outline"
             size="sm"
@@ -200,11 +336,10 @@ export default function DepotDetailsPage({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-primary-custom text-primary-custom"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "border-primary-custom text-primary-custom"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -218,10 +353,10 @@ export default function DepotDetailsPage({
             <BasicInfoTab depot={depot} onSave={handleSave} />
           )}
           {activeTab === "products" && (
-            <ProductsTab onSave={handleSave} />
+            <ProductsTab onSave={() => handleSave()} />
           )}
           {activeTab === "loadings" && (
-            <LoadingsTab onSave={handleSave} />
+            <LoadingsTab onSave={() => handleSave()} />
           )}
           {activeTab === "vehicles-drivers" && (
             <VehiclesDriversTab />
@@ -230,14 +365,21 @@ export default function DepotDetailsPage({
             <DeliverySitesTab />
           )}
           {activeTab === "notes" && (
-            <NotesTab 
+            <NotesTab
               site={{
                 ...depot,
+                // Map depot properties to SiteDetails just for the NotesTab
                 siteCode: depot.depotCode,
                 siteName: depot.depotName,
-                tanks: []
-              } as SiteDetails} // Type compatibility - using depot as site for notes
-              notes={notes} 
+                tanks: [],
+                street: depot.street || "",
+                postalCode: depot.postalCode || "",
+                active: depot.active,
+                priority: depot.priority || "Medium",
+                id: depot.id,
+                latLong: depot.latLong || ""
+              } as unknown as SiteDetails}
+              notes={notes}
               setNotes={setNotes}
             />
           )}
@@ -249,3 +391,4 @@ export default function DepotDetailsPage({
     </div>
   );
 }
+

@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin } from "@phosphor-icons/react";
 import { DepotDetails } from "../DepotDetailsPage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BasicInfoTabProps {
   depot: DepotDetails;
-  onSave: () => void;
+  onSave: (updatedDepot: DepotDetails) => void;
 }
 
 export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
@@ -31,36 +31,130 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
     "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"
   ];
 
-  const mockOperatingHours = {
-    Monday: { open: "06:00 AM", close: "10:00 PM", closed: false },
-    Tuesday: { open: "06:00 AM", close: "10:00 PM", closed: false },
-    Wednesday: { open: "06:00 AM", close: "10:00 PM", closed: false },
-    Thursday: { open: "06:00 AM", close: "10:00 PM", closed: false },
-    Friday: { open: "06:00 AM", close: "10:00 PM", closed: false },
-    Saturday: { open: "08:00 AM", close: "08:00 PM", closed: false },
-    Sunday: { open: "08:00 AM", close: "08:00 PM", closed: false }
+  // Helper function to convert 24-hour time to 12-hour format
+  const convertTo12Hour = (time24h: string): string => {
+    if (!time24h || !time24h.includes(':')) return "08:00 AM";
+    const [hours, minutes] = time24h.split(':');
+    let hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+
+    if (hour === 0) {
+      hour = 12;
+    } else if (hour > 12) {
+      hour = hour - 12;
+    }
+
+    return `${hour.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
+  // Default operating hours structure - all days closed if not set
+  const defaultOperatingHours = {
+    Monday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Thursday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Friday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Saturday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+    Sunday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+  };
+
+  const parseOperatingHours = (hoursValue: any) => {
+    let parsedOperatingHours = defaultOperatingHours;
+    if (hoursValue) {
+      if (typeof hoursValue === 'string') {
+        try {
+          const parsed = JSON.parse(hoursValue);
+          // Check if it's in .NET format (lowercase day abbreviations)
+          if (parsed.mon || parsed.tue || parsed.wed) {
+            const dayMapping: { [key: string]: string } = {
+              'mon': 'Monday', 'tue': 'Tuesday', 'wed': 'Wednesday',
+              'thu': 'Thursday', 'fri': 'Friday', 'sat': 'Saturday', 'sun': 'Sunday'
+            };
+            const uiFormat: any = { ...defaultOperatingHours };
+            Object.entries(parsed).forEach(([shortDay, hours]: [string, any]) => {
+              const fullDay = dayMapping[shortDay];
+              if (fullDay && hours) {
+                uiFormat[fullDay] = {
+                  open: convertTo12Hour(hours.open),
+                  close: convertTo12Hour(hours.close),
+                  closed: hours.closed
+                };
+              }
+            });
+            parsedOperatingHours = uiFormat;
+          } else {
+            parsedOperatingHours = { ...defaultOperatingHours, ...parsed };
+          }
+        } catch {
+          parsedOperatingHours = defaultOperatingHours;
+        }
+      } else if (typeof hoursValue === 'object') {
+        const dayMapping: { [key: string]: string } = {
+          'mon': 'Monday', 'tue': 'Tuesday', 'wed': 'Wednesday',
+          'thu': 'Thursday', 'fri': 'Friday', 'sat': 'Saturday', 'sun': 'Sunday'
+        };
+        const uiFormat: any = { ...defaultOperatingHours };
+        Object.entries(hoursValue).forEach(([shortDay, hours]: [string, any]) => {
+          const fullDay = dayMapping[shortDay];
+          if (fullDay && hours) {
+            uiFormat[fullDay] = {
+              open: convertTo12Hour(hours.open),
+              close: convertTo12Hour(hours.close),
+              closed: hours.closed
+            };
+          }
+        });
+        parsedOperatingHours = uiFormat;
+      }
+    }
+    return parsedOperatingHours;
   };
 
   // Form state for all editable fields
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
+    depotCode: depot.depotCode || "",
+    shortcode: depot.shortcode || "",
     latitude: depot.latitude || "",
     longitude: depot.longitude || "",
-    street: depot.street,
+    street: depot.street || "",
     postalCode: depot.postalCode || "",
     town: depot.town || "",
     active: depot.active !== undefined ? depot.active : true,
     priority: depot.priority || "Medium",
-    isParking: depot.isParking || false,
-    managerName: "",
-    managerPhone: "",
-    managerEmail: "",
-    emergencyContact: "",
-    loadingBays: "",
-    averageLoadingTime: "",
-    maxTruckSize: "",
-    certifications: "",
-    operatingHours: mockOperatingHours,
-  });
+    managerName: depot.managerName || "",
+    managerPhone: depot.managerPhone || "",
+    managerEmail: depot.managerEmail || "",
+    emergencyContact: depot.emergencyContact || "",
+    loadingBays: depot.loadingBays || "",
+    averageLoadingTime: depot.averageLoadingTime || "",
+    maxTruckSize: depot.maxTruckSize || "",
+    certifications: depot.certifications || "",
+    operatingHours: parseOperatingHours(depot.operatingHours),
+  }));
+
+  // Update form data when depot prop changes (e.g., after a successful save)
+  useEffect(() => {
+    setFormData({
+      depotCode: depot.depotCode || "",
+      shortcode: depot.shortcode || "",
+      latitude: depot.latitude || "",
+      longitude: depot.longitude || "",
+      street: depot.street || "",
+      postalCode: depot.postalCode || "",
+      town: depot.town || "",
+      active: depot.active !== undefined ? depot.active : true,
+      priority: depot.priority || "Medium",
+      managerName: depot.managerName || "",
+      managerPhone: depot.managerPhone || "",
+      managerEmail: depot.managerEmail || "",
+      emergencyContact: depot.emergencyContact || "",
+      loadingBays: depot.loadingBays || "",
+      averageLoadingTime: depot.averageLoadingTime || "",
+      maxTruckSize: depot.maxTruckSize || "",
+      certifications: depot.certifications || "",
+      operatingHours: parseOperatingHours(depot.operatingHours),
+    });
+  }, [depot]);
 
   const handleInputChange = (field: string, value: string | boolean | number | null) => {
     setFormData(prev => ({
@@ -85,24 +179,52 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
   const handleCancel = () => {
     // Reset form data to original depot values
     setFormData({
+      depotCode: depot.depotCode || "",
+      shortcode: depot.shortcode || "",
       latitude: depot.latitude || "",
       longitude: depot.longitude || "",
-      street: depot.street,
+      street: depot.street || "",
       postalCode: depot.postalCode || "",
       town: depot.town || "",
       active: depot.active !== undefined ? depot.active : true,
       priority: depot.priority || "Medium",
-      isParking: depot.isParking || false,
-      managerName: "",
-      managerPhone: "",
-      managerEmail: "",
-      emergencyContact: "",
-      loadingBays: "",
-      averageLoadingTime: "",
-      maxTruckSize: "",
-      certifications: "",
-      operatingHours: mockOperatingHours,
+      managerName: depot.managerName || "",
+      managerPhone: depot.managerPhone || "",
+      managerEmail: depot.managerEmail || "",
+      emergencyContact: depot.emergencyContact || "",
+      loadingBays: depot.loadingBays || "",
+      averageLoadingTime: depot.averageLoadingTime || "",
+      maxTruckSize: depot.maxTruckSize || "",
+      certifications: depot.certifications || "",
+      operatingHours: parseOperatingHours(depot.operatingHours),
     });
+  };
+
+  const handleSave = () => {
+    // Convert form data back to DepotDetails format
+    const updatedDepot: DepotDetails = {
+      ...depot,
+      depotCode: formData.depotCode,
+      shortcode: formData.shortcode,
+      latitude: formData.latitude ? parseFloat(formData.latitude.toString()) : undefined,
+      longitude: formData.longitude ? parseFloat(formData.longitude.toString()) : undefined,
+      street: formData.street,
+      postalCode: formData.postalCode,
+      town: formData.town,
+      active: formData.active,
+      //@ts-ignore
+      priority: formData.priority,
+      managerName: formData.managerName,
+      managerPhone: formData.managerPhone,
+      managerEmail: formData.managerEmail,
+      emergencyContact: formData.emergencyContact,
+      loadingBays: formData.loadingBays ? parseInt(formData.loadingBays.toString(), 10) : undefined,
+      averageLoadingTime: formData.averageLoadingTime ? parseInt(formData.averageLoadingTime.toString(), 10) : undefined,
+      maxTruckSize: formData.maxTruckSize,
+      certifications: formData.certifications,
+      operatingHours: JSON.stringify(formData.operatingHours),
+    };
+    onSave(updatedDepot);
   };
 
   return (
@@ -110,26 +232,48 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
       {/* Main Content - Scrollable Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-4">
-          
+
           {/* Top Section - Depot Information and Contact Information */}
           <div className="grid grid-cols-2 gap-6">
-            
+
             {/* Left Column - Basic Depot Information */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Depot Information</h3>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  formData.active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${formData.active
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
                   {formData.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              
+
 
 
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="depotCode" className="text-sm font-medium text-gray-700">
+                    Depot Code
+                  </Label>
+                  <Input
+                    id="depotCode"
+                    value={formData.depotCode}
+                    disabled
+                    className="h-9 mt-1 bg-gray-50 border-gray-200"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shortcode" className="text-sm font-medium text-gray-700">
+                    Short Code
+                  </Label>
+                  <Input
+                    id="shortcode"
+                    value={formData.shortcode}
+                    onChange={(e) => handleInputChange("shortcode", e.target.value)}
+                    className="h-9 mt-1"
+                    placeholder="e.g. DPT"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
                     Latitude
@@ -141,7 +285,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                     value={formData.latitude}
                     onChange={(e) => handleInputChange('latitude', e.target.value)}
                     placeholder="e.g. 40.7128"
-                    className="mt-1"
+                    className="h-9 mt-1"
                   />
                 </div>
                 <div>
@@ -155,7 +299,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                     value={formData.longitude}
                     onChange={(e) => handleInputChange('longitude', e.target.value)}
                     placeholder="e.g. -74.0060"
-                    className="mt-1"
+                    className="h-9 mt-1"
                   />
                 </div>
               </div>
@@ -267,7 +411,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="active"
@@ -276,17 +420,6 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                   />
                   <Label htmlFor="active" className="text-sm font-medium text-gray-700">
                     Depot Active
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="isParking"
-                    checked={formData.isParking}
-                    onCheckedChange={(checked) => handleInputChange('isParking', !!checked)}
-                  />
-                  <Label htmlFor="isParking" className="text-sm font-medium text-gray-700">
-                    Is Parking
                   </Label>
                 </div>
               </div>
@@ -308,7 +441,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
             {/* Right Column - Contact Information */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
-              
+
               <div>
                 <Label htmlFor="managerName" className="text-sm font-medium text-gray-700">
                   Depot Manager
@@ -373,8 +506,8 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                     <MapPin size={32} className="mx-auto mb-2 text-blue-600" />
                     <p className="text-gray-600 text-sm">Interactive Map</p>
                     <p className="text-xs text-gray-500">
-                      {formData.latitude && formData.longitude 
-                        ? `${formData.latitude}, ${formData.longitude}` 
+                      {formData.latitude && formData.longitude
+                        ? `${formData.latitude}, ${formData.longitude}`
                         : 'No coordinates set'}
                     </p>
                   </div>
@@ -386,18 +519,17 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
           {/* Bottom Section - Operating Hours */}
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-gray-900">Operating Hours (Loading Operations)</h3>
-            
+
             <div className="grid grid-cols-4 gap-2">
               {weekDays.map((day) => {
                 const hours = formData.operatingHours[day as keyof typeof formData.operatingHours];
                 return (
-                  <div 
-                    key={day} 
-                    className={`border rounded-lg p-2 ${
-                      hours.closed 
-                        ? 'bg-red-50 border-red-200' 
-                        : ''
-                    }`}
+                  <div
+                    key={day}
+                    className={`border rounded-lg p-2 ${hours.closed
+                      ? 'bg-red-50 border-red-200'
+                      : ''
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm text-gray-900">{day.slice(0, 3)}</span>
@@ -405,14 +537,14 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
                         <Checkbox
                           id={`${day}-closed`}
                           checked={hours.closed}
-                          onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}                       
+                          onCheckedChange={(checked) => handleOperatingHoursChange(day, 'closed', !!checked)}
                         />
                         <Label htmlFor={`${day}-closed`} className="text-xs text-gray-600">
                           Closed
                         </Label>
                       </div>
                     </div>
-                    
+
                     {!hours.closed && (
                       <div className="space-y-1">
                         <div>
@@ -467,7 +599,7 @@ export default function BasicInfoTab({ depot, onSave }: BasicInfoTabProps) {
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button onClick={onSave} className="bg-primary-custom hover:bg-primary-custom/90">
+          <Button onClick={handleSave} className="bg-primary-custom hover:bg-primary-custom/90">
             Save Changes
           </Button>
         </div>

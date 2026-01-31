@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { useDataManagerContext, useRegionContext } from "@/contexts/RoleBasedContext";
-import { filterEntitiesByRole, assignMockRegions } from "@/utils/roleBasedFiltering";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -14,89 +13,155 @@ import {
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
 import { CheckSquare, Circle, Rows, XCircle, Check, X } from "@phosphor-icons/react";
-import AddDepotDialog, { Depot } from "@/app/components/AddDepotDialog";
+import AddDepotDialog, { NewDepot } from "@/app/components/AddDepotDialog";
 import DepotDetailsPage, { DepotDetails } from "@/app/components/DepotDetailsPage";
-
+import { UserApiService, Depot } from "@/lib/api/user";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 // Extended depot type with region information
-interface DepotWithRegion extends DepotDetails {
-  regionId: number;
-  regionName: string;
+interface DepotWithRegion extends Depot {
+  regionId?: number;
+  regionName?: string;
 }
 
 export default function DepotContent() {
   const { sidebarCollapsed } = useAppContext();
-  const { canAddEntities, isDataManager, companyId } = useDataManagerContext();
+  const { canAddEntities, isDataManager } = useDataManagerContext();
   const { selectedRegions, shouldFilterByRegion } = useRegionContext();
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
+
   const [selectedDepot, setSelectedDepot] = useState<DepotDetails | null>(null);
   const [showDepotDetails, setShowDepotDetails] = useState(false);
-  
-  // All depot data with regions assigned
-  const allDepots = assignMockRegions([
-    { id: 1, depotCode: "DP001", depotName: "Main Distribution Center", latLong: "34.0522, -118.2437", latitude: "34.0522", longitude: "-118.2437", street: "100 Industrial Blvd", postalCode: "90210", town: "Los Angeles", active: true, priority: "High", isParking: false },
-    { id: 2, depotCode: "DP002", depotName: "Port Terminal Depot", latLong: "33.7701, -118.1937", latitude: "33.7701", longitude: "-118.1937", street: "500 Harbor Drive", postalCode: "90731", town: "San Pedro", active: true, priority: "High", isParking: true },
-    { id: 3, depotCode: "DP003", depotName: "Airport Fuel Terminal", latLong: "33.9425, -118.4081", latitude: "33.9425", longitude: "-118.4081", street: "200 Airport Way", postalCode: "90045", town: "Los Angeles", active: true, priority: "High", isParking: true },
-    { id: 4, depotCode: "DP004", depotName: "Orange County Hub", latLong: "33.8073, -117.9185", latitude: "33.8073", longitude: "-117.9185", street: "300 Commerce Dr", postalCode: "92802", town: "Anaheim", active: true, priority: "Medium", isParking: false },
-    { id: 5, depotCode: "DP005", depotName: "Valley Distribution", latLong: "34.1684, -118.3731", latitude: "34.1684", longitude: "-118.3731", street: "400 Valley Blvd", postalCode: "91367", town: "Woodland Hills", active: false, priority: "Low", isParking: false },
-    { id: 6, depotCode: "DP006", depotName: "Coastal Storage Facility", latLong: "34.0059, -118.4989", latitude: "34.0059", longitude: "-118.4989", street: "600 Ocean Ave", postalCode: "90401", town: "Santa Monica", active: true, priority: "Medium", isParking: false },
-    { id: 7, depotCode: "DP007", depotName: "Industrial Park Depot", latLong: "33.8358, -118.3406", latitude: "33.8358", longitude: "-118.3406", street: "700 Manufacturing St", postalCode: "90501", town: "Torrance", active: true, priority: "High", isParking: true },
-    { id: 8, depotCode: "DP008", depotName: "South Bay Terminal", latLong: "33.8847, -118.4109", latitude: "33.8847", longitude: "-118.4109", street: "800 Terminal Way", postalCode: "90266", town: "Manhattan Beach", active: true, priority: "Medium", isParking: false },
-    { id: 9, depotCode: "DP009", depotName: "Long Beach Facility", latLong: "33.7701, -118.1937", latitude: "33.7701", longitude: "-118.1937", street: "900 Port Blvd", postalCode: "90802", town: "Long Beach", active: true, priority: "High", isParking: false },
-    { id: 10, depotCode: "DP010", depotName: "Irvine Tech Depot", latLong: "33.6846, -117.8265", latitude: "33.6846", longitude: "-117.8265", street: "1000 Innovation Dr", postalCode: "92612", town: "Irvine", active: true, priority: "Medium", isParking: false },
-    { id: 11, depotCode: "DP011", depotName: "Mission Viejo Storage", latLong: "33.6000, -117.6720", latitude: "33.6000", longitude: "-117.6720", street: "1100 Storage Ln", postalCode: "92692", town: "Mission Viejo", active: false, priority: "Low", isParking: false },
-    { id: 12, depotCode: "DP012", depotName: "Newport Distribution", latLong: "33.6189, -117.9298", latitude: "33.6189", longitude: "-117.9298", street: "1200 Distribution Ave", postalCode: "92661", town: "Newport Beach", active: true, priority: "Medium", isParking: false },
-    { id: 13, depotCode: "DP013", depotName: "San Diego Central", latLong: "32.7157, -117.1611", latitude: "32.7157", longitude: "-117.1611", street: "1300 Central Plaza", postalCode: "92101", town: "San Diego", active: true, priority: "High", isParking: true },
-    { id: 14, depotCode: "DP014", depotName: "Oceanside Terminal", latLong: "33.1959, -117.3795", latitude: "33.1959", longitude: "-117.3795", street: "1400 Marine Ave", postalCode: "92054", town: "Oceanside", active: true, priority: "Medium", isParking: false },
-    { id: 15, depotCode: "DP015", depotName: "La Jolla Research Depot", latLong: "32.8470, -117.2730", latitude: "32.8470", longitude: "-117.2730", street: "1500 Research Way", postalCode: "92037", town: "La Jolla", active: true, priority: "Medium", isParking: false },
-    { id: 16, depotCode: "DP016", depotName: "Carlsbad Industrial", latLong: "33.1581, -117.3506", latitude: "33.1581", longitude: "-117.3506", street: "1600 Industrial Pkwy", postalCode: "92008", town: "Carlsbad", active: false, priority: "Low", isParking: false },
-    { id: 17, depotCode: "DP017", depotName: "Encinitas Coastal Depot", latLong: "33.0370, -117.2920", latitude: "33.0370", longitude: "-117.2920", street: "1700 Coastal Hwy", postalCode: "92024", town: "Encinitas", active: true, priority: "Low", isParking: false },
-    { id: 18, depotCode: "DP018", depotName: "Del Mar Premium Hub", latLong: "32.9595, -117.2653", latitude: "32.9595", longitude: "-117.2653", street: "1800 Premium Blvd", postalCode: "92014", town: "Del Mar", active: true, priority: "High", isParking: false },
-    { id: 19, depotCode: "DP019", depotName: "Chula Vista South", latLong: "32.6401, -117.0842", latitude: "32.6401", longitude: "-117.0842", street: "1900 South Bay Dr", postalCode: "91910", town: "Chula Vista", active: true, priority: "Medium", isParking: true },
-    { id: 20, depotCode: "DP020", depotName: "Point Loma Naval Depot", latLong: "32.6953, -117.2415", latitude: "32.6953", longitude: "-117.2415", street: "2000 Naval Base Rd", postalCode: "92106", town: "Point Loma", active: true, priority: "High", isParking: false },
-  ]);
+  const [depots, setDepots] = useState<DepotWithRegion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filter depots based on role and selected regions
-  const getFilteredDepots = (): DepotWithRegion[] => {
-    return filterEntitiesByRole(allDepots, {
-      shouldFilterByRegion,
-      selectedRegions,
-      companyId,
-      isDataManager
-    });
-  };
+  // Create a stable reference for selected region IDs
+  const selectedRegionIds = useMemo(
+    () => selectedRegions.map(r => r.id).sort().join(','),
+    [selectedRegions]
+  );
 
-  const [depots, setDepots] = useState<DepotWithRegion[]>(getFilteredDepots());
-
-  // Update depots when selected regions change
+  // Fetch depots from API
   useEffect(() => {
-    setDepots(getFilteredDepots());
-  }, [selectedRegions, shouldFilterByRegion]);
+    const fetchDepots = async () => {
+      setIsLoading(true);
+      try {
+        let depotsPromise: Promise<DepotWithRegion[]>;
 
-  const handleAddDepot = (newDepot: Depot) => {
-    // For new depot, assign to first selected region or default region
-    const defaultRegionId = shouldFilterByRegion && selectedRegions.length > 0 
-      ? selectedRegions[0].id 
-      : 1;
-    const defaultRegionName = shouldFilterByRegion && selectedRegions.length > 0 
-      ? selectedRegions[0].name 
-      : "West Coast";
-      
-    const depot: DepotWithRegion = {
-      ...newDepot,
-      id: allDepots.length + depots.length + 1,
-      latLong: `${newDepot.latitude}, ${newDepot.longitude}`,
-      regionId: defaultRegionId,
-      regionName: defaultRegionName,
+        if (shouldFilterByRegion && selectedRegions.length > 0) {
+          // If regions are selected, fetch for each and flatten
+          const regionPromises = selectedRegions.map(async (region) => {
+            const regionDepots = await UserApiService.getDepotsByRegion(region.id);
+            return regionDepots.map(depot => ({
+              ...depot,
+              regionId: region.id,
+              regionName: region.name,
+              latLong: depot.latLong || (depot.latitude && depot.longitude ? `${depot.latitude}, ${depot.longitude}` : ""),
+              active: depot.active ?? true,
+              priority: depot.priority || "Medium",
+              isParking: depot.isParking || false
+            }));
+          });
+
+          depotsPromise = Promise.all(regionPromises).then(regionsDepots => regionsDepots.flat());
+        } else {
+          // If no regions or global (DataManager viewing all), fetch all
+          depotsPromise = UserApiService.getDepots().then(allDepots => {
+            return allDepots.map(depot => {
+              const regionName = "Unknown"; // We might not have regionName in GET /Depots unless mapped
+              return {
+                ...depot,
+                latLong: depot.latLong || (depot.latitude && depot.longitude ? `${depot.latitude}, ${depot.longitude}` : ""),
+                active: depot.active ?? true,
+                priority: depot.priority || "Medium",
+                isParking: depot.isParking || false,
+                regionName
+              };
+            });
+          });
+        }
+
+        const depotsResult = await depotsPromise;
+        setDepots(depotsResult);
+      } catch (error) {
+        console.error("Failed to fetch depots:", error);
+        setDepots([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setDepots([...depots, depot]);
+
+    fetchDepots();
+  }, [selectedRegionIds, shouldFilterByRegion]);
+
+  const handleAddDepot = async (newDepot: NewDepot) => {
+    if (selectedRegions.length === 0 && shouldFilterByRegion) {
+      showError("No region selected", "Please select a region first");
+      return;
+    }
+
+    // Default to first selected region or 0/null
+    const regionId = selectedRegions.length > 0 ? selectedRegions[0].id : 0;
+    const regionName = selectedRegions.length > 0 ? selectedRegions[0].name : "Unknown";
+
+    try {
+      showLoader("Creating new depot...");
+      const createdDepot = await UserApiService.addDepot({
+        depotCode: newDepot.depotCode,
+        depotName: newDepot.depotName,
+        regionId: regionId
+      });
+
+      // Optimistically add to list
+      const depotWithRegion: DepotWithRegion = {
+        ...createdDepot,
+        regionId: regionId,
+        regionName: regionName,
+        active: true, // Default
+        priority: "Medium", // Default
+        isParking: false, // Default
+        latLong: "",
+        latitude: 0,
+        longitude: 0,
+      };
+
+      setDepots([...depots, depotWithRegion]);
+      showSuccess("Depot created successfully", `${newDepot.depotName} has been added`);
+    } catch (error) {
+      console.error("Failed to create depot:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create depot";
+      showError("Failed to create depot", errorMessage);
+    } finally {
+      hideLoader();
+    }
   };
 
-  const handleRowDoubleClick = (event: { data: DepotDetails }) => {
-    setSelectedDepot(event.data);
-    setShowDepotDetails(true);
+  const handleRowDoubleClick = async (event: { data: DepotWithRegion }) => {
+    try {
+      showLoader("Loading depot details...");
+      // Fetch full depot data from API
+      const fullDepotData = await UserApiService.getDepotById(event.data.id);
+
+      const details: DepotDetails = {
+        ...fullDepotData,
+        // Ensure frontend fields are initialized
+        products: [],
+        loadings: []
+      };
+
+      setSelectedDepot(details);
+      setShowDepotDetails(true);
+    } catch (error) {
+      console.error("Failed to load depot details:", error);
+      showError("Error", "Failed to load depot details");
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleBackFromDetails = () => {
@@ -105,16 +170,16 @@ export default function DepotContent() {
   };
 
   const handleSaveDepot = (updatedDepot: DepotDetails) => {
-    const updatedDepots = depots.map((depot: DepotWithRegion) => 
+    // Update the list
+    const updatedDepots = depots.map((depot) =>
       depot.id === updatedDepot.id ? {
-        ...updatedDepot,
-        regionId: depot.regionId,
-        regionName: depot.regionName
-      } as DepotWithRegion : depot
+        ...depot,
+        ...updatedDepot
+      } : depot
     );
     setDepots(updatedDepots);
-    setShowDepotDetails(false);
-    setSelectedDepot(null);
+    // Update selected depot to reflect changes in the UI without closing the view
+    setSelectedDepot(updatedDepot);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -130,16 +195,13 @@ export default function DepotContent() {
     }
   };
 
-
-
   // Status Cell Renderer for Active/Inactive
   const StatusCellRenderer = (params: ICellRendererParams) => {
     const isActive = params.value;
     return (
       <span
-        className={`px-3 py-1 text-sm font-medium rounded-full ${
-          isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-        }`}
+        className={`px-3 py-1 text-sm font-medium rounded-full ${isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
       >
         {isActive ? "Active" : "Inactive"}
       </span>
@@ -151,25 +213,11 @@ export default function DepotContent() {
     return (
       <span
         className={`px-3 py-1 text-sm font-medium rounded-full ${getPriorityColor(
-          params.value
+          params.value || "Medium"
         )}`}
       >
-        {params.value}
+        {params.value || "Medium"}
       </span>
-    );
-  };
-
-  // Is Parking Cell Renderer
-  const IsParkingCellRenderer = (params: ICellRendererParams) => {
-    const isParking = params.value;
-    return (
-      <div className="flex items-center justify-center h-full">
-        {isParking ? (
-          <Check size={20} color="green" weight="bold" />
-        ) : (
-          <X size={20} color="red" weight="bold" />
-        )}
-      </div>
     );
   };
 
@@ -196,6 +244,11 @@ export default function DepotContent() {
       sortable: false,
       filter: false,
       cellStyle: { textAlign: 'center' },
+      valueGetter: (params) => {
+        if (params.data.latLong) return params.data.latLong;
+        if (params.data.latitude && params.data.longitude) return `${params.data.latitude}, ${params.data.longitude}`;
+        return "";
+      }
     },
     {
       field: "street",
@@ -232,14 +285,7 @@ export default function DepotContent() {
       minWidth: 100,
       cellRenderer: PriorityCellRenderer,
     },
-    {
-      field: "isParking",
-      headerName: "Is Parking",
-      flex: 1,
-      minWidth: 100,
-      cellRenderer: IsParkingCellRenderer,
-      cellStyle: { textAlign: 'center' },
-    },
+
   ];
 
   // Grid options
@@ -259,87 +305,92 @@ export default function DepotContent() {
         />
       ) : (
         <main
-          className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
-            sidebarCollapsed ? "ml-16" : "ml-64"
-          }`}
+          className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"
+            }`}
         >
-      <div className="p-4 h-full flex flex-col">
-        {/* Header with Stats and Add Button */}
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          {/* Stats Cards - Same height as button */}
-          <div className="flex gap-3">
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><Rows size={25} color="#02589d" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-gray-900">
-                  {depots.length}
-                </span>
-                <span className="text-xs text-gray-600">Total</span>
+          <div className="p-4 h-full flex flex-col">
+            {/* Header with Stats and Add Button */}
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
+              {/* Stats Cards - Same height as button */}
+              <div className="flex gap-3">
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><Rows size={25} color="#02589d" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-gray-900">
+                      {depots.length}
+                    </span>
+                    <span className="text-xs text-gray-600">Total</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><CheckSquare size={25} weight="duotone" color="green" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-green-600">
+                      {depots.filter((d) => d.active).length}
+                    </span>
+                    <span className="text-xs text-gray-600">Active</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><Circle size={25} color="red" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-red-600">
+                      {depots.filter((d) => d.priority === "High").length}
+                    </span>
+                    <span className="text-xs text-gray-600">High</span>
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
+                  <span className="text-base"><XCircle size={25} color="red" weight="duotone" /></span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-red-600">
+                      {depots.filter((d) => !d.active).length}
+                    </span>
+                    <span className="text-xs text-gray-600">Inactive</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><CheckSquare size={25} weight="duotone" color="green" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-green-600">
-                  {depots.filter((d) => d.active).length}
-                </span>
-                <span className="text-xs text-gray-600">Active</span>
-              </div>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><Circle size={25} color="red" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-red-600">
-                  {depots.filter((d) => d.priority === "High").length}
-                </span>
-                <span className="text-xs text-gray-600">High</span>
-              </div>
-            </div>
-            <div className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center gap-2 h-10">
-              <span className="text-base"><XCircle size={25} color="red" weight="duotone" /></span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-red-600">
-                  {depots.filter((d) => !d.active).length}
-                </span>
-                <span className="text-xs text-gray-600">Inactive</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Add New Depot Button - Only for Data Managers */}
-          {canAddEntities && <AddDepotDialog onSave={handleAddDepot} />}
-        </div>
+              {/* Add New Depot Button - Only for Data Managers */}
+              {canAddEntities && <AddDepotDialog onSave={handleAddDepot} />}
+            </div>
 
-        {/* Depots Table - Takes remaining space */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
-          {/* Tip Section */}
-          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <span className="font-medium">Tip:</span> Double-click on any depot row to view detailed information including basic info, delivery sites, vehicles, and settings.
-            </p>
+            {/* Depots Table - Takes remaining space */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 overflow-hidden">
+              {/* Tip Section */}
+              <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  <span className="font-medium">Tip:</span> Double-click on any depot row to view detailed information including basic info, delivery sites, vehicles, and settings.
+                </p>
+              </div>
+
+              <div style={{ height: "calc(100% - 60px)", width: "100%" }}>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+                  </div>
+                ) : (
+                  <AgGridReact
+                    rowData={depots}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    animateRows={true}
+                    pagination={true}
+                    paginationPageSize={20}
+                    rowHeight={55}
+                    headerHeight={45}
+                    suppressMenuHide={true}
+                    theme={themeQuartz}
+                    onGridReady={(params: GridReadyEvent) => {
+                      params.api.sizeColumnsToFit();
+                    }}
+                    onRowDoubleClicked={handleRowDoubleClick}
+                  />
+                )}
+              </div>
+            </div>
           </div>
-          
-          <div style={{ height: "calc(100% - 60px)", width: "100%" }}>
-            <AgGridReact
-              rowData={depots}
-              columnDefs={columnDefs}
-              defaultColDef={defaultColDef}
-              animateRows={true}
-              pagination={true}
-              paginationPageSize={20}
-              rowHeight={55}
-              headerHeight={45}
-              suppressMenuHide={true}
-              theme={themeQuartz}
-              onGridReady={(params: GridReadyEvent) => {
-                params.api.sizeColumnsToFit();
-              }}
-              onRowDoubleClicked={handleRowDoubleClick}
-            />
-          </div>
-        </div>
-      </div>
-    </main>
+        </main>
       )}
     </>
   );
