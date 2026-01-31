@@ -176,6 +176,90 @@ export interface ReportsData {
   metadata?: Record<string, unknown>
 }
 
+// Tank-related interfaces matching API response
+export interface TankReading {
+  id: number;
+  tankId: number;
+  readingTimestamp: string;
+  readingMethod: string;
+  currentVolumeL: number;
+  salesSinceLastReadingL: number;
+  avgDailySalesL: number;
+}
+
+export interface TankDelivery {
+  id: number;
+  tankId: number;
+  status: string;
+  plannedQuantityL: number;
+  confirmedQuantityL: number | null;
+  scheduledArrival: string;
+  actualArrival: string | null;
+}
+
+export interface SalesPattern {
+  id: number;
+  tankId: number;
+  dayOfWeek: number;
+  hourOfDay: number;
+  weightFactor: number;
+  avgHourlySalesL: number;
+}
+
+export interface TankFull {
+  id: number;
+  siteId: number;
+  productId: number;
+  tankCode: string;
+  capacityL: number;
+  safeFillL: number;
+  deadstockL: number;
+  dischargeRateLpm: number;
+  active: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  lastReadings: TankReading[];
+  deliveries: TankDelivery[];
+  salesPatterns: SalesPattern[];
+}
+
+export interface Product {
+  id: number;
+  productCode: string;
+  productName: string;
+  shortName: string;
+  companyId: number;
+  companyName: string;
+  regionId: number;
+  regionName: string;
+  active: boolean;
+  isHazardous: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTankRequest {
+  tankCode: string;
+  siteId: number;
+  productId: number;
+}
+
+export interface Tank {
+  id: number;
+  siteId: number;
+  productId: number;
+  tankCode: string;
+  capacityL: number;
+  safeFillL: number;
+  deadstockL: number;
+  dischargeRateLpm: number | null;
+  active: boolean;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // User API service functions
 export class UserApiService {
   // Get dashboard data
@@ -260,6 +344,27 @@ export class UserApiService {
   // Update an existing site
   static async updateSite(siteId: number, siteData: Partial<Site>, token?: string): Promise<Site> {
     const { data, error } = await api.put<Site>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/${siteId}`, siteData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get tanks for a specific site with full details
+  static async getTanksBySite(siteId: number, token?: string): Promise<TankFull[]> {
+    const { data, error } = await api.get<TankFull[]>('USER', `/Tanks/site/${siteId}/full`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get products by region (from admin API)
+  static async getProductsByRegion(regionId: number, token?: string): Promise<Product[]> {
+    const { data, error } = await api.get<Product[]>('ADMIN', `/Products/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Create a new tank
+  static async createTank(tankData: CreateTankRequest, token?: string): Promise<Tank> {
+    const { data, error } = await api.post<Tank>('USER', '/Tanks', tankData)
     if (error) throw new Error(error)
     return data!
   }

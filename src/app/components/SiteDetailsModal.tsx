@@ -81,6 +81,18 @@ export interface SiteDetails {
   depotId?: number | null;
   deliveryStopped?: boolean;
   pumpedRequired?: boolean;
+  // Regions array from the API
+  regions?: Array<{
+    id: number;
+    name: string;
+    regionCode: string;
+    companyId: number;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  }>;
   // Notes for the site
   notes?: {
     id: number;
