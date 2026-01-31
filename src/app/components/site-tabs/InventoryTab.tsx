@@ -10,6 +10,8 @@ import { CaretDown, CaretUp, PlusSquare } from "@phosphor-icons/react";
 import { SiteDetails } from "../SiteDetailsModal";
 import { UserApiService, TankFull, Product } from "@/lib/api/user";
 import { useRegionContext } from "@/contexts/RoleBasedContext";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 
 interface InventoryTabProps {
   site: SiteDetails;
@@ -39,24 +41,32 @@ export default function InventoryTab({ site }: InventoryTabProps) {
   // Get selected region from context (from header)
   const { selectedRegions } = useRegionContext();
 
+  // Get loader and notification hooks
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
+
   // Fetch tank data when component mounts or site changes
   useEffect(() => {
     const fetchTanks = async () => {
-      setIsLoading(true);
-      setError(null);
       try {
+        showLoader("Loading tank data...");
+        setError(null);
         const tankData = await UserApiService.getTanksBySite(site.id);
         setTanks(tankData);
       } catch (err) {
         console.error("Failed to fetch tanks:", err);
-        setError(err instanceof Error ? err.message : "Failed to load tank data");
+        const errorMsg = err instanceof Error ? err.message : "Failed to load tank data";
+        setError(errorMsg);
+        showError("Failed to load tanks", errorMsg);
       } finally {
+        hideLoader();
         setIsLoading(false);
       }
     };
 
     fetchTanks();
-  }, [site.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [site.id]); // Only re-fetch when site.id changes
 
   // Fetch products by selected region from context
   useEffect(() => {
@@ -148,7 +158,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
     }
 
     try {
-      setIsLoading(true);
+      showLoader("Creating tank...");
 
       // Create the tank
       const newTank = await UserApiService.createTank({
@@ -168,16 +178,34 @@ export default function InventoryTab({ site }: InventoryTabProps) {
       setNewTankProductId("");
       setIsAddTankDialogOpen(false);
 
-      // TODO: Show success notification
-      alert(`Tank "${newTank.tankCode}" created successfully!`);
+      // Show success notification
+      showSuccess("Tank created successfully", `Tank "${newTank.tankCode}" has been added`);
     } catch (err) {
       console.error("Failed to create tank:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to create tank";
 
-      // Show error to user
-      alert(`Error: ${errorMessage}`);
+      // Parse error message
+      let errorMessage = "Failed to create tank";
+
+      if (err instanceof Error) {
+        try {
+          // Try to parse the error message as JSON
+          const errorObj = JSON.parse(err.message);
+          if (errorObj.details) {
+            const details = JSON.parse(errorObj.details);
+            errorMessage = details.message || errorMessage;
+          } else if (errorObj.message) {
+            errorMessage = errorObj.message;
+          }
+        } catch {
+          // If parsing fails, use the error message as is
+          errorMessage = err.message;
+        }
+      }
+
+      // Show error notification
+      showError("Failed to create tank", errorMessage);
     } finally {
-      setIsLoading(false);
+      hideLoader();
     }
   };
 
