@@ -245,6 +245,55 @@ export interface CreateTankRequest {
   productId: number;
 }
 
+export interface UpdateTankRequest {
+  productId: number;
+  capacityL: number;
+  safeFillL: number;
+  deadstockL: number;
+  dischargeRateLpm: number;
+  active: boolean;
+  metadata?: string;
+}
+
+// Note-related interfaces matching API response
+export interface Note {
+  id: number;
+  category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
+  priority: "Low" | "Medium" | "High";
+  comment: string;
+  status: "Open" | "In Review" | "Closed";
+  closingComment: string | null;
+  closedAt: string | null;
+  closedBy: number | null;
+  siteId: number | null;
+  depotId: number | null;
+  parkingId: number | null;
+  vehicleId: number | null;
+  companyId: number;
+  createdBy: number;
+  createdByName: string;
+  closedByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface CreateNoteRequest {
+  category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
+  priority: "Low" | "Medium" | "High";
+  comment: string;
+  siteId?: number;
+  depotId?: number;
+  parkingId?: number;
+  vehicleId?: number;
+  companyId: number;
+}
+
+export interface UpdateNoteStatusRequest {
+  status: "Open" | "In Review" | "Closed";
+  closingComment?: string;
+}
+
 export interface Tank {
   id: number;
   siteId: number;
@@ -365,6 +414,61 @@ export class UserApiService {
   // Create a new tank
   static async createTank(tankData: CreateTankRequest, token?: string): Promise<Tank> {
     const { data, error } = await api.post<Tank>('USER', '/Tanks', tankData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Update an existing tank
+  static async updateTank(tankId: number, tankData: UpdateTankRequest, token?: string): Promise<Tank> {
+    const { data, error } = await api.put<Tank>('USER', `/Tanks/${tankId}`, tankData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Delete a tank
+  static async deleteTank(tankId: number, token?: string): Promise<void> {
+    const { error } = await api.delete('USER', `/Tanks/${tankId}`)
+    if (error) throw new Error(error)
+  }
+
+  // Create a new note
+  static async createNote(noteData: CreateNoteRequest, token?: string): Promise<Note> {
+    const { data, error } = await api.post<Note>('USER', '/Notes', noteData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get notes by site ID
+  static async getNotesBySite(siteId: number, token?: string): Promise<Note[]> {
+    const { data, error } = await api.get<Note[]>('USER', `/Notes/by-site/${siteId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get notes by depot ID
+  static async getNotesByDepot(depotId: number, token?: string): Promise<Note[]> {
+    const { data, error } = await api.get<Note[]>('USER', `/Notes/by-depot/${depotId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get notes by parking ID
+  static async getNotesByParking(parkingId: number, token?: string): Promise<Note[]> {
+    const { data, error } = await api.get<Note[]>('USER', `/Notes/by-parking/${parkingId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get notes by vehicle ID
+  static async getNotesByVehicle(vehicleId: number, token?: string): Promise<Note[]> {
+    const { data, error } = await api.get<Note[]>('USER', `/Notes/by-vehicle/${vehicleId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Update note status
+  static async updateNoteStatus(noteId: number, statusData: UpdateNoteStatusRequest, token?: string): Promise<Note> {
+    const { data, error } = await api.put<Note>('USER', `/Notes/${noteId}/status`, statusData)
     if (error) throw new Error(error)
     return data!
   }

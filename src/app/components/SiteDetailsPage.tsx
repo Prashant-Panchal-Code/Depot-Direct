@@ -42,38 +42,7 @@ export default function SiteDetailsPage({
   const [activeTab, setActiveTab] = useState("basic-info");
 
   // Notes state lifted up to manage count properly
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: 1,
-      createdDate: "2024-01-15 14:30",
-      createdBy: "John Smith",
-      comment: "Site inspection completed. All tanks operational.",
-      priority: "Medium" as const,
-      category: "Maintenance" as const,
-      status: "Closed" as const,
-      closedDate: "2024-01-16 10:30",
-      closedBy: "John Smith",
-      closingComment: "All issues resolved and documented"
-    },
-    {
-      id: 2,
-      createdDate: "2024-01-12 09:15",
-      createdBy: "Sarah Johnson",
-      comment: "Delivery access road needs repair. Coordinating with maintenance team.",
-      priority: "High" as const,
-      category: "Maintenance" as const,
-      status: "In Review" as const
-    },
-    {
-      id: 3,
-      createdDate: "2024-01-08 16:45",
-      createdBy: "Mike Davis",
-      comment: "New safety protocols implemented successfully.",
-      priority: "Medium" as const,
-      category: "Safety" as const,
-      status: "Open" as const
-    }
-  ]);
+  const [notes, setNotes] = useState<Note[]>([]);
 
   const openNotesCount = notes.filter(note => note.status !== "Closed").length;
 

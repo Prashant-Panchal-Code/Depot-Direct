@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AgGridReact } from "ag-grid-react";
@@ -22,21 +22,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { UserApiService, Note as ApiNote, CreateNoteRequest } from "@/lib/api/user";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// Local Note interface for UI display
 export interface Note {
   id: number;
-  createdDate: string;
-  createdBy: string;
-  comment: string;
+  category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
   priority: "Low" | "Medium" | "High";
-  category: "General" | "Maintenance" | "Safety" | "Delivery" | "Operations";
+  comment: string;
   status: "Open" | "In Review" | "Closed";
+  closingComment: string | null;
+  closedAt: string | null;
+  closedBy: number | null;
+  siteId: number | null;
+  depotId: number | null;
+  parkingId: number | null;
+  vehicleId: number | null;
+  companyId: number;
+  createdBy: number;
+  createdByName: string;
+  closedByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  // UI-specific fields
+  createdDate: string;
   closedDate?: string;
-  closedBy?: string;
-  closingComment?: string;
 }
 
 interface NotesTabProps {
@@ -56,6 +72,8 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     status: "Open",
     closingComment: ""
   });
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
 
   const [newNote, setNewNote] = useState<{
     comment: string;
@@ -67,30 +85,115 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     category: "General"
   });
 
-  const handleAddNote = (e: React.FormEvent) => {
+  // Track if we've already fetched notes for this site
+  const hasFetchedRef = useRef(false);
+  const currentSiteIdRef = useRef(site.id);
+
+  // Reset fetch flag when site changes
+  if (currentSiteIdRef.current !== site.id) {
+    hasFetchedRef.current = false;
+    currentSiteIdRef.current = site.id;
+  }
+
+  // Fetch notes when component mounts
+  useEffect(() => {
+    // Only fetch if we haven't already fetched for this site
+    if (hasFetchedRef.current) {
+      return;
+    }
+
+    const fetchNotes = async () => {
+      try {
+        showLoader("Loading notes...");
+        const apiNotes = await UserApiService.getNotesBySite(site.id);
+
+        // Convert API notes to UI format
+        const uiNotes: Note[] = apiNotes.map(apiNote => ({
+          ...apiNote,
+          createdDate: new Date(apiNote.createdAt).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }),
+          closedDate: apiNote.closedAt ? new Date(apiNote.closedAt).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }) : undefined
+        }));
+
+        setNotes(uiNotes);
+        hasFetchedRef.current = true; // Mark as fetched
+      } catch (error) {
+        console.error("Failed to fetch notes:", error);
+        showError("Failed to load notes", error instanceof Error ? error.message : "Unknown error");
+      } finally {
+        hideLoader();
+      }
+    };
+
+    fetchNotes();
+  }, [site.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNote.comment.trim()) return;
 
-    const note: Note = {
-      id: Math.max(...notes.map(n => n.id), 0) + 1, // Generate next available ID
-      createdDate: new Date().toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }),
-      createdBy: "Current User", // In real app, this would come from authentication
-      comment: newNote.comment,
-      priority: newNote.priority,
-      category: newNote.category,
-      status: "Open" // New notes are always Open
-    };
+    try {
+      showLoader("Adding note...");
 
-    setNotes([note, ...notes]);
-    setNewNote({ comment: "", priority: "Medium", category: "General" });
-    setOpen(false);
+      // Get companyId from site regions if available
+      const companyId = site.regions && site.regions.length > 0
+        ? site.regions[0].companyId
+        : 0; // Default to 0 if not available
+
+      const createNoteRequest: CreateNoteRequest = {
+        category: newNote.category,
+        priority: newNote.priority,
+        comment: newNote.comment,
+        siteId: site.id,
+        companyId: companyId
+      };
+
+      const apiNote = await UserApiService.createNote(createNoteRequest);
+
+      // Convert API note to UI format (API already provides createdByName and closedByName)
+      const uiNote: Note = {
+        ...apiNote,
+        createdDate: new Date(apiNote.createdAt).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }),
+        closedDate: apiNote.closedAt ? new Date(apiNote.closedAt).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }) : undefined
+      };
+
+      setNotes([uiNote, ...notes]);
+      setNewNote({ comment: "", priority: "Medium", category: "General" });
+      setOpen(false);
+      showSuccess("Note added successfully", "Your note has been saved");
+    } catch (error) {
+      console.error("Failed to add note:", error);
+      showError("Failed to add note", error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleEditNote = (note: Note) => {
@@ -102,7 +205,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     setEditOpen(true);
   };
 
-  const handleStatusUpdate = (e: React.FormEvent) => {
+  const handleStatusUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedNote) return;
 
@@ -112,40 +215,56 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       return;
     }
 
-    setNotes(notes.map(note => {
-      if (note.id === selectedNote.id) {
-        const updatedNote = { 
-          ...note, 
-          status: editForm.status 
-        };
-        
-        // Add close information when closing a note
-        if (editForm.status === "Closed") {
-          updatedNote.closedDate = new Date().toLocaleString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          });
-          updatedNote.closedBy = "Current User"; // In real app, this would come from authentication
-          updatedNote.closingComment = editForm.closingComment;
-        } else if (note.status === "Closed" && (editForm.status === "Open" || editForm.status === "In Review")) {
-          // Remove close information if reopening
-          delete updatedNote.closedDate;
-          delete updatedNote.closedBy;
-          delete updatedNote.closingComment;
-        }
-        
-        return updatedNote;
-      }
-      return note;
-    }));
+    try {
+      showLoader("Updating note status...");
 
-    setEditOpen(false);
-    setSelectedNote(null);
-    setEditForm({ status: "Open", closingComment: "" });
+      // Prepare the update request
+      const updateRequest: { status: "Open" | "In Review" | "Closed"; closingComment?: string } = {
+        status: editForm.status
+      };
+
+      // Only include closingComment if status is Closed
+      if (editForm.status === "Closed") {
+        updateRequest.closingComment = editForm.closingComment;
+      }
+
+      // Call the API to update note status
+      const updatedApiNote = await UserApiService.updateNoteStatus(selectedNote.id, updateRequest);
+
+      // Convert API response to UI format
+      const updatedNote: Note = {
+        ...updatedApiNote,
+        createdDate: new Date(updatedApiNote.createdAt).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }),
+        closedDate: updatedApiNote.closedAt ? new Date(updatedApiNote.closedAt).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }) : undefined
+      };
+
+      // Update the notes list with the updated note
+      setNotes(notes.map(note => note.id === selectedNote.id ? updatedNote : note));
+
+      setEditOpen(false);
+      setSelectedNote(null);
+      setEditForm({ status: "Open", closingComment: "" });
+      showSuccess("Note status updated", `Note status changed to ${editForm.status}`);
+    } catch (error) {
+      console.error("Failed to update note status:", error);
+      showError("Failed to update note status", error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      hideLoader();
+    }
   };
 
   const openNotes = notes.filter(note => note.status !== "Closed");
@@ -201,13 +320,12 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
 
   // Category cell renderer
   const CategoryCellRenderer = (params: ICellRendererParams) => {
-    const category = params.value as "General" | "Maintenance" | "Safety" | "Delivery" | "Operations";
+    const category = params.value as "General" | "Maintenance" | "Safety" | "Delivery Operations";
     const colorClass = {
       General: "bg-blue-100 text-blue-700",
       Maintenance: "bg-orange-100 text-orange-700",
       Safety: "bg-red-100 text-red-700",
-      Delivery: "bg-green-100 text-green-700",
-      Operations: "bg-purple-100 text-purple-700"
+      "Delivery Operations": "bg-purple-100 text-purple-700"
     }[category] || "bg-gray-100 text-gray-700";
 
     return (
@@ -232,7 +350,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       }
     },
     {
-      field: "createdBy",
+      field: "createdByName",
       headerName: "Created By",
       flex: 1,
       minWidth: 120,
@@ -276,7 +394,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       }
     },
     {
-      field: "closedBy",
+      field: "closedByName",
       headerName: "Closed By",
       flex: 1,
       minWidth: 120,
@@ -290,7 +408,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       minWidth: 200,
       cellClass: "text-sm text-gray-600 italic",
       autoHeight: true,
-      cellStyle: { 
+      cellStyle: {
         whiteSpace: 'normal',
         lineHeight: '1.4',
         paddingTop: '8px',
@@ -305,7 +423,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       minWidth: 250,
       cellClass: "text-sm",
       autoHeight: true,
-      cellStyle: { 
+      cellStyle: {
         whiteSpace: 'normal',
         lineHeight: '1.4',
         paddingTop: '8px',
@@ -345,7 +463,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
             </span>
           </div>
         </div>
-        
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -374,8 +492,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
                   <option value="General">General</option>
                   <option value="Maintenance">Maintenance</option>
                   <option value="Safety">Safety</option>
-                  <option value="Delivery">Delivery</option>
-                  <option value="Operations">Operations</option>
+                  <option value="Delivery Operations">Delivery Operations</option>
                 </select>
               </div>
 
@@ -411,9 +528,9 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setOpen(false)}
                 >
                   Cancel
@@ -493,9 +610,9 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
             )}
 
             <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setEditOpen(false)}
               >
                 Cancel

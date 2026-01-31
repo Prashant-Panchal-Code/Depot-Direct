@@ -25,6 +25,7 @@ interface EditableTankFields {
   safeFillL: number;
   dischargeRateLpm: number;
   avgDailySalesL: number;
+  active: boolean;
 }
 
 export default function InventoryTab({ site }: InventoryTabProps) {
@@ -37,6 +38,8 @@ export default function InventoryTab({ site }: InventoryTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [editedTanks, setEditedTanks] = useState<{ [tankId: number]: Partial<EditableTankFields> }>({});
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [tankToDelete, setTankToDelete] = useState<TankFull | null>(null);
 
   // Get selected region from context (from header)
   const { selectedRegions } = useRegionContext();
@@ -93,7 +96,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
     fetchProducts();
   }, [selectedRegions]); // Re-fetch when selected region changes
 
-  const handleTankFieldChange = (tankId: number, field: keyof EditableTankFields, value: number) => {
+  const handleTankFieldChange = (tankId: number, field: keyof EditableTankFields, value: number | boolean) => {
     setEditedTanks(prev => ({
       ...prev,
       [tankId]: {
@@ -103,13 +106,17 @@ export default function InventoryTab({ site }: InventoryTabProps) {
     }));
   };
 
-  const getTankValue = (tank: TankFull, field: keyof EditableTankFields): number => {
+  const getTankNumberValue = (tank: TankFull, field: Exclude<keyof EditableTankFields, 'active'>): number => {
     // Special handling for avgDailySalesL which comes from lastReadings
     if (field === 'avgDailySalesL') {
       const latestReading = tank.lastReadings && tank.lastReadings.length > 0 ? tank.lastReadings[0] : null;
-      return editedTanks[tank.id]?.[field] ?? latestReading?.avgDailySalesL ?? 0;
+      return (editedTanks[tank.id]?.[field] as number) ?? latestReading?.avgDailySalesL ?? 0;
     }
-    return editedTanks[tank.id]?.[field] ?? tank[field];
+    return (editedTanks[tank.id]?.[field] as number) ?? tank[field];
+  };
+
+  const getTankBooleanValue = (tank: TankFull, field: 'active'): boolean => {
+    return (editedTanks[tank.id]?.[field] as boolean) ?? tank[field];
   };
 
   const handleSaveTank = async (tankId: number) => {
@@ -120,15 +127,35 @@ export default function InventoryTab({ site }: InventoryTabProps) {
     }
 
     try {
-      // TODO: Add API call to update tank
-      console.log("Saving tank", tankId, "with changes:", editedFields);
+      showLoader("Saving tank changes...");
 
-      // Update local state
-      setTanks(prev => prev.map(tank =>
-        tank.id === tankId
-          ? { ...tank, ...editedFields }
-          : tank
-      ));
+      // Get the current tank to merge with edited fields
+      const currentTank = tanks.find(t => t.id === tankId);
+      if (!currentTank) {
+        throw new Error("Tank not found");
+      }
+
+      // Prepare the update request with all required fields
+      const updateData = {
+        productId: editedFields.productId ?? currentTank.productId,
+        capacityL: editedFields.capacityL ?? currentTank.capacityL,
+        safeFillL: editedFields.safeFillL ?? currentTank.safeFillL,
+        deadstockL: editedFields.deadstockL ?? currentTank.deadstockL,
+        dischargeRateLpm: editedFields.dischargeRateLpm ?? currentTank.dischargeRateLpm,
+        active: editedFields.active ?? currentTank.active,
+        metadata: typeof currentTank.metadata === 'string' ? currentTank.metadata : JSON.stringify(currentTank.metadata)
+      };
+
+      console.log("Updating tank", tankId, "with data:", updateData);
+
+      // Call the API to update the tank
+      const updatedTank = await UserApiService.updateTank(tankId, updateData);
+
+      console.log("Tank updated successfully:", updatedTank);
+
+      // Refresh the tank list to get the latest data
+      const tankData = await UserApiService.getTanksBySite(site.id);
+      setTanks(tankData);
 
       // Clear edited state for this tank
       setEditedTanks(prev => {
@@ -137,11 +164,65 @@ export default function InventoryTab({ site }: InventoryTabProps) {
         return newState;
       });
 
-      // TODO: Show success notification
-      console.log("Tank updated successfully");
+      // Show success notification
+      showSuccess("Tank updated successfully", `Tank "${currentTank.tankCode}" has been updated`);
     } catch (err) {
       console.error("Failed to save tank:", err);
-      // TODO: Show error notification
+
+      // Parse error message
+      let errorMessage = "Failed to update tank";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      // Show error notification
+      showError("Failed to update tank", errorMessage);
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleDeleteTank = async () => {
+    if (!tankToDelete) return;
+
+    try {
+      showLoader("Deleting tank...");
+
+      // Call the API to delete the tank
+      await UserApiService.deleteTank(tankToDelete.id);
+
+      console.log("Tank deleted successfully:", tankToDelete.id);
+
+      // Refresh the tank list
+      const tankData = await UserApiService.getTanksBySite(site.id);
+      setTanks(tankData);
+
+      // Clear edited state for this tank if it exists
+      setEditedTanks(prev => {
+        const newState = { ...prev };
+        delete newState[tankToDelete.id];
+        return newState;
+      });
+
+      // Close the dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setTankToDelete(null);
+
+      // Show success notification
+      showSuccess("Tank deleted successfully", `Tank "${tankToDelete.tankCode}" has been deleted`);
+    } catch (err) {
+      console.error("Failed to delete tank:", err);
+
+      // Parse error message
+      let errorMessage = "Failed to delete tank";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      // Show error notification
+      showError("Failed to delete tank", errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 
@@ -216,7 +297,11 @@ export default function InventoryTab({ site }: InventoryTabProps) {
   };
 
   const calculateFillPercentage = (current: number, capacity: number) => {
-    return Math.round((current / capacity) * 100);
+    if (!capacity || capacity === 0 || !current) {
+      return 0;
+    }
+    const percentage = Math.round((current / capacity) * 100);
+    return isNaN(percentage) ? 0 : percentage;
   };
 
   const getDeliveryStatusColor = (status: string) => {
@@ -244,6 +329,27 @@ export default function InventoryTab({ site }: InventoryTabProps) {
   const getDayName = (dayOfWeek: number) => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return days[dayOfWeek] || "Unknown";
+  };
+
+  // Helper to sort tanks: active first, then by tank code alphabetically
+  const sortTanks = (tanksToSort: TankFull[]) => {
+    return [...tanksToSort].sort((a, b) => {
+      // First, sort by active status (active = true comes first)
+      if (a.active !== b.active) {
+        return a.active ? -1 : 1;
+      }
+      // Then sort by tank code alphabetically
+      return a.tankCode.localeCompare(b.tankCode);
+    });
+  };
+
+  // Helper to get product display name by product ID
+  const getProductDisplayName = (productId: number): string => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      return `${product.productName} (${product.productCode})`;
+    }
+    return `Product ID: ${productId}`;
   };
 
   // Helper to aggregate daily sales from sales patterns
@@ -355,7 +461,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
               <p className="text-gray-600">No tanks found for this site.</p>
             </div>
           ) : (
-            tanks.map((tank) => {
+            sortTanks(tanks).map((tank) => {
               const isExpanded = expandedTanks[tank.id];
               const latestReading = tank.lastReadings && tank.lastReadings.length > 0 ? tank.lastReadings[0] : null;
               const currentVolume = latestReading?.currentVolumeL || 0;
@@ -377,7 +483,9 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">{fillPercentage}% Full</span>
+                        {!isNaN(fillPercentage) && tank.capacityL > 0 && (
+                          <span className="text-sm text-gray-600">{fillPercentage}% Full</span>
+                        )}
                         {isExpanded ? <CaretUp size={16} /> : <CaretDown size={16} />}
                       </div>
                     </div>
@@ -385,7 +493,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                     {/* Tank Level Indicator */}
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-gray-600 mb-1">
-                        <span>Product ID: {tank.productId}</span>
+                        <span>{getProductDisplayName(tank.productId)}</span>
                         <span>{currentVolume.toLocaleString()}L / {tank.capacityL.toLocaleString()}L</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -411,21 +519,26 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label className="text-xs font-medium text-gray-700">Tank Status</Label>
-                                <Select defaultValue={tank.active ? "Active" : "Inactive"}>
+                                <Select
+                                  value={getTankBooleanValue(tank, 'active') ? "Active" : "Inactive"}
+                                  onValueChange={(value) => {
+                                    const isActive = value === "Active";
+                                    handleTankFieldChange(tank.id, 'active', isActive as any);
+                                  }}
+                                >
                                   <SelectTrigger className="mt-1 h-8 text-sm">
                                     <SelectValue placeholder="Select status..." />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="Active">Active</SelectItem>
                                     <SelectItem value="Inactive">Inactive</SelectItem>
-                                    <SelectItem value="Maintenance">Maintenance</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
                                 <Label className="text-xs font-medium text-gray-700">Product</Label>
                                 <Select
-                                  value={getTankValue(tank, 'productId').toString()}
+                                  value={getTankNumberValue(tank, 'productId').toString()}
                                   onValueChange={(value) => handleTankFieldChange(tank.id, 'productId', parseInt(value))}
                                 >
                                   <SelectTrigger className="mt-1 h-8 text-sm">
@@ -448,7 +561,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                                 <Label className="text-xs font-medium text-gray-700">Tank Capacity (L)</Label>
                                 <Input
                                   type="number"
-                                  value={getTankValue(tank, 'capacityL')}
+                                  value={getTankNumberValue(tank, 'capacityL')}
                                   onChange={(e) => handleTankFieldChange(tank.id, 'capacityL', parseFloat(e.target.value))}
                                   className="mt-1 h-8 text-sm"
                                   placeholder="e.g. 15000"
@@ -458,7 +571,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                                 <Label className="text-xs font-medium text-gray-700">Deadstock Volume (L)</Label>
                                 <Input
                                   type="number"
-                                  value={getTankValue(tank, 'deadstockL')}
+                                  value={getTankNumberValue(tank, 'deadstockL')}
                                   onChange={(e) => handleTankFieldChange(tank.id, 'deadstockL', parseFloat(e.target.value))}
                                   className="mt-1 h-8 text-sm"
                                   placeholder="e.g. 500"
@@ -472,7 +585,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                                 <Label className="text-xs font-medium text-gray-700">Safe Fill (L)</Label>
                                 <Input
                                   type="number"
-                                  value={getTankValue(tank, 'safeFillL')}
+                                  value={getTankNumberValue(tank, 'safeFillL')}
                                   onChange={(e) => handleTankFieldChange(tank.id, 'safeFillL', parseFloat(e.target.value))}
                                   className="mt-1 h-8 text-sm"
                                 />
@@ -481,7 +594,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                                 <Label className="text-xs font-medium text-gray-700">Discharge Rate (L/min)</Label>
                                 <Input
                                   type="number"
-                                  value={getTankValue(tank, 'dischargeRateLpm')}
+                                  value={getTankNumberValue(tank, 'dischargeRateLpm')}
                                   onChange={(e) => handleTankFieldChange(tank.id, 'dischargeRateLpm', parseFloat(e.target.value))}
                                   className="mt-1 h-8 text-sm"
                                 />
@@ -503,7 +616,7 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                                 <Label className="text-xs font-medium text-gray-700">Avg. Daily Sales (L)</Label>
                                 <Input
                                   type="number"
-                                  value={getTankValue(tank, 'avgDailySalesL')}
+                                  value={getTankNumberValue(tank, 'avgDailySalesL')}
                                   onChange={(e) => handleTankFieldChange(tank.id, 'avgDailySalesL', parseFloat(e.target.value))}
                                   className="mt-1 h-8 text-sm"
                                 />
@@ -564,7 +677,15 @@ export default function InventoryTab({ site }: InventoryTabProps) {
                             >
                               Save Changes
                             </Button>
-                            <Button size="sm" variant="outline" className="text-xs text-red-600 hover:text-red-700">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setTankToDelete(tank);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
                               Delete Tank
                             </Button>
                           </div>
@@ -625,6 +746,59 @@ export default function InventoryTab({ site }: InventoryTabProps) {
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Tank</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-700 mb-4">
+              Are you sure you want to delete this tank? This action cannot be undone.
+            </p>
+            {tankToDelete && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Tank Code:</span>
+                  <span className="text-gray-900">{tankToDelete.tankCode}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Product:</span>
+                  <span className="text-gray-900">{getProductDisplayName(tankToDelete.productId)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Capacity:</span>
+                  <span className="text-gray-900">{tankToDelete.capacityL.toLocaleString()}L</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">Status:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tankToDelete.active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+                    {tankToDelete.active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setTankToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteTank}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Tank
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
