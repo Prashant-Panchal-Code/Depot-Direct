@@ -45,7 +45,13 @@ export interface Site {
   contactPerson: string;
   phone: string;
   email: string;
-  operatingHours: string;
+  operatingHours: {
+    [key: string]: {
+      open: string;
+      close: string;
+      closed: boolean;
+    };
+  } | string;
   depotId: number;
   deliveryStopped: boolean;
   pumpedRequired: boolean;
@@ -96,9 +102,14 @@ export interface SiteSummary {
   id: number;
   siteCode: string;
   siteName: string;
-  town: string;
+  town: string | null;
   active: boolean;
   priority: string;
+  latitude: number | null;
+  longitude: number | null;
+  latLong: string | null;
+  street: string | null;
+  postalCode: string | null;
   companyId: number;
   companyName: string;
   countryId: number;
@@ -191,6 +202,13 @@ export class UserApiService {
   // Get sites by region
   static async getSitesByRegion(regionId: number, token?: string): Promise<SiteSummary[]> {
     const { data, error } = await api.get<SiteSummary[]>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get a single site by ID
+  static async getSiteById(siteId: number, token?: string): Promise<Site> {
+    const { data, error } = await api.get<Site>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/${siteId}`)
     if (error) throw new Error(error)
     return data!
   }

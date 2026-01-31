@@ -68,7 +68,13 @@ export interface SiteDetails {
   contactPerson?: string;
   phone?: string;
   email?: string;
-  operatingHours?: string;
+  operatingHours?: {
+    [key: string]: {
+      open: string;
+      close: string;
+      closed: boolean;
+    };
+  } | string;
   tanks?: Tank[];
   history?: HistoryEvent[];
   // New fields for depot and delivery management
@@ -412,7 +418,11 @@ export default function SiteDetailsModal({
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Operating Hours</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-700 whitespace-pre-wrap">
-                    {siteWithDefaults.operatingHours || "08:00 AM - 05:00 PM (Default)"}
+                    {typeof siteWithDefaults.operatingHours === 'string'
+                      ? siteWithDefaults.operatingHours
+                      : typeof siteWithDefaults.operatingHours === 'object'
+                        ? JSON.stringify(siteWithDefaults.operatingHours, null, 2)
+                        : "08:00 AM - 05:00 PM (Default)"}
                   </p>
                 </div>
               </div>

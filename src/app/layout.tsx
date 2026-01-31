@@ -5,6 +5,8 @@ import { AppProvider } from "./contexts/AppContext";
 import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from "@/components/shared/UserProvider";
 import { RoleBasedProvider } from "@/contexts/RoleBasedContext";
+import { LoaderProvider } from "@/contexts/LoaderContext";
+import GlobalLoader from "./components/GlobalLoader";
 
 // AG Grid imports
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -33,16 +35,19 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased`}
       >
-        <AppProvider>
-          <UserProvider>
-            <RoleBasedProvider>
-              <LayoutContent>
-                {children}
-              </LayoutContent>
-              <Toaster />
-            </RoleBasedProvider>
-          </UserProvider>
-        </AppProvider>
+        <LoaderProvider>
+          <AppProvider>
+            <UserProvider>
+              <RoleBasedProvider>
+                <LayoutContent>
+                  {children}
+                </LayoutContent>
+                <Toaster />
+                <GlobalLoader />
+              </RoleBasedProvider>
+            </UserProvider>
+          </AppProvider>
+        </LoaderProvider>
       </body>
     </html>
   );

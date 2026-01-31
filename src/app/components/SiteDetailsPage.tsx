@@ -14,6 +14,8 @@ import {
 import { ArrowLeft } from "@phosphor-icons/react";
 import { SiteDetails } from "./SiteDetailsModal";
 import { useAppContext } from "../contexts/AppContext";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 import BasicInfoTab from "./site-tabs/BasicInfoTab";
 import InventoryTab from "./site-tabs/InventoryTab";
 import DeliveriesTab from "./site-tabs/DeliveriesTab";
@@ -35,6 +37,8 @@ export default function SiteDetailsPage({
   onSave,
 }: SiteDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
   const [activeTab, setActiveTab] = useState("basic-info");
 
   // Notes state lifted up to manage count properly
@@ -84,6 +88,7 @@ export default function SiteDetailsPage({
 
   const handleSave = async (updatedSite: SiteDetails) => {
     try {
+      showLoader("Saving site details...");
       // Helper function to convert 12-hour time to 24-hour format
       const convertTo24Hour = (time12h: string): string => {
         const [time, modifier] = time12h.split(' ');
@@ -173,11 +178,13 @@ export default function SiteDetailsPage({
       // Call parent's onSave with the updated site
       onSave(updatedSite);
 
-      alert("Site updated successfully!");
+      showSuccess("Site updated successfully", `${updatedSite.siteName} has been updated`);
     } catch (error) {
       console.error("Failed to update site:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to update site";
-      alert(errorMessage);
+      showError("Failed to update site", errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 

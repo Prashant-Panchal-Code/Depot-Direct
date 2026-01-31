@@ -34,13 +34,13 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
 
   // Form state for all editable fields
   const [formData, setFormData] = useState(() => {
-    // Default operating hours structure
+    // Default operating hours structure - all days closed if not set
     const defaultOperatingHours = {
-      Monday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Friday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Monday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Friday: { open: "08:00 AM", close: "05:00 PM", closed: true },
       Saturday: { open: "08:00 AM", close: "05:00 PM", closed: true },
       Sunday: { open: "08:00 AM", close: "05:00 PM", closed: true },
     };
@@ -100,24 +100,47 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
         } catch {
           parsedOperatingHours = defaultOperatingHours;
         }
-      } else {
-        parsedOperatingHours = site.operatingHours;
+      } else if (typeof site.operatingHours === 'object') {
+        // Handle object format directly from API
+        const dayMapping: { [key: string]: string } = {
+          'mon': 'Monday',
+          'tue': 'Tuesday',
+          'wed': 'Wednesday',
+          'thu': 'Thursday',
+          'fri': 'Friday',
+          'sat': 'Saturday',
+          'sun': 'Sunday'
+        };
+
+        const uiFormat: any = { ...defaultOperatingHours };
+        Object.entries(site.operatingHours).forEach(([shortDay, hours]: [string, any]) => {
+          const fullDay = dayMapping[shortDay];
+          if (fullDay && hours) {
+            uiFormat[fullDay] = {
+              open: convertTo12Hour(hours.open),
+              close: convertTo12Hour(hours.close),
+              closed: hours.closed
+            };
+          }
+        });
+
+        parsedOperatingHours = uiFormat;
       }
     }
 
     return {
-      siteName: site.siteName,
+      siteName: site.siteName || "",
       siteCode: site.siteCode || "",
       shortcode: site.shortcode || "",
       latitude: site.latLong?.split(',')[0]?.trim() || "",
       longitude: site.latLong?.split(',')[1]?.trim() || "",
-      street: site.street,
+      street: site.street || "",
       postalCode: site.postalCode || "",
       town: site.town || site.street?.split(',')[1]?.trim() || "",
       active: site.active !== undefined ? site.active : true,
       priority: site.priority || "Medium",
-      phone: site.phone || "(555) 123-4567",
-      email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
+      phone: site.phone || "",
+      email: site.email || "",
       contactPerson: site.contactPerson || "",
       operatingHours: parsedOperatingHours,
       depotId: site.depotId || null,
@@ -164,13 +187,13 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
   };
 
   const handleCancel = () => {
-    // Default empty operating hours structure
+    // Default empty operating hours structure - all days closed if not set
     const defaultOperatingHours = {
-      Monday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: false },
-      Friday: { open: "08:00 AM", close: "05:00 PM", closed: false },
+      Monday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Tuesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Wednesday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Thursday: { open: "08:00 AM", close: "05:00 PM", closed: true },
+      Friday: { open: "08:00 AM", close: "05:00 PM", closed: true },
       Saturday: { open: "08:00 AM", close: "05:00 PM", closed: true },
       Sunday: { open: "08:00 AM", close: "05:00 PM", closed: true },
     };
@@ -210,10 +233,10 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
               'sun': 'Sunday'
             };
 
-            const uiFormat: any = {};
+            const uiFormat: any = { ...defaultOperatingHours };
             Object.entries(parsed).forEach(([shortDay, hours]: [string, any]) => {
               const fullDay = dayMapping[shortDay];
-              if (fullDay) {
+              if (fullDay && hours) {
                 uiFormat[fullDay] = {
                   open: convertTo12Hour(hours.open),
                   close: convertTo12Hour(hours.close),
@@ -225,30 +248,53 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
             parsedOperatingHours = uiFormat;
           } else {
             // Already in UI format
-            parsedOperatingHours = parsed;
+            parsedOperatingHours = { ...defaultOperatingHours, ...parsed };
           }
         } catch {
           parsedOperatingHours = defaultOperatingHours;
         }
-      } else {
-        parsedOperatingHours = site.operatingHours;
+      } else if (typeof site.operatingHours === 'object') {
+        // Handle object format directly from API
+        const dayMapping: { [key: string]: string } = {
+          'mon': 'Monday',
+          'tue': 'Tuesday',
+          'wed': 'Wednesday',
+          'thu': 'Thursday',
+          'fri': 'Friday',
+          'sat': 'Saturday',
+          'sun': 'Sunday'
+        };
+
+        const uiFormat: any = { ...defaultOperatingHours };
+        Object.entries(site.operatingHours).forEach(([shortDay, hours]: [string, any]) => {
+          const fullDay = dayMapping[shortDay];
+          if (fullDay && hours) {
+            uiFormat[fullDay] = {
+              open: convertTo12Hour(hours.open),
+              close: convertTo12Hour(hours.close),
+              closed: hours.closed
+            };
+          }
+        });
+
+        parsedOperatingHours = uiFormat;
       }
     }
 
     // Reset form data to original site values
     setFormData({
-      siteName: site.siteName,
+      siteName: site.siteName || "",
       siteCode: site.siteCode || "",
       shortcode: site.shortcode || "",
       latitude: site.latLong?.split(',')[0]?.trim() || "",
       longitude: site.latLong?.split(',')[1]?.trim() || "",
-      street: site.street,
+      street: site.street || "",
       postalCode: site.postalCode || "",
       town: site.town || site.street?.split(',')[1]?.trim() || "",
       active: site.active !== undefined ? site.active : true,
       priority: site.priority || "Medium",
-      phone: site.phone || "(555) 123-4567",
-      email: site.email || `contact@${site.siteName?.toLowerCase().replace(/\s+/g, '') || 'site'}.com`,
+      phone: site.phone || "",
+      email: site.email || "",
       contactPerson: site.contactPerson || "",
       operatingHours: parsedOperatingHours,
       depotId: site.depotId || null,

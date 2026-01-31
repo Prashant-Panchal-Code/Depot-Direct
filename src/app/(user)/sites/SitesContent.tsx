@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
 import { UserApiService } from "@/lib/api/user";
 import { useDataManagerContext, useRegionContext } from "@/contexts/RoleBasedContext";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -33,10 +35,18 @@ export default function SitesContent() {
   const { sidebarCollapsed } = useAppContext();
   const { canAddEntities, isDataManager, companyId } = useDataManagerContext();
   const { selectedRegions, shouldFilterByRegion } = useRegionContext();
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError, showInfo } = useNotification();
   const [selectedSite, setSelectedSite] = useState<SiteDetails | null>(null);
   const [showSiteDetails, setShowSiteDetails] = useState(false);
   const [sites, setSites] = useState<SiteWithRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Create a stable reference for selected region IDs to prevent unnecessary re-renders
+  const selectedRegionIds = useMemo(
+    () => selectedRegions.map(r => r.id).sort().join(','),
+    [selectedRegions]
+  );
 
   // Fetch sites from API
   useEffect(() => {
@@ -54,12 +64,13 @@ export default function SitesContent() {
             // Map sites to SiteWithRegion immediately to preserve region context
             return sites.map((summary): SiteWithRegion => ({
               ...summary,
-              // Map known fields
-              latitude: 0,
-              longitude: 0,
-              latLong: "",
-              street: "",
-              postalCode: "",
+              // Use actual values from API, with fallbacks for missing fields
+              latitude: summary.latitude ?? 0,
+              longitude: summary.longitude ?? 0,
+              latLong: summary.latLong ?? "",
+              street: summary.street ?? "",
+              postalCode: summary.postalCode ?? "",
+              town: summary.town ?? "",
               contactPerson: "",
               phone: "",
               email: "",
@@ -134,19 +145,20 @@ export default function SitesContent() {
     };
 
     fetchSites();
-  }, [selectedRegions]); // Re-run when selected regions change
+  }, [selectedRegionIds]); // Re-run when selected region IDs change
 
 
   const handleAddSite = async (newSite: NewSite) => {
     // For new site, user current selected region
     if (selectedRegions.length === 0) {
-      alert("Please select a region first");
+      showError("No region selected", "Please select a region first");
       return;
     }
 
     const regionId = selectedRegions[0].id;
 
     try {
+      showLoader("Creating new site...");
       // Call actual API
       const newSiteResponse = await UserApiService.createSite({
         siteCode: newSite.siteCode,
@@ -168,28 +180,42 @@ export default function SitesContent() {
       };
 
       setSites([...sites, site]);
+      showSuccess("Site created successfully", `${newSite.siteName} has been added`);
 
     } catch (error) {
       console.error("Failed to create site", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create site";
-      alert(errorMessage);
+      showError("Failed to create site", errorMessage);
+    } finally {
+      hideLoader();
     }
   };
 
-  const handleRowDoubleClick = (data: Site) => {
-    const siteDetails: SiteDetails = {
-      ...data,
-      id: data.id ?? 0,
-      latLong: data.latLong || `${data.latitude}, ${data.longitude}`,
-      contactPerson: data.contactPerson || "",
-      phone: data.phone || "",
-      email: data.email || "",
-      depotId: data.depotId,
-      deliveryStopped: data.deliveryStopped || false,
-      pumpedRequired: data.pumpedRequired || false,
-    };
-    setSelectedSite(siteDetails);
-    setShowSiteDetails(true);
+  const handleRowDoubleClick = async (data: Site) => {
+    try {
+      showLoader("Loading site details...");
+      // Fetch the full site data from the API
+      const fullSiteData = await UserApiService.getSiteById(data.id);
+
+      const siteDetails: SiteDetails = {
+        ...fullSiteData,
+        id: fullSiteData.id ?? 0,
+        latLong: fullSiteData.latLong || `${fullSiteData.latitude}, ${fullSiteData.longitude}`,
+        contactPerson: fullSiteData.contactPerson || "",
+        phone: fullSiteData.phone || "",
+        email: fullSiteData.email || "",
+        depotId: fullSiteData.depotId,
+        deliveryStopped: fullSiteData.deliveryStopped || false,
+        pumpedRequired: fullSiteData.pumpedRequired || false,
+      };
+      setSelectedSite(siteDetails);
+      setShowSiteDetails(true);
+    } catch (error) {
+      console.error("Failed to fetch site details:", error);
+      showError("Failed to load site details", "Please try again.");
+    } finally {
+      hideLoader();
+    }
   };
 
   const handleBackToSites = () => {
