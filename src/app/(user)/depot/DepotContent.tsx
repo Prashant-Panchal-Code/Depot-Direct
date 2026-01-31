@@ -148,6 +148,7 @@ export default function DepotContent() {
       const fullDepotData = await UserApiService.getDepotById(event.data.id);
 
       const details: DepotDetails = {
+        ...event.data,
         ...fullDepotData,
         // Ensure frontend fields are initialized
         products: [],

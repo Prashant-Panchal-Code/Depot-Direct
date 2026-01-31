@@ -1,176 +1,154 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger 
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Product } from "../DepotDetailsPage";
-import { 
-  Plus, 
-  PencilSimple, 
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Product, DepotDetails } from "../DepotDetailsPage";
+import {
+  Plus,
+  PencilSimple,
   Trash,
   ThermometerSimple,
   GasPump,
   Timer,
-  CurrencyDollar
+  CurrencyInr
 } from "@phosphor-icons/react";
+import { UserApiService, Product as ApiProduct, DepotProduct } from "@/lib/api/user";
+import { useNotification } from "@/hooks/useNotification";
+import { useLoader } from "@/contexts/LoaderContext";
 
 interface ProductsTabProps {
-  onSave: () => void;
+  depot: DepotDetails;
+  onSave: (updatedProducts: Product[]) => void;
 }
 
-export default function ProductsTab({ onSave }: ProductsTabProps) {
-  // Mock products data
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      productCode: "DSL001",
-      productName: "Ultra Low Sulfur Diesel",
-      status: "Active",
-      costPerLiter: 1.45,
-      currentTemperature: 22.5,
-      density: 0.835,
-      loadingRate: 1200,
-      depotOfftakeLimit: true,
-      monthlyMaxLimit: 150000,
-      monthlyMinLimit: 50000
-    },
-    {
-      id: 2,
-      productCode: "GSL087",
-      productName: "Premium Gasoline 91",
-      status: "Active",
-      costPerLiter: 1.65,
-      currentTemperature: 24.1,
-      density: 0.755,
-      loadingRate: 1500,
-      depotOfftakeLimit: true,
-      monthlyMaxLimit: 200000,
-      monthlyMinLimit: 75000
-    },
-    {
-      id: 3,
-      productCode: "GSL095",
-      productName: "Premium Gasoline 95",
-      status: "Active",
-      costPerLiter: 1.75,
-      currentTemperature: 23.8,
-      density: 0.758,
-      loadingRate: 1500,
-      depotOfftakeLimit: false
-    },
-    {
-      id: 4,
-      productCode: "KER001",
-      productName: "Jet Fuel A1",
-      status: "Inactive",
-      costPerLiter: 1.85,
-      currentTemperature: 21.2,
-      density: 0.795,
-      loadingRate: 800,
-      depotOfftakeLimit: true,
-      monthlyMaxLimit: 100000,
-      monthlyMinLimit: 25000
-    },
-    {
-      id: 5,
-      productCode: "HFO180",
-      productName: "Heavy Fuel Oil 180",
-      status: "Active",
-      costPerLiter: 0.95,
-      currentTemperature: 45.0,
-      density: 0.980,
-      loadingRate: 600,
-      depotOfftakeLimit: false
-    }
-  ]);
+export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
+  // Products currently added to the depot
+  const [products, setProducts] = useState<Product[]>([]);
 
+  // Available products from the master list
+  const [availableProducts, setAvailableProducts] = useState<ApiProduct[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    productCode: "",
-    productName: "",
-    status: "Active",
-    costPerLiter: 0,
-    currentTemperature: 20,
-    density: 0.8,
-    loadingRate: 1000,
-    depotOfftakeLimit: false,
-    monthlyMaxLimit: 0,
-    monthlyMinLimit: 0
+  const [editFormData, setEditFormData] = useState<Partial<Product>>({});
+  const { showSuccess, showError } = useNotification();
+  const { showLoader, hideLoader } = useLoader();
+
+  // Map API DepotProduct to frontend Product
+  const mapApiToFrontend = (apiProduct: DepotProduct): Product => ({
+    id: apiProduct.id, // Use the unique DepotProduct ID
+    productId: apiProduct.productId, // Store the master product ID
+    productCode: apiProduct.productCode,
+    productName: apiProduct.productName,
+    status: apiProduct.productAvailable ? "Active" : "Inactive",
+    costPerLiter: apiProduct.costPerLitre,
+    currentTemperature: apiProduct.planningTemperature,
+    density: apiProduct.density,
+    loadingRate: apiProduct.loadingRateLpm,
+    depotOfftakeLimit: apiProduct.offtakeLimitActive,
+    dailyMaxLimit: apiProduct.dailyMaxLimitL,
+    dailyMinLimit: apiProduct.dailyMinLimitL
   });
 
-  const handleAddProduct = () => {
-    if (newProduct.productCode && newProduct.productName) {
-      const product: Product = {
-        id: products.length + 1,
-        productCode: newProduct.productCode!,
-        productName: newProduct.productName!,
-        status: newProduct.status as "Active" | "Inactive",
-        costPerLiter: newProduct.costPerLiter || 0,
-        currentTemperature: newProduct.currentTemperature || 20,
-        density: newProduct.density || 0.8,
-        loadingRate: newProduct.loadingRate || 1000
-      };
-      
-      setProducts([...products, product]);
-      setNewProduct({
-        productCode: "",
-        productName: "",
-        status: "Active",
-        costPerLiter: 0,
-        currentTemperature: 20,
-        density: 0.8,
-        loadingRate: 1000
-      });
-      setShowAddDialog(false);
-    }
-  };
+  // Load depot products from the API on mount
+  useEffect(() => {
+    const fetchDepotProducts = async () => {
+      if (!depot.id) return;
+      try {
+        const data = await UserApiService.getDepotProducts(depot.id);
+        if (data && data.length > 0) {
+          setProducts(data.map(mapApiToFrontend));
+        } else {
+          // If no products from API, we could show empty or keep fallback for now
+          // setProducts([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch depot products:", error);
+      }
+    };
+    fetchDepotProducts();
+  }, [depot.id]);
+
+  // Fetch available products for the region
+  useEffect(() => {
+    const fetchAvailableProducts = async () => {
+      try {
+        if (!depot.regionId) {
+          console.warn("No region ID available for fetching products");
+          return;
+        }
+        const data = await UserApiService.getProductsByRegion(depot.regionId);
+        setAvailableProducts(data.filter(p => p.active));
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+    fetchAvailableProducts();
+  }, [depot.regionId]);
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
-    setNewProduct(product);
+    setEditFormData({ ...product });
     setShowAddDialog(true);
   };
 
   const handleUpdateProduct = () => {
-    if (editingProduct && newProduct.productCode && newProduct.productName) {
-      const updatedProducts = products.map(p => 
-        p.id === editingProduct.id 
-          ? {
-              ...editingProduct,
-              productCode: newProduct.productCode!,
-              productName: newProduct.productName!,
-              status: newProduct.status as "Active" | "Inactive",
-              costPerLiter: newProduct.costPerLiter || 0,
-              currentTemperature: newProduct.currentTemperature || 20,
-              density: newProduct.density || 0.8,
-              loadingRate: newProduct.loadingRate || 1000
-            }
-          : p
-      );
-      
-      setProducts(updatedProducts);
-      setEditingProduct(null);
-      setNewProduct({
-        productCode: "",
-        productName: "",
-        status: "Active",
-        costPerLiter: 0,
-        currentTemperature: 20,
-        density: 0.8,
-        loadingRate: 1000
-      });
+    if (editingProduct && editFormData) {
+      setProducts(products.map(p =>
+        p.id === editingProduct.id ? { ...p, ...editFormData } as Product : p
+      ));
       setShowAddDialog(false);
+      setEditingProduct(null);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    const apiProduct = availableProducts.find(p => p.id.toString() === selectedProductId);
+    if (apiProduct) {
+      // Check if already added
+      if (products.some(p => p.productId === apiProduct.id)) {
+        showError("Product already exists", "This product is already added to the depot.");
+        setShowAddDialog(false);
+        return;
+      }
+
+      try {
+        showLoader("Adding product to depot...");
+        const response = await UserApiService.addDepotProduct(depot.id, {
+          productId: apiProduct.id,
+          density: 0.8,
+          planningTemperature: 20,
+          loadingRateLpm: 1000,
+          productAvailable: true,
+          costPerLitre: 0,
+          offtakeLimitActive: false,
+          dailyMinLimitL: 0,
+          dailyMaxLimitL: 0,
+          metadata: ""
+        });
+
+        const newProduct = mapApiToFrontend(response);
+        setProducts([...products, newProduct]);
+        setSelectedProductId("");
+        setShowAddDialog(false);
+        showSuccess("Product added", `${newProduct.productName} has been added successfully.`);
+      } catch (error) {
+        console.error("Failed to add product:", error);
+        showError("Failed to add product", "An error occurred while adding the product.");
+      } finally {
+        hideLoader();
+      }
     }
   };
 
@@ -179,16 +157,16 @@ export default function ProductsTab({ onSave }: ProductsTabProps) {
   };
 
   const toggleProductStatus = (id: number) => {
-    setProducts(products.map(p => 
-      p.id === id 
-        ? { ...p, status: p.status === "Active" ? "Inactive" as const : "Active" as const }
+    setProducts(products.map(p =>
+      p.id === id
+        ? { ...p, status: p.status === "Active" ? "Inactive" : "Active" }
         : p
     ));
   };
 
   const getStatusColor = (status: string) => {
-    return status === "Active" 
-      ? "bg-green-100 text-green-800" 
+    return status === "Active"
+      ? "bg-green-100 text-green-800"
       : "bg-red-100 text-red-800";
   };
 
@@ -204,165 +182,144 @@ export default function ProductsTab({ onSave }: ProductsTabProps) {
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className={editingProduct ? "max-w-2xl" : "max-w-md"}>
             <DialogHeader>
-              <DialogTitle>
-                {editingProduct ? "Edit Product" : "Add New Product"}
-              </DialogTitle>
+              <DialogTitle>{editingProduct ? "Edit Product Settings" : "Add New Product"}</DialogTitle>
             </DialogHeader>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              <div>
-                <Label htmlFor="productCode">Product Code</Label>
-                <Input
-                  id="productCode"
-                  value={newProduct.productCode || ""}
-                  onChange={(e) => setNewProduct({...newProduct, productCode: e.target.value})}
-                  placeholder="e.g., DSL001"
-                  className="mt-1"
-                />
-              </div>
 
-              <div>
-                <Label htmlFor="productName">Product Name</Label>
-                <Input
-                  id="productName"
-                  value={newProduct.productName || ""}
-                  onChange={(e) => setNewProduct({...newProduct, productName: e.target.value})}
-                  placeholder="e.g., Ultra Low Sulfur Diesel"
-                  className="mt-1"
-                />
+            {editingProduct ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <div>
+                  <Label className="text-gray-500 text-xs">Product Code</Label>
+                  <Input
+                    value={editFormData.productCode || ""}
+                    readOnly
+                    className="mt-1 bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-500 text-xs">Product Name</Label>
+                  <Input
+                    value={editFormData.productName || ""}
+                    readOnly
+                    className="mt-1 bg-gray-50 border-gray-200 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="costPerLiter">Cost per Liter</Label>
+                  <Input
+                    id="costPerLiter"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.costPerLiter || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, costPerLiter: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="currentTemperature">Current Temperature (°C)</Label>
+                  <Input
+                    id="currentTemperature"
+                    type="number"
+                    step="0.1"
+                    value={editFormData.currentTemperature || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, currentTemperature: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="density">Density (kg/L)</Label>
+                  <Input
+                    id="density"
+                    type="number"
+                    step="0.001"
+                    value={editFormData.density || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, density: parseFloat(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="loadingRate">Loading Rate (L/min)</Label>
+                  <Input
+                    id="loadingRate"
+                    type="number"
+                    value={editFormData.loadingRate || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, loadingRate: parseInt(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="depotOfftakeLimit"
+                      checked={editFormData.depotOfftakeLimit || false}
+                      onCheckedChange={(checked) => setEditFormData({ ...editFormData, depotOfftakeLimit: !!checked })}
+                    />
+                    <Label htmlFor="depotOfftakeLimit">Depot Offtake Limit</Label>
+                  </div>
+                  {editFormData.depotOfftakeLimit && (
+                    <div className="grid grid-cols-2 gap-4 pl-6 border-l-2">
+                      <div>
+                        <Label htmlFor="dailyMinLimit">Min Limit (L)</Label>
+                        <Input
+                          id="dailyMinLimit"
+                          type="number"
+                          value={editFormData.dailyMinLimit || ""}
+                          onChange={(e) => setEditFormData({ ...editFormData, dailyMinLimit: parseInt(e.target.value) || 0 })}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dailyMaxLimit">Max Limit (L)</Label>
+                        <Input
+                          id="dailyMaxLimit"
+                          type="number"
+                          value={editFormData.dailyMaxLimit || ""}
+                          onChange={(e) => setEditFormData({ ...editFormData, dailyMaxLimit: parseInt(e.target.value) || 0 })}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={newProduct.status || "Active"} 
-                  onValueChange={(value) => setNewProduct({...newProduct, status: value as "Active" | "Inactive"})}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
+            ) : (
+              <div className="py-6">
+                <Label htmlFor="product" className="text-sm font-medium text-gray-700">
+                  Product
+                </Label>
+                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                  <SelectTrigger className="mt-2 w-full">
+                    <SelectValue placeholder="Select a product to add..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    {availableProducts.length > 0 ? (
+                      availableProducts.map((p) => (
+                        <SelectItem key={p.id} value={p.id.toString()}>
+                          {p.productCode} - {p.productName}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-sm text-gray-500 text-center">No products available in this region</div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
+            )}
 
-              <div>
-                <Label htmlFor="costPerLiter">Cost per Liter ($)</Label>
-                <Input
-                  id="costPerLiter"
-                  type="number"
-                  step="0.01"
-                  value={newProduct.costPerLiter || ""}
-                  onChange={(e) => setNewProduct({...newProduct, costPerLiter: parseFloat(e.target.value) || 0})}
-                  placeholder="1.45"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="currentTemperature">Current Temperature (°C)</Label>
-                <Input
-                  id="currentTemperature"
-                  type="number"
-                  step="0.1"
-                  value={newProduct.currentTemperature || ""}
-                  onChange={(e) => setNewProduct({...newProduct, currentTemperature: parseFloat(e.target.value) || 20})}
-                  placeholder="22.5"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="density">Density (kg/L)</Label>
-                <Input
-                  id="density"
-                  type="number"
-                  step="0.001"
-                  value={newProduct.density || ""}
-                  onChange={(e) => setNewProduct({...newProduct, density: parseFloat(e.target.value) || 0.8})}
-                  placeholder="0.835"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="loadingRate">Loading Rate (L/min)</Label>
-                <Input
-                  id="loadingRate"
-                  type="number"
-                  value={newProduct.loadingRate || ""}
-                  onChange={(e) => setNewProduct({...newProduct, loadingRate: parseInt(e.target.value) || 1000})}
-                  placeholder="1200"
-                  className="mt-1"
-                />
-              </div>
-
-              {/* Depot Offtake Limit Section */}
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Checkbox
-                    id="depotOfftakeLimit"
-                    checked={newProduct.depotOfftakeLimit || false}
-                    onCheckedChange={(checked) => setNewProduct({...newProduct, depotOfftakeLimit: !!checked})}
-                  />
-                  <Label htmlFor="depotOfftakeLimit" className="text-sm font-medium text-gray-700">
-                    Depot Offtake Limit
-                  </Label>
-                </div>
-
-                {newProduct.depotOfftakeLimit && (
-                  <div className="grid grid-cols-2 gap-3 pl-6 border-l-2 border-gray-200">
-                    <div>
-                      <Label htmlFor="monthlyMinLimit">Monthly Min Limit (L)</Label>
-                      <Input
-                        id="monthlyMinLimit"
-                        type="number"
-                        value={newProduct.monthlyMinLimit || ""}
-                        onChange={(e) => setNewProduct({...newProduct, monthlyMinLimit: parseInt(e.target.value) || 0})}
-                        placeholder="50000"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="monthlyMaxLimit">Monthly Max Limit (L)</Label>
-                      <Input
-                        id="monthlyMaxLimit"
-                        type="number"
-                        value={newProduct.monthlyMaxLimit || ""}
-                        onChange={(e) => setNewProduct({...newProduct, monthlyMaxLimit: parseInt(e.target.value) || 0})}
-                        placeholder="150000"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => {
                 setShowAddDialog(false);
+                setSelectedProductId("");
                 setEditingProduct(null);
-                setNewProduct({
-                  productCode: "",
-                  productName: "",
-                  status: "Active",
-                  costPerLiter: 0,
-                  currentTemperature: 20,
-                  density: 0.8,
-                  loadingRate: 1000,
-                  depotOfftakeLimit: false,
-                  monthlyMaxLimit: 0,
-                  monthlyMinLimit: 0
-                });
               }}>
                 Cancel
               </Button>
-              <Button onClick={editingProduct ? handleUpdateProduct : handleAddProduct} className="bg-primary-custom hover:bg-primary-custom/90">
+              <Button
+                onClick={editingProduct ? handleUpdateProduct : handleAddProduct}
+                className="bg-primary-custom hover:bg-primary-custom/90"
+                disabled={!editingProduct && !selectedProductId}
+              >
                 {editingProduct ? "Update Product" : "Add Product"}
               </Button>
             </div>
@@ -409,10 +366,10 @@ export default function ProductsTab({ onSave }: ProductsTabProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 text-xs text-gray-600">
-                  <CurrencyDollar size={14} />
+                  <CurrencyInr size={14} />
                   <span>Cost/L</span>
                 </div>
-                <span className="font-medium text-xs">${product.costPerLiter.toFixed(2)}</span>
+                <span className="font-medium text-xs">{product.costPerLiter.toFixed(2)}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -442,18 +399,18 @@ export default function ProductsTab({ onSave }: ProductsTabProps) {
               {product.depotOfftakeLimit && (
                 <>
                   <div className="border-t pt-2 mt-2">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Monthly Limits</p>
+                    <p className="text-xs text-gray-500 font-medium mb-1">Daily Limits</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-xs text-gray-600">
                         <span>Min</span>
                       </div>
-                      <span className="font-medium text-xs">{product.monthlyMinLimit?.toLocaleString() || 0} L</span>
+                      <span className="font-medium text-xs">{product.dailyMinLimit?.toLocaleString() || 0} L</span>
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center gap-1 text-xs text-gray-600">
                         <span>Max</span>
                       </div>
-                      <span className="font-medium text-xs">{product.monthlyMaxLimit?.toLocaleString() || 0} L</span>
+                      <span className="font-medium text-xs">{product.dailyMaxLimit?.toLocaleString() || 0} L</span>
                     </div>
                   </div>
                 </>
@@ -489,7 +446,7 @@ export default function ProductsTab({ onSave }: ProductsTabProps) {
 
       <div className="flex justify-end gap-4">
         <Button variant="outline">Cancel</Button>
-        <Button className="bg-primary-custom hover:bg-primary-custom/90" onClick={onSave}>Save Changes</Button>
+        <Button className="bg-primary-custom hover:bg-primary-custom/90" onClick={() => onSave(products)}>Save Changes</Button>
       </div>
     </div>
   );

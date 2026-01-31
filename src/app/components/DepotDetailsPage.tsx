@@ -33,6 +33,7 @@ export interface DepotDetails extends Depot {
 
 export interface Product {
   id: number;
+  productId: number;
   productCode: string;
   productName: string;
   status: "Active" | "Inactive";
@@ -41,8 +42,8 @@ export interface Product {
   density: number;
   loadingRate: number; // Ltr/min
   depotOfftakeLimit?: boolean;
-  monthlyMaxLimit?: number; // Liters
-  monthlyMinLimit?: number; // Liters
+  dailyMaxLimit?: number; // Liters
+  dailyMinLimit?: number; // Liters
 }
 
 export interface Loading {
@@ -353,7 +354,10 @@ export default function DepotDetailsPage({
             <BasicInfoTab depot={depot} onSave={handleSave} />
           )}
           {activeTab === "products" && (
-            <ProductsTab onSave={() => handleSave()} />
+            <ProductsTab
+              depot={depot}
+              onSave={(updatedProducts) => handleSave({ ...depot, products: updatedProducts })}
+            />
           )}
           {activeTab === "loadings" && (
             <LoadingsTab onSave={() => handleSave()} />

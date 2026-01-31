@@ -303,6 +303,39 @@ export interface Note {
   deletedAt: string | null;
 }
 
+export interface DepotProduct {
+  id: number;
+  depotId: number;
+  productId: number;
+  productName: string;
+  productCode: string;
+  density: number;
+  planningTemperature: number;
+  loadingRateLpm: number;
+  productAvailable: boolean;
+  costPerLitre: number;
+  offtakeLimitActive: boolean;
+  dailyMinLimitL: number;
+  dailyMaxLimitL: number;
+  metadata: string;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AddDepotProductRequest {
+  productId: number;
+  density: number;
+  planningTemperature: number;
+  loadingRateLpm: number;
+  productAvailable: boolean;
+  costPerLitre: number;
+  offtakeLimitActive: boolean;
+  dailyMinLimitL: number;
+  dailyMaxLimitL: number;
+  metadata: string;
+}
+
 export interface CreateNoteRequest {
   category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
   priority: "Low" | "Medium" | "High";
@@ -521,6 +554,20 @@ export class UserApiService {
   // Update note status
   static async updateNoteStatus(noteId: number, statusData: UpdateNoteStatusRequest, token?: string): Promise<Note> {
     const { data, error } = await api.put<Note>('USER', `/Notes/${noteId}/status`, statusData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get products for a depot
+  static async getDepotProducts(depotId: number, token?: string): Promise<DepotProduct[]> {
+    const { data, error } = await api.get<DepotProduct[]>('USER', `/Depots/${depotId}/products`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Add a product to a depot
+  static async addDepotProduct(depotId: number, productData: AddDepotProductRequest, token?: string): Promise<DepotProduct> {
+    const { data, error } = await api.post<DepotProduct>('USER', `/Depots/${depotId}/products`, productData)
     if (error) throw new Error(error)
     return data!
   }
