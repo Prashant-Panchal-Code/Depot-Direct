@@ -35,7 +35,7 @@ export const API_CONFIG = {
       VEHICLES: '/vehicles',
       SITES: '/sites',
       DEPOT: '/depot',
-      PARKING: '/parking',
+      PARKING: '/Parkings',
       SCHEDULE: '/schedule',
       REPORTS: '/reports'
     }
@@ -53,7 +53,7 @@ export const getAuthHeaders = (module: 'ADMIN' | 'USER', token?: string) => {
   }
 
   const config = API_CONFIG[module]
-  
+
   // Both ADMIN and USER modules now use Bearer tokens
   const authToken = token || config.AUTH.credentials
   const headers: Record<string, string> = {
@@ -61,7 +61,7 @@ export const getAuthHeaders = (module: 'ADMIN' | 'USER', token?: string) => {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
-  
+
   return headers
 }
 

@@ -160,19 +160,90 @@ export interface Depot {
   isParking?: boolean; // Frontend specific or mapped property
 }
 
-export interface ParkingData {
-  id: string
-  name: string
-  location: string
-  totalSpaces: number
-  availableSpaces: number
-  reservations: Array<{
-    id: string
-    vehicleId: string
-    startTime: string
-    endTime: string
-  }>
-  metadata?: Record<string, unknown>
+export interface ParkingSummary {
+  id: number;
+  parkingCode: string;
+  parkingName: string;
+  town: string | null;
+  active: boolean;
+  parkingSpaces: number;
+  latitude: number | null;
+  longitude: number | null;
+  latLong: string | null;
+  street: string | null;
+  postalCode: string | null;
+  companyId: number;
+  companyName: string;
+  countryId: number;
+  countryName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Parking {
+  id: number;
+  parkingCode: string;
+  parkingName: string;
+  shortcode: string;
+  latitude: number;
+  longitude: number;
+  latLong: string;
+  street: string;
+  postalCode: string;
+  town: string;
+  active: boolean;
+  managerName: string;
+  managerPhone: string;
+  managerEmail: string;
+  emergencyContact: string;
+  parkingSpaces: number;
+  countryId: number;
+  companyId: number;
+  metadata: string;
+  createdBy: number;
+  lastUpdatedBy: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string;
+  country: {
+    id: number;
+    name: string;
+    isoCode: string;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  };
+  company: {
+    id: number;
+    name: string;
+    companyCode: string;
+    countryId: number;
+    description: string;
+    metadata: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  regions: Array<{
+    id: number;
+    name: string;
+    regionCode: string;
+    companyId: number;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  }>;
+}
+
+export interface CreateParkingRequest {
+  parkingCode: string;
+  parkingName: string;
+  regionId: number;
 }
 
 export interface ScheduleData {
@@ -531,9 +602,23 @@ export class UserApiService {
     return data!
   }
 
-  // Get parking data
-  static async getParkingData(token?: string): Promise<ParkingData> {
-    const { data, error } = await api.get<ParkingData>('USER', API_CONFIG.USER.ENDPOINTS.PARKING)
+  // Get parking summary by region
+  static async getParkingsByRegion(regionId: number, token?: string): Promise<ParkingSummary[]> {
+    const { data, error } = await api.get<ParkingSummary[]>('USER', `${API_CONFIG.USER.ENDPOINTS.PARKING}/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get parking by ID
+  static async getParkingById(parkingId: number, token?: string): Promise<Parking> {
+    const { data, error } = await api.get<Parking>('USER', `${API_CONFIG.USER.ENDPOINTS.PARKING}/${parkingId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Create parking
+  static async createParking(parkingData: CreateParkingRequest, token?: string): Promise<Parking> {
+    const { data, error } = await api.post<Parking>('USER', API_CONFIG.USER.ENDPOINTS.PARKING, parkingData)
     if (error) throw new Error(error)
     return data!
   }

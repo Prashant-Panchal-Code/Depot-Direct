@@ -17,18 +17,17 @@ interface BasicInfoTabProps {
 export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
   // Form state for all editable fields
   const [formData, setFormData] = useState({
-    latitude: parking.latitude || "",
-    longitude: parking.longitude || "",
-    street: parking.street,
+    latitude: parking.latitude || 0,
+    longitude: parking.longitude || 0,
+    street: parking.street || "",
     postalCode: parking.postalCode || "",
     town: parking.town || "",
     active: parking.active !== undefined ? parking.active : true,
-    isDepot: parking.isDepot || false,
-    managerName: "",
-    managerPhone: "",
-    managerEmail: "",
-    emergencyContact: "",
-    parkingSpaces: "",
+    managerName: parking.managerName || "",
+    managerPhone: parking.managerPhone || "",
+    managerEmail: parking.managerEmail || "",
+    emergencyContact: parking.emergencyContact || "",
+    parkingSpaces: parking.parkingSpaces || 0,
   });
 
   const handleInputChange = (field: string, value: string | boolean | number | null) => {
@@ -41,18 +40,17 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
   const handleCancel = () => {
     // Reset form data to original parking values
     setFormData({
-      latitude: parking.latitude || "",
-      longitude: parking.longitude || "",
-      street: parking.street,
+      latitude: parking.latitude || 0,
+      longitude: parking.longitude || 0,
+      street: parking.street || "",
       postalCode: parking.postalCode || "",
       town: parking.town || "",
       active: parking.active !== undefined ? parking.active : true,
-      isDepot: parking.isDepot || false,
-      managerName: "",
-      managerPhone: "",
-      managerEmail: "",
-      emergencyContact: "",
-      parkingSpaces: "",
+      managerName: parking.managerName || "",
+      managerPhone: parking.managerPhone || "",
+      managerEmail: parking.managerEmail || "",
+      emergencyContact: parking.emergencyContact || "",
+      parkingSpaces: parking.parkingSpaces || 0,
     });
   };
 
@@ -61,19 +59,18 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
       {/* Main Content - Scrollable Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-4">
-          
+
           {/* Top Section - Parking Information and Contact Information */}
           <div className="grid grid-cols-2 gap-6">
-            
+
             {/* Left Column - Basic Parking Information */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Parking Information</h3>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  formData.active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${formData.active
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
                   {formData.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -162,35 +159,22 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={(checked) => handleInputChange('active', !!checked)}
-                  />
-                  <Label htmlFor="active" className="text-sm font-medium text-gray-700">
-                    Parking Active
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="isDepot"
-                    checked={formData.isDepot}
-                    onCheckedChange={(checked) => handleInputChange('isDepot', !!checked)}
-                  />
-                  <Label htmlFor="isDepot" className="text-sm font-medium text-gray-700">
-                    Is Depot Location
-                  </Label>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="active"
+                  checked={formData.active}
+                  onCheckedChange={(checked) => handleInputChange('active', !!checked)}
+                />
+                <Label htmlFor="active" className="text-sm font-medium text-gray-700">
+                  Parking Active
+                </Label>
               </div>
             </div>
 
             {/* Right Column - Contact Information */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
-              
+
               <div>
                 <Label htmlFor="managerName" className="text-sm font-medium text-gray-700">
                   Facility Manager
@@ -255,8 +239,8 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
                     <MapPin size={32} className="mx-auto mb-2 text-blue-600" />
                     <p className="text-gray-600 text-sm">Interactive Map</p>
                     <p className="text-xs text-gray-500">
-                      {formData.latitude && formData.longitude 
-                        ? `${formData.latitude}, ${formData.longitude}` 
+                      {formData.latitude && formData.longitude
+                        ? `${formData.latitude}, ${formData.longitude}`
                         : 'No coordinates set'}
                     </p>
                   </div>

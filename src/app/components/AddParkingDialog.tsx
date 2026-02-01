@@ -15,36 +15,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { PlusSquare } from "@phosphor-icons/react";
 
-export interface Parking {
+export interface NewParking {
   parkingCode: string;
   parkingName: string;
-  latitude: string;
-  longitude: string;
-  street: string;
-  postalCode: string;
-  town: string;
-  active: boolean;
-  priority: string;
-  isDepot: boolean;
 }
 
 interface AddParkingDialogProps {
-  onSave: (parking: Parking) => void;
+  onSave: (parking: NewParking) => void;
 }
 
 export default function AddParkingDialog({ onSave }: AddParkingDialogProps) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<Parking>({
+  const [formData, setFormData] = useState<NewParking>({
     parkingCode: "",
     parkingName: "",
-    latitude: "",
-    longitude: "",
-    street: "",
-    postalCode: "",
-    town: "",
-    active: true,
-    priority: "Medium",
-    isDepot: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,14 +37,6 @@ export default function AddParkingDialog({ onSave }: AddParkingDialogProps) {
     setFormData({
       parkingCode: "",
       parkingName: "",
-      latitude: "",
-      longitude: "",
-      street: "",
-      postalCode: "",
-      town: "",
-      active: true,
-      priority: "Medium",
-      isDepot: false,
     });
     setOpen(false);
   };
@@ -68,7 +44,7 @@ export default function AddParkingDialog({ onSave }: AddParkingDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button> <PlusSquare size={30}  weight="fill" /> Add New Parking</Button>
+        <Button> <PlusSquare size={30} weight="fill" /> Add New Parking</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -102,119 +78,6 @@ export default function AddParkingDialog({ onSave }: AddParkingDialogProps) {
               placeholder="Enter parking name"
               required
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">
-                Latitude
-              </label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                placeholder="0.000000"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">
-                Longitude
-              </label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                placeholder="0.000000"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
-              Street Address
-            </label>
-            <Input
-              id="street"
-              value={formData.street}
-              onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-              placeholder="Enter street address"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-              Postal Code
-            </label>
-            <Input
-              id="postalCode"
-              value={formData.postalCode}
-              onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-              placeholder="Enter postal code"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="town" className="block text-sm font-medium text-gray-700 mb-1">
-              Town/City
-            </label>
-            <Input
-              id="town"
-              value={formData.town}
-              onChange={(e) => setFormData({ ...formData, town: e.target.value })}
-              placeholder="Enter town or city"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Priority
-            </label>
-            <Select
-              value={formData.priority}
-              onValueChange={(value: string) => setFormData({ ...formData, priority: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="active"
-              checked={formData.active}
-              onCheckedChange={(checked) => setFormData({ ...formData, active: checked as boolean })}
-            />
-            <label
-              htmlFor="active"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              Active
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isDepot"
-              checked={formData.isDepot}
-              onCheckedChange={(checked) => setFormData({ ...formData, isDepot: checked as boolean })}
-            />
-            <label
-              htmlFor="isDepot"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              Is Depot
-            </label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
