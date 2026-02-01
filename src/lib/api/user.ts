@@ -336,6 +336,18 @@ export interface AddDepotProductRequest {
   metadata: string;
 }
 
+export interface UpdateDepotProductRequest {
+  density: number;
+  planningTemperature: number;
+  loadingRateLpm: number;
+  productAvailable: boolean;
+  costPerLitre: number;
+  offtakeLimitActive: boolean;
+  dailyMinLimitL: number;
+  dailyMaxLimitL: number;
+  metadata: string;
+}
+
 export interface CreateNoteRequest {
   category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
   priority: "Low" | "Medium" | "High";
@@ -568,6 +580,13 @@ export class UserApiService {
   // Add a product to a depot
   static async addDepotProduct(depotId: number, productData: AddDepotProductRequest, token?: string): Promise<DepotProduct> {
     const { data, error } = await api.post<DepotProduct>('USER', `/Depots/${depotId}/products`, productData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Update a depot product
+  static async updateDepotProduct(depotId: number, depotProductId: number, productData: UpdateDepotProductRequest, token?: string): Promise<DepotProduct> {
+    const { data, error } = await api.put<DepotProduct>('USER', `/Depots/${depotId}/products/${depotProductId}`, productData)
     if (error) throw new Error(error)
     return data!
   }

@@ -17,7 +17,6 @@ import { Product, DepotDetails } from "../DepotDetailsPage";
 import {
   Plus,
   PencilSimple,
-  Trash,
   ThermometerSimple,
   GasPump,
   Timer,
@@ -103,13 +102,35 @@ export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
     setShowAddDialog(true);
   };
 
-  const handleUpdateProduct = () => {
+  const handleUpdateProduct = async () => {
     if (editingProduct && editFormData) {
-      setProducts(products.map(p =>
-        p.id === editingProduct.id ? { ...p, ...editFormData } as Product : p
-      ));
-      setShowAddDialog(false);
-      setEditingProduct(null);
+      try {
+        showLoader("Updating product...");
+        const response = await UserApiService.updateDepotProduct(depot.id, editingProduct.id, {
+          density: editFormData.density || 0,
+          planningTemperature: editFormData.currentTemperature || 0,
+          loadingRateLpm: editFormData.loadingRate || 0,
+          productAvailable: editFormData.status === "Active",
+          costPerLitre: editFormData.costPerLiter || 0,
+          offtakeLimitActive: editFormData.depotOfftakeLimit || false,
+          dailyMinLimitL: editFormData.dailyMinLimit || 0,
+          dailyMaxLimitL: editFormData.dailyMaxLimit || 0,
+          metadata: ""
+        });
+
+        const updatedProduct = mapApiToFrontend(response);
+        setProducts(products.map(p =>
+          p.id === editingProduct.id ? updatedProduct : p
+        ));
+        setShowAddDialog(false);
+        setEditingProduct(null);
+        showSuccess("Product updated", `${updatedProduct.productName} has been updated successfully.`);
+      } catch (error) {
+        console.error("Failed to update product:", error);
+        showError("Failed to update product", "An error occurred while updating the product.");
+      } finally {
+        hideLoader();
+      }
     }
   };
 
@@ -128,8 +149,8 @@ export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
         const response = await UserApiService.addDepotProduct(depot.id, {
           productId: apiProduct.id,
           density: 0.8,
-          planningTemperature: 20,
-          loadingRateLpm: 1000,
+          planningTemperature: 15,
+          loadingRateLpm: 1500,
           productAvailable: true,
           costPerLitre: 0,
           offtakeLimitActive: false,
@@ -150,10 +171,6 @@ export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
         hideLoader();
       }
     }
-  };
-
-  const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
   };
 
   const toggleProductStatus = (id: number) => {
@@ -349,14 +366,6 @@ export default function ProductsTab({ depot, onSave }: ProductsTabProps) {
                     onClick={() => handleEditProduct(product)}
                   >
                     <PencilSimple size={12} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-red-600 hover:text-red-700"
-                    onClick={() => handleDeleteProduct(product.id)}
-                  >
-                    <Trash size={12} />
                   </Button>
                 </div>
               </div>
