@@ -366,7 +366,7 @@ export default function DepotDetailsPage({
             <VehiclesDriversTab />
           )}
           {activeTab === "delivery-sites" && (
-            <DeliverySitesTab />
+            <DeliverySitesTab depot={depot} />
           )}
           {activeTab === "notes" && (
             <NotesTab

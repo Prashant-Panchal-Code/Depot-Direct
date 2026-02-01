@@ -348,6 +348,84 @@ export interface UpdateDepotProductRequest {
   metadata: string;
 }
 
+// Depot Site interfaces
+export interface DepotSite {
+  id: number;
+  depotId: number;
+  siteId: number;
+  distanceKm: number;
+  travelTimeMins: number;
+  returnTimeMins: number;
+  active: boolean;
+  isPrimary: boolean;
+  transportRate: number;
+  metadata: string;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  depot: {
+    id: number;
+    depotCode: string;
+    depotName: string;
+    town: string;
+    active: boolean;
+    priority: string;
+    companyId: number;
+    companyName: string;
+  };
+  site: {
+    id: number;
+    siteCode: string;
+    siteName: string;
+    town: string;
+    active: boolean;
+    priority: string;
+    companyId: number;
+    companyName: string;
+  };
+}
+
+export interface DepotSiteSummary {
+  id: number;
+  depotId: number;
+  depotCode: string;
+  depotName: string;
+  siteId: number;
+  siteCode: string;
+  siteName: string;
+  distanceKm: number;
+  travelTimeMins: number;
+  returnTimeMins: number;
+  active: boolean;
+  isPrimary: boolean;
+  transportRate: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDepotSiteRequest {
+  depotId: number;
+  siteId: number;
+  distanceKm: number;
+  travelTimeMins: number;
+  returnTimeMins: number;
+  active: boolean;
+  isPrimary: boolean;
+  transportRate: number;
+  metadata?: string;
+}
+
+export interface UpdateDepotSiteRequest {
+  distanceKm: number;
+  travelTimeMins: number;
+  returnTimeMins: number;
+  active: boolean;
+  isPrimary: boolean;
+  transportRate: number;
+  metadata?: string;
+}
+
 export interface CreateNoteRequest {
   category: "General" | "Maintenance" | "Safety" | "Delivery Operations";
   priority: "Low" | "Medium" | "High";
@@ -589,6 +667,38 @@ export class UserApiService {
     const { data, error } = await api.put<DepotProduct>('USER', `/Depots/${depotId}/products/${depotProductId}`, productData)
     if (error) throw new Error(error)
     return data!
+  }
+
+  // Get depot sites for a specific depot
+  static async getDepotSites(depotId: number, token?: string): Promise<DepotSiteSummary[]> {
+    const { data, error } = await api.get<DepotSiteSummary[]>('USER', `/depot-sites/depot/${depotId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Create a new depot site
+  static async createDepotSite(depotSiteData: CreateDepotSiteRequest, token?: string): Promise<DepotSite> {
+    console.log('API: Creating depot site with data:', JSON.stringify(depotSiteData, null, 2));
+    const { data, error } = await api.post<DepotSite>('USER', '/depot-sites', depotSiteData)
+    if (error) {
+      console.error('API: Error creating depot site:', error);
+      throw new Error(error);
+    }
+    console.log('API: Successfully created depot site:', data);
+    return data!
+  }
+
+  // Update an existing depot site
+  static async updateDepotSite(depotSiteId: number, depotSiteData: UpdateDepotSiteRequest, token?: string): Promise<DepotSite> {
+    const { data, error } = await api.put<DepotSite>('USER', `/depot-sites/${depotSiteId}`, depotSiteData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Delete a depot site
+  static async deleteDepotSite(depotSiteId: number, token?: string): Promise<void> {
+    const { error } = await api.delete('USER', `/depot-sites/${depotSiteId}`)
+    if (error) throw new Error(error)
   }
 }
 
