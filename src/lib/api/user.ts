@@ -670,35 +670,33 @@ export class UserApiService {
   }
 
   // Get depot sites for a specific depot
-  static async getDepotSites(depotId: number, token?: string): Promise<DepotSiteSummary[]> {
+  static async getDepotSites(depotId: number, token?: string): Promise<{ data?: DepotSiteSummary[]; error?: string }> {
     const { data, error } = await api.get<DepotSiteSummary[]>('USER', `/depot-sites/depot/${depotId}`)
-    if (error) throw new Error(error)
-    return data!
+    return { data, error }
+  }
+
+  // Get depot sites for a specific site (depot access from site perspective)
+  static async getSiteDepots(siteId: number, token?: string): Promise<{ data?: DepotSiteSummary[]; error?: string }> {
+    const { data, error } = await api.get<DepotSiteSummary[]>('USER', `/depot-sites/site/${siteId}`)
+    return { data, error }
   }
 
   // Create a new depot site
-  static async createDepotSite(depotSiteData: CreateDepotSiteRequest, token?: string): Promise<DepotSite> {
-    console.log('API: Creating depot site with data:', JSON.stringify(depotSiteData, null, 2));
+  static async createDepotSite(depotSiteData: CreateDepotSiteRequest, token?: string): Promise<{ data?: DepotSite; error?: string }> {
     const { data, error } = await api.post<DepotSite>('USER', '/depot-sites', depotSiteData)
-    if (error) {
-      console.error('API: Error creating depot site:', error);
-      throw new Error(error);
-    }
-    console.log('API: Successfully created depot site:', data);
-    return data!
+    return { data, error }
   }
 
   // Update an existing depot site
-  static async updateDepotSite(depotSiteId: number, depotSiteData: UpdateDepotSiteRequest, token?: string): Promise<DepotSite> {
+  static async updateDepotSite(depotSiteId: number, depotSiteData: UpdateDepotSiteRequest, token?: string): Promise<{ data?: DepotSite; error?: string }> {
     const { data, error } = await api.put<DepotSite>('USER', `/depot-sites/${depotSiteId}`, depotSiteData)
-    if (error) throw new Error(error)
-    return data!
+    return { data, error }
   }
 
   // Delete a depot site
-  static async deleteDepotSite(depotSiteId: number, token?: string): Promise<void> {
+  static async deleteDepotSite(depotSiteId: number, token?: string): Promise<{ error?: string }> {
     const { error } = await api.delete('USER', `/depot-sites/${depotSiteId}`)
-    if (error) throw new Error(error)
+    return { error }
   }
 }
 

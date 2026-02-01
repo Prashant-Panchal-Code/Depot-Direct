@@ -143,28 +143,12 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       email: site.email || "",
       contactPerson: site.contactPerson || "",
       operatingHours: parsedOperatingHours,
-      depotId: site.depotId || null,
       deliveryStopped: site.deliveryStopped || false,
       pumpedRequired: site.pumpedRequired || false,
     };
   });
 
-  // Fetch depots from API
-  const [depots, setDepots] = useState<Depot[]>([]);
 
-  useEffect(() => {
-    const fetchDepots = async () => {
-      try {
-        const depotsData = await UserApiService.getDepots();
-        setDepots(depotsData);
-      } catch (error) {
-        console.error("Failed to fetch depots:", error);
-        setDepots([]);
-      }
-    };
-
-    fetchDepots();
-  }, []);
 
   const handleInputChange = (field: string, value: string | boolean | number | null) => {
     setFormData(prev => ({
@@ -297,7 +281,6 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       email: site.email || "",
       contactPerson: site.contactPerson || "",
       operatingHours: parsedOperatingHours,
-      depotId: site.depotId || null,
       deliveryStopped: site.deliveryStopped || false,
       pumpedRequired: site.pumpedRequired || false,
     });
@@ -320,7 +303,6 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
       email: formData.email,
       contactPerson: formData.contactPerson,
       operatingHours: typeof formData.operatingHours === 'string' ? formData.operatingHours : JSON.stringify(formData.operatingHours),
-      depotId: formData.depotId,
       deliveryStopped: formData.deliveryStopped,
       pumpedRequired: formData.pumpedRequired,
     };
@@ -444,47 +426,23 @@ export default function BasicInfoTab({ site, onSave }: BasicInfoTabProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
-                    Priority Level
-                  </Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value) => handleInputChange('priority', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High Priority</SelectItem>
-                      <SelectItem value="Medium">Medium Priority</SelectItem>
-                      <SelectItem value="Low">Low Priority</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="depot" className="text-sm font-medium text-gray-700">
-                    Preferred Depot
-                  </Label>
-                  <Select
-                    value={formData.depotId ? formData.depotId.toString() : "none"}
-                    onValueChange={(value) => handleInputChange('depotId', value === "none" ? null : parseInt(value))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select a depot" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Depot Assigned</SelectItem>
-                      {depots.map((depot) => (
-                        <SelectItem key={depot.id} value={depot.id.toString()}>
-                          {depot.depotName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
+                  Priority Level
+                </Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => handleInputChange('priority', value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="High">High Priority</SelectItem>
+                    <SelectItem value="Medium">Medium Priority</SelectItem>
+                    <SelectItem value="Low">Low Priority</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
