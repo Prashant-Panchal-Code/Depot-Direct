@@ -370,6 +370,7 @@ export default function DepotDetailsPage({
           )}
           {activeTab === "notes" && (
             <NotesTab
+              context="depot"
               site={{
                 ...depot,
                 // Map depot properties to SiteDetails just for the NotesTab

@@ -59,9 +59,10 @@ interface NotesTabProps {
   site: SiteDetails;
   notes: Note[];
   setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
+  context?: 'site' | 'depot'; // Optional context to determine if it's for a site or depot
 }
 
-export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
+export default function NotesTab({ site, notes, setNotes, context = 'site' }: NotesTabProps) {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -74,6 +75,11 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
   });
   const { showLoader, hideLoader } = useLoader();
   const { showSuccess, showError } = useNotification();
+
+  // Determine if this is a depot or site context
+  const isDepot = context === 'depot';
+  const entityName = isDepot ? 'Depot Notes' : 'Site Notes';
+  const entityDisplayName = isDepot ? site.siteName : site.siteName;
 
   const [newNote, setNewNote] = useState<{
     comment: string;
@@ -105,7 +111,10 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     const fetchNotes = async () => {
       try {
         showLoader("Loading notes...");
-        const apiNotes = await UserApiService.getNotesBySite(site.id);
+        // Use the appropriate API call based on context
+        const apiNotes = isDepot
+          ? await UserApiService.getNotesByDepot(site.id)
+          : await UserApiService.getNotesBySite(site.id);
 
         // Convert API notes to UI format
         const uiNotes: Note[] = apiNotes.map(apiNote => ({
@@ -139,7 +148,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
     };
 
     fetchNotes();
-  }, [site.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [site.id, isDepot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +166,8 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
         category: newNote.category,
         priority: newNote.priority,
         comment: newNote.comment,
-        siteId: site.id,
+        // Set the correct ID based on context
+        ...(isDepot ? { depotId: site.id } : { siteId: site.id }),
         companyId: companyId
       };
 
@@ -453,7 +463,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
       <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <NotePencil size={24} className="text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Site Notes</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{entityName}</h3>
           <div className="flex gap-2">
             <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
               {notes.length} total
@@ -475,7 +485,7 @@ export default function NotesTab({ site, notes, setNotes }: NotesTabProps) {
             <DialogHeader>
               <DialogTitle>Add New Note</DialogTitle>
               <DialogDescription>
-                Add a note for {site.siteName}
+                Add a note for {entityDisplayName}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddNote} className="space-y-4">
