@@ -42,10 +42,11 @@ export default function ParkingDetailsPage({
     };
   }, [setSidebarCollapsed]);
 
-  const handleSave = () => {
+  const handleSave = (updatedFields: Partial<ParkingDetails>) => {
     // Handle save logic here
-    console.log("Saving parking:", parking);
-    onSave(parking);
+    const updatedParking = { ...parking, ...updatedFields };
+    console.log("Saving parking:", updatedParking);
+    onSave(updatedParking);
   };
 
   const handleBack = () => {
@@ -73,8 +74,8 @@ export default function ParkingDetailsPage({
     <div className="h-screen bg-gray-50 overflow-hidden">
       <div
         className={`h-[calc(100vh-5rem)] flex flex-col py-4 mt-20 transition-all duration-300 ${sidebarCollapsed
-            ? 'ml-16 w-[calc(100vw-4rem)] px-4'
-            : 'ml-64 w-[calc(100vw-16rem)] px-4'
+          ? 'ml-16 w-[calc(100vw-4rem)] px-4'
+          : 'ml-64 w-[calc(100vw-16rem)] px-4'
           }`}
       >
         {/* Parking Header with Name and Code */}
@@ -82,8 +83,8 @@ export default function ParkingDetailsPage({
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">{parking.parkingName}-<span className="text-2xl text-gray-600">{parking.parkingCode}</span></h2>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${parking.active
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
               }`}>
               {parking.active ? 'Active' : 'Inactive'}
             </span>
@@ -127,8 +128,8 @@ export default function ParkingDetailsPage({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                    ? "border-primary-custom text-primary-custom"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-primary-custom text-primary-custom"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
                 {tab.label}

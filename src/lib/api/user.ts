@@ -623,6 +623,13 @@ export class UserApiService {
     return data!
   }
 
+  // Update parking
+  static async updateParking(parkingId: number, parkingData: Partial<Parking>, token?: string): Promise<Parking> {
+    const { data, error } = await api.put<Parking>('USER', `${API_CONFIG.USER.ENDPOINTS.PARKING}/${parkingId}`, parkingData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
   // Get schedule data
   static async getScheduleData(token?: string): Promise<ScheduleData> {
     const { data, error } = await api.get<ScheduleData>('USER', API_CONFIG.USER.ENDPOINTS.SCHEDULE)

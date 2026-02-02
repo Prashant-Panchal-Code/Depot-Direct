@@ -158,17 +158,34 @@ export default function ParkingContent() {
     setSelectedParking(null);
   };
 
-  const handleSaveParking = (updatedParking: ParkingDetails) => {
-    // Update the list
-    const updatedParkings = parkings.map((parking) =>
-      parking.id === updatedParking.id ? {
-        ...parking,
-        ...updatedParking
-      } : parking
-    );
-    setParkings(updatedParkings as ParkingWithRegion[]);
-    // Update selected parking to reflect changes in the UI without closing the view
-    setSelectedParking(updatedParking);
+  const handleSaveParking = async (updatedParking: ParkingDetails) => {
+    try {
+      showLoader("Saving parking details...");
+      // Call API to update parking
+      const savedParking = await UserApiService.updateParking(updatedParking.id, updatedParking);
+
+      // Update the list
+      const updatedParkings = parkings.map((parking) =>
+        parking.id === savedParking.id ? {
+          ...parking,
+          ...savedParking,
+          // Preserve region info if it exists
+          regionId: parking.regionId,
+          regionName: parking.regionName
+        } : parking
+      );
+
+      setParkings(updatedParkings as ParkingWithRegion[]);
+
+      // Update selected parking to reflect changes
+      setSelectedParking(savedParking as unknown as ParkingDetails);
+      showSuccess("Success", "Parking details updated successfully");
+    } catch (error) {
+      console.error("Failed to update parking:", error);
+      showError("Error", "Failed to update parking details");
+    } finally {
+      hideLoader();
+    }
   };
 
   // Status Cell Renderer for Active/Inactive

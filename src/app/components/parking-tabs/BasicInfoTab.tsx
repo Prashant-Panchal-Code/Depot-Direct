@@ -11,7 +11,7 @@ import { ParkingDetails } from "../ParkingDetailsPage";
 
 interface BasicInfoTabProps {
   parking: ParkingDetails;
-  onSave: () => void;
+  onSave: (data: Partial<ParkingDetails>) => void;
 }
 
 export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
@@ -28,6 +28,7 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
     managerEmail: parking.managerEmail || "",
     emergencyContact: parking.emergencyContact || "",
     parkingSpaces: parking.parkingSpaces || 0,
+    shortcode: parking.shortcode || "",
   });
 
   const handleInputChange = (field: string, value: string | boolean | number | null) => {
@@ -51,7 +52,12 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
       managerEmail: parking.managerEmail || "",
       emergencyContact: parking.emergencyContact || "",
       parkingSpaces: parking.parkingSpaces || 0,
+      shortcode: parking.shortcode || "",
     });
+  };
+
+  const handleSave = () => {
+    onSave(formData);
   };
 
   return (
@@ -73,6 +79,32 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
                   }`}>
                   {formData.active ? 'Active' : 'Inactive'}
                 </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="parkingCode" className="text-sm font-medium text-gray-700">
+                    Parking Code
+                  </Label>
+                  <Input
+                    id="parkingCode"
+                    value={parking.parkingCode}
+                    disabled
+                    className="mt-1 bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shortcode" className="text-sm font-medium text-gray-700">
+                    Short Code
+                  </Label>
+                  <Input
+                    id="shortcode"
+                    value={formData.shortcode}
+                    onChange={(e) => handleInputChange('shortcode', e.target.value)}
+                    placeholder="Enter short code"
+                    className="mt-1"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -257,7 +289,7 @@ export default function BasicInfoTab({ parking, onSave }: BasicInfoTabProps) {
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button onClick={onSave} className="bg-primary-custom hover:bg-primary-custom/90">
+          <Button onClick={handleSave} className="bg-primary-custom hover:bg-primary-custom/90">
             Save Changes
           </Button>
         </div>
