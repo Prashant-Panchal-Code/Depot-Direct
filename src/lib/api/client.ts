@@ -14,14 +14,14 @@ export interface ApiResponse<T = any> {
  * Since HTTP-only cookies can't be accessed by client JS, we use a proxy endpoint
  */
 export async function apiRequest<T = any>(
-  module: 'ADMIN' | 'USER',
+  module: 'ADMIN' | 'USER' | 'SHARED',
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
     // Use proxy endpoint that can access HTTP-only cookies on the server side
     const proxyUrl = `/api/proxy?module=${module}&endpoint=${encodeURIComponent(endpoint)}`
-    
+
     const response = await fetch(proxyUrl, {
       ...options,
       credentials: 'include', // Include HTTP-only cookies
@@ -44,7 +44,7 @@ export async function apiRequest<T = any>(
 
     let data: T
     const contentType = response.headers.get('content-type')
-    
+
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
     } else {
@@ -69,22 +69,22 @@ export async function apiRequest<T = any>(
  * Convenience methods for common HTTP operations
  */
 export const api = {
-  get: <T = any>(module: 'ADMIN' | 'USER', endpoint: string) => 
+  get: <T = any>(module: 'ADMIN' | 'USER' | 'SHARED', endpoint: string) =>
     apiRequest<T>(module, endpoint, { method: 'GET' }),
-    
-  post: <T = any>(module: 'ADMIN' | 'USER', endpoint: string, data?: any) =>
+
+  post: <T = any>(module: 'ADMIN' | 'USER' | 'SHARED', endpoint: string, data?: any) =>
     apiRequest<T>(module, endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined
     }),
-    
-  put: <T = any>(module: 'ADMIN' | 'USER', endpoint: string, data?: any) =>
+
+  put: <T = any>(module: 'ADMIN' | 'USER' | 'SHARED', endpoint: string, data?: any) =>
     apiRequest<T>(module, endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined
     }),
-    
-  delete: <T = any>(module: 'ADMIN' | 'USER', endpoint: string) =>
+
+  delete: <T = any>(module: 'ADMIN' | 'USER' | 'SHARED', endpoint: string) =>
     apiRequest<T>(module, endpoint, { method: 'DELETE' })
 }
 

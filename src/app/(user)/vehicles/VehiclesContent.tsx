@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppContext } from "@/app/contexts/AppContext";
+import { UserApiService } from "@/lib/api/user";
+import { useLoader } from "@/contexts/LoaderContext";
 import { AgGridReact } from "ag-grid-react";
 import {
   ColDef,
@@ -11,12 +13,12 @@ import {
   ICellRendererParams,
 } from "ag-grid-community";
 import { themeQuartz } from "ag-grid-community";
-import { 
-  CheckSquare, 
-  Rows, 
-  XCircle, 
-  Truck, 
-  Car, 
+import {
+  CheckSquare,
+  Rows,
+  XCircle,
+  Truck,
+  Car,
   Package
 } from "@phosphor-icons/react";
 import AddTruckDialog, { TruckTractor, NewTruck } from "@/app/components/AddTruckDialog";
@@ -26,6 +28,7 @@ import TrailerDetailsPage, { TrailerDetails } from "@/app/components/TrailerDeta
 import TruckDetailsPage, { TruckDetails } from "@/app/components/TruckDetailsPage";
 import VehicleDetailsPage, { VehicleDetails } from "@/app/components/VehicleDetailsPage";
 import { DataManagerOnly } from "@/components/shared/RoleBasedComponents";
+import { useRegionContext } from "@/contexts/RoleBasedContext";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -34,6 +37,7 @@ type TabType = 'vehicles' | 'trucks' | 'trailers';
 
 export default function VehiclesContent() {
   const { sidebarCollapsed } = useAppContext();
+  const { selectedRegions } = useRegionContext();
   const [activeTab, setActiveTab] = useState<TabType>('vehicles');
   const [selectedTrailer, setSelectedTrailer] = useState<TrailerDetails | null>(null);
   const [showTrailerDetails, setShowTrailerDetails] = useState(false);
@@ -42,196 +46,81 @@ export default function VehiclesContent() {
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleDetails | null>(null);
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
 
-  // Mock data for trucks with extended details
-  const [trucks, setTrucks] = useState<TruckDetails[]>([
-    { 
-      id: 1, 
-      truckName: "Heavy Hauler 1", 
-      truckCode: "TK001", 
-      registrationNumber: "ABC-123", 
-      haulierCompany: "Express Logistics", 
-      active: true,
-      licensePlate: "ABC-123",
-      capacityKL: 25.0,
-      parkingAssigned: "Parking Zone A",
-      owner: "Own",
-      pumpAvailable: true,
-      compliance: {
-        id: 1,
-        adrExpiryDate: "2025-08-15",
-        lastInspectionDate: "2024-08-15",
-        nextInspectionDue: "2025-08-15",
-        certificateNumber: "TK-ADR-2024-001",
-        inspectionType: "Annual",
-        complianceStatus: "Compliant",
-        notes: "All truck inspections up to date. Next annual inspection scheduled."
-      },
-      maintenance: {
-        id: 1,
-        lastServiceDate: "2024-07-10",
-        nextServiceDue: "2024-12-10",
-        serviceType: "Routine",
-        mileage: 150000,
-        serviceProvider: "Main Depot Workshop",
-        cost: 1800.00,
-        workDescription: "Full service including engine check, brake inspection, and hydraulic system maintenance.",
-        status: "Completed",
-        notes: "All systems operational. Recommended brake pad replacement in 3 months."
-      }
-    },
-    { 
-      id: 2, 
-      truckName: "Power Truck 2", 
-      truckCode: "TK002", 
-      registrationNumber: "DEF-456", 
-      haulierCompany: "Fast Transport", 
-      active: true,
-      licensePlate: "DEF-456",
-      capacityKL: 30.0,
-      parkingAssigned: "Parking Zone B",
-      owner: "Third Party",
-      pumpAvailable: false,
-      compliance: {
-        id: 2,
-        adrExpiryDate: "2025-03-20",
-        lastInspectionDate: "2024-03-20",
-        nextInspectionDue: "2025-03-20",
-        certificateNumber: "TK-ADR-2024-002",
-        inspectionType: "Annual",
-        complianceStatus: "Due Soon",
-        notes: "Certificate expires in 6 months. Renewal process to be initiated."
-      },
-      maintenance: {
-        id: 2,
-        lastServiceDate: "2024-06-15",
-        nextServiceDue: "2024-11-15",
-        serviceType: "Routine",
-        mileage: 175000,
-        serviceProvider: "Authorized Service Center",
-        cost: 2100.00,
-        workDescription: "Routine maintenance with engine oil change, filter replacements, and safety checks.",
-        status: "Completed",
-        notes: "Engine running smoothly. No issues detected."
-      }
-    },
-    { 
-      id: 3, 
-      truckName: "Max Capacity 3", 
-      truckCode: "TK003", 
-      registrationNumber: "GHI-789", 
-      haulierCompany: "Mega Freight", 
-      active: true,
-      licensePlate: "GHI-789",
-      capacityKL: 35.0,
-      parkingAssigned: "Main Parking",
-      owner: "Own",
-      pumpAvailable: true,
-      compliance: {
-        id: 3,
-        adrExpiryDate: "2025-11-10",
-        lastInspectionDate: "2024-11-10",
-        nextInspectionDue: "2025-11-10",
-        certificateNumber: "TK-ADR-2024-003",
-        inspectionType: "Annual",
-        complianceStatus: "Compliant",
-        notes: "Recently renewed. All documentation current."
-      },
-      maintenance: {
-        id: 3,
-        lastServiceDate: "2024-08-20",
-        nextServiceDue: "2025-01-20",
-        serviceType: "Routine",
-        mileage: 135000,
-        serviceProvider: "Main Depot Workshop",
-        cost: 1650.00,
-        workDescription: "Complete service including pump maintenance, hydraulic system check, and tire inspection.",
-        status: "Completed",
-        notes: "Pump system serviced and tested. All functions working properly."
-      }
-    },
-    { 
-      id: 4, 
-      truckName: "Reliable Truck 4", 
-      truckCode: "TK004", 
-      registrationNumber: "JKL-012", 
-      haulierCompany: "Express Logistics", 
-      active: false,
-      licensePlate: "JKL-012",
-      capacityKL: 28.0,
-      parkingAssigned: "North Parking",
-      owner: "Own",
-      pumpAvailable: false,
-      compliance: {
-        id: 4,
-        adrExpiryDate: "2024-12-01",
-        lastInspectionDate: "2023-12-01",
-        nextInspectionDue: "2024-12-01",
-        certificateNumber: "TK-ADR-2023-004",
-        inspectionType: "Annual",
-        complianceStatus: "Expired",
-        notes: "Certificate expired. Truck currently inactive until renewal."
-      },
-      maintenance: {
-        id: 4,
-        lastServiceDate: "2024-02-28",
-        nextServiceDue: "2024-08-28",
-        serviceType: "Repair",
-        mileage: 200000,
-        serviceProvider: "External Service Provider",
-        cost: 3200.00,
-        workDescription: "Major engine repair, transmission service, and electrical system overhaul.",
-        status: "Overdue",
-        notes: "Truck requires additional repairs before returning to service."
-      }
-    },
-    { 
-      id: 5, 
-      truckName: "Fleet Leader 5", 
-      truckCode: "TK005", 
-      registrationNumber: "MNO-345", 
-      haulierCompany: "Prime Movers", 
-      active: true,
-      licensePlate: "MNO-345",
-      capacityKL: 32.0,
-      parkingAssigned: "South Parking",
-      owner: "Third Party",
-      pumpAvailable: true,
-      compliance: {
-        id: 5,
-        adrExpiryDate: "2025-05-30",
-        lastInspectionDate: "2024-05-30",
-        nextInspectionDue: "2025-05-30",
-        certificateNumber: "TK-ADR-2024-005",
-        inspectionType: "Annual",
-        complianceStatus: "Compliant",
-        notes: "New truck with full compliance documentation."
-      },
-      maintenance: {
-        id: 5,
-        lastServiceDate: "2024-08-01",
-        nextServiceDue: "2025-02-01",
-        serviceType: "Routine",
-        mileage: 85000,
-        serviceProvider: "Authorized Dealer",
-        cost: 1200.00,
-        workDescription: "First major service since delivery. All systems checked and validated.",
-        status: "Completed",
-        notes: "New truck performing excellently. Standard warranty service completed."
-      }
-    },
-  ]);
+  // State for data
+  const [trucks, setTrucks] = useState<TruckDetails[]>([]);
+  const [loadingTrucks, setLoadingTrucks] = useState(false);
+  const { showLoader, hideLoader } = useLoader();
+
+  // Fetch trucks depending on active tab and selected region
+  useEffect(() => {
+    if (activeTab === 'trucks') {
+      const fetchTrucks = async () => {
+        setLoadingTrucks(true);
+        // showLoader("Loading trucks..."); 
+        try {
+          const regionId = selectedRegions.length > 0 ? selectedRegions[0].id : 5;
+          const apiTrucks = await UserApiService.getTractorsByRegion(regionId);
+
+          // Map API response to TruckDetails
+          const mappedTrucks: TruckDetails[] = apiTrucks.map((t: any) => ({
+            ...t,
+            id: t.id,
+            truckName: t.tractorName,
+            truckCode: t.tractorCode,
+            registrationNumber: t.licensePlate,
+            haulierCompany: t.haulierName || (t.haulier ? t.haulier.haulierName : 'Unknown'),
+            active: t.status === 'Active' ? true : (t.status === 'Inactive' ? false : true), // Default to true if status is string
+            // Default/Fallback values for extended properties not in list API
+            licensePlate: t.licensePlate,
+            capacityKL: t.pumpFlowRateLpm ? t.pumpFlowRateLpm / 1000 : 0, // Placeholder mapping or 0
+            parkingAssigned: "Not Assigned",
+            owner: "Own",
+            pumpAvailable: t.pumpAvailable,
+            compliance: {
+              id: 0,
+              adrExpiryDate: "",
+              lastInspectionDate: "",
+              nextInspectionDue: "",
+              certificateNumber: "",
+              inspectionType: "Annual",
+              complianceStatus: "Compliant"
+            },
+            maintenance: {
+              id: 0,
+              lastServiceDate: "",
+              nextServiceDue: "",
+              serviceType: "Routine",
+              serviceProvider: "",
+              workDescription: "",
+              status: "Completed"
+            }
+          }));
+
+          setTrucks(mappedTrucks);
+        } catch (error) {
+          console.error("Failed to fetch trucks:", error);
+          // Fallback to empty or keep existing
+        } finally {
+          setLoadingTrucks(false);
+          // hideLoader();
+        }
+      };
+
+      fetchTrucks();
+    }
+  }, [activeTab, selectedRegions]);
 
   // Mock data for trailers with extended details
   const [trailers, setTrailers] = useState<TrailerDetails[]>([
-    { 
-      id: 1, 
-      trailerName: "Fuel Tanker 1", 
-      trailerCode: "TR001", 
-      registrationNumber: "XYZ-111", 
-      volumeCapacity: 35000, 
-      weightCapacity: 28000, 
-      numberOfCompartments: 4, 
-      haulierCompany: "Express Logistics", 
+    {
+      id: 1,
+      trailerName: "Fuel Tanker 1",
+      trailerCode: "TR001",
+      registrationNumber: "XYZ-111",
+      volumeCapacity: 35000,
+      weightCapacity: 28000,
+      numberOfCompartments: 4,
+      haulierCompany: "Express Logistics",
       active: true,
       owner: "Own",
       depotAssigned: "Main Depot",
@@ -301,15 +190,15 @@ export default function VehiclesContent() {
         notes: "All systems operational. Recommended tire replacement in 6 months."
       }
     },
-    { 
-      id: 2, 
-      trailerName: "Diesel Tank 2", 
-      trailerCode: "TR002", 
-      registrationNumber: "XYZ-222", 
-      volumeCapacity: 40000, 
-      weightCapacity: 32000, 
-      numberOfCompartments: 5, 
-      haulierCompany: "Fast Transport", 
+    {
+      id: 2,
+      trailerName: "Diesel Tank 2",
+      trailerCode: "TR002",
+      registrationNumber: "XYZ-222",
+      volumeCapacity: 40000,
+      weightCapacity: 32000,
+      numberOfCompartments: 5,
+      haulierCompany: "Fast Transport",
       active: true,
       owner: "Third Party",
       depotAssigned: "North Terminal",
@@ -389,15 +278,15 @@ export default function VehiclesContent() {
         notes: "Service appointment booked for next month."
       }
     },
-    { 
-      id: 3, 
-      trailerName: "Multi-Product 3", 
-      trailerCode: "TR003", 
-      registrationNumber: "XYZ-333", 
-      volumeCapacity: 38000, 
-      weightCapacity: 30000, 
-      numberOfCompartments: 6, 
-      haulierCompany: "Mega Freight", 
+    {
+      id: 3,
+      trailerName: "Multi-Product 3",
+      trailerCode: "TR003",
+      registrationNumber: "XYZ-333",
+      volumeCapacity: 38000,
+      weightCapacity: 30000,
+      numberOfCompartments: 6,
+      haulierCompany: "Mega Freight",
       active: true,
       owner: "Own",
       depotAssigned: "South Hub",
@@ -426,15 +315,15 @@ export default function VehiclesContent() {
         notes: "Major service overdue. Requires immediate attention before next use."
       }
     },
-    { 
-      id: 4, 
-      trailerName: "Heavy Duty 4", 
-      trailerCode: "TR004", 
-      registrationNumber: "XYZ-444", 
-      volumeCapacity: 42000, 
-      weightCapacity: 35000, 
-      numberOfCompartments: 4, 
-      haulierCompany: "Express Logistics", 
+    {
+      id: 4,
+      trailerName: "Heavy Duty 4",
+      trailerCode: "TR004",
+      registrationNumber: "XYZ-444",
+      volumeCapacity: 42000,
+      weightCapacity: 35000,
+      numberOfCompartments: 4,
+      haulierCompany: "Express Logistics",
       active: false, // Inactive due to non-sequential compartments
       owner: "Own",
       depotAssigned: "Main Depot",
@@ -495,15 +384,15 @@ export default function VehiclesContent() {
         notes: "Trailer in excellent condition. Ready for service when reactivated."
       }
     },
-    { 
-      id: 5, 
-      trailerName: "Standard Tank 5", 
-      trailerCode: "TR005", 
-      registrationNumber: "XYZ-555", 
-      volumeCapacity: 36000, 
-      weightCapacity: 29000, 
-      numberOfCompartments: 5, 
-      haulierCompany: "Prime Movers", 
+    {
+      id: 5,
+      trailerName: "Standard Tank 5",
+      trailerCode: "TR005",
+      registrationNumber: "XYZ-555",
+      volumeCapacity: 36000,
+      weightCapacity: 29000,
+      numberOfCompartments: 5,
+      haulierCompany: "Prime Movers",
       active: true,
       owner: "Third Party",
       depotAssigned: "West Terminal",
@@ -532,15 +421,15 @@ export default function VehiclesContent() {
         notes: "All systems functioning well. Next service scheduled."
       }
     },
-    { 
-      id: 6, 
-      trailerName: "Compact Tanker 6", 
-      trailerCode: "TR006", 
-      registrationNumber: "XYZ-666", 
-      volumeCapacity: 30000, 
-      weightCapacity: 25000, 
-      numberOfCompartments: 3, 
-      haulierCompany: "Fast Transport", 
+    {
+      id: 6,
+      trailerName: "Compact Tanker 6",
+      trailerCode: "TR006",
+      registrationNumber: "XYZ-666",
+      volumeCapacity: 30000,
+      weightCapacity: 25000,
+      numberOfCompartments: 3,
+      haulierCompany: "Fast Transport",
       active: true,
       owner: "Own",
       depotAssigned: "North Terminal",
@@ -573,73 +462,73 @@ export default function VehiclesContent() {
 
   // Mock data for vehicles (truck + trailer combinations)
   const [vehicles, setVehicles] = useState<VehicleDetails[]>([
-    { 
-      id: 1, 
-      vehicleName: "Heavy Hauler 1 + Fuel Tanker 1", 
-      vehicleCode: "VH001", 
-      truckId: 1, 
+    {
+      id: 1,
+      vehicleName: "Heavy Hauler 1 + Fuel Tanker 1",
+      vehicleCode: "VH001",
+      truckId: 1,
       trailerId: 1,
-      truckName: "Heavy Hauler 1", 
+      truckName: "Heavy Hauler 1",
       truckRegistration: "ABC-123",
-      trailerName: "Fuel Tanker 1", 
+      trailerName: "Fuel Tanker 1",
       trailerRegistration: "XYZ-111",
-      volumeCapacity: 35000, 
-      weightCapacity: 28000, 
-      numberOfTrailers: 1, 
-      haulierCompany: "Express Logistics", 
-      baseLocation: "Main Depot", 
-      active: true 
+      volumeCapacity: 35000,
+      weightCapacity: 28000,
+      numberOfTrailers: 1,
+      haulierCompany: "Express Logistics",
+      baseLocation: "Main Depot",
+      active: true
     },
-    { 
-      id: 2, 
-      vehicleName: "Power Truck 2 + Diesel Tank 2", 
-      vehicleCode: "VH002", 
-      truckId: 2, 
+    {
+      id: 2,
+      vehicleName: "Power Truck 2 + Diesel Tank 2",
+      vehicleCode: "VH002",
+      truckId: 2,
       trailerId: 2,
-      truckName: "Power Truck 2", 
+      truckName: "Power Truck 2",
       truckRegistration: "DEF-456",
-      trailerName: "Diesel Tank 2", 
+      trailerName: "Diesel Tank 2",
       trailerRegistration: "XYZ-222",
-      volumeCapacity: 40000, 
-      weightCapacity: 32000, 
-      numberOfTrailers: 1, 
-      haulierCompany: "Fast Transport", 
-      baseLocation: "North Terminal", 
-      active: true 
+      volumeCapacity: 40000,
+      weightCapacity: 32000,
+      numberOfTrailers: 1,
+      haulierCompany: "Fast Transport",
+      baseLocation: "North Terminal",
+      active: true
     },
-    { 
-      id: 3, 
-      vehicleName: "Max Capacity 3 + Multi-Product 3", 
-      vehicleCode: "VH003", 
-      truckId: 3, 
+    {
+      id: 3,
+      vehicleName: "Max Capacity 3 + Multi-Product 3",
+      vehicleCode: "VH003",
+      truckId: 3,
       trailerId: 3,
-      truckName: "Max Capacity 3", 
+      truckName: "Max Capacity 3",
       truckRegistration: "GHI-789",
-      trailerName: "Multi-Product 3", 
+      trailerName: "Multi-Product 3",
       trailerRegistration: "XYZ-333",
-      volumeCapacity: 38000, 
-      weightCapacity: 30000, 
-      numberOfTrailers: 1, 
-      haulierCompany: "Mega Freight", 
-      baseLocation: "South Hub", 
-      active: true 
+      volumeCapacity: 38000,
+      weightCapacity: 30000,
+      numberOfTrailers: 1,
+      haulierCompany: "Mega Freight",
+      baseLocation: "South Hub",
+      active: true
     },
-    { 
-      id: 4, 
-      vehicleName: "Fleet Leader 5 + Standard Tank 5", 
-      vehicleCode: "VH004", 
-      truckId: 5, 
+    {
+      id: 4,
+      vehicleName: "Fleet Leader 5 + Standard Tank 5",
+      vehicleCode: "VH004",
+      truckId: 5,
       trailerId: 5,
-      truckName: "Fleet Leader 5", 
+      truckName: "Fleet Leader 5",
       truckRegistration: "MNO-345",
-      trailerName: "Standard Tank 5", 
+      trailerName: "Standard Tank 5",
       trailerRegistration: "XYZ-555",
-      volumeCapacity: 36000, 
-      weightCapacity: 29000, 
-      numberOfTrailers: 1, 
-      haulierCompany: "Prime Movers", 
-      baseLocation: "West Terminal", 
-      active: false 
+      volumeCapacity: 36000,
+      weightCapacity: 29000,
+      numberOfTrailers: 1,
+      haulierCompany: "Prime Movers",
+      baseLocation: "West Terminal",
+      active: false
     },
   ]);
 
@@ -658,7 +547,7 @@ export default function VehiclesContent() {
   };
 
   const handleSaveTrailerDetails = (updatedTrailer: TrailerDetails) => {
-    const updatedTrailers = trailers.map(trailer => 
+    const updatedTrailers = trailers.map(trailer =>
       trailer.id === updatedTrailer.id ? updatedTrailer : trailer
     );
     setTrailers(updatedTrailers);
@@ -679,7 +568,7 @@ export default function VehiclesContent() {
   };
 
   const handleSaveTruckDetails = (updatedTruck: TruckDetails) => {
-    const updatedTrucks = trucks.map(truck => 
+    const updatedTrucks = trucks.map(truck =>
       truck.id === updatedTruck.id ? updatedTruck : truck
     );
     setTrucks(updatedTrucks);
@@ -700,16 +589,19 @@ export default function VehiclesContent() {
   };
 
   const handleSaveVehicleDetails = (vehicleId: number, data: Partial<VehicleDetails>) => {
-    const updatedVehicles = vehicles.map(vehicle => 
+    const updatedVehicles = vehicles.map(vehicle =>
       vehicle.id === vehicleId ? { ...vehicle, ...data } : vehicle
     );
     setVehicles(updatedVehicles);
   };
 
   const handleAddTruck = (newTruck: NewTruck) => {
+    // We optimistically add it locally, but we should also fetch from API
+    // Since the dialog now handles the API call, we just need to refresh or add to state
+    // Ideally we would fetch the full list, but for now we can append locally to match existing logic
     const truck: TruckDetails = {
       ...newTruck,
-      id: trucks.length + 1,
+      id: trucks.length + 1, // This ID might be incorrect if duplicate with DB, but good for UI until refresh
       active: true, // Set as active by default
       licensePlate: newTruck.registrationNumber, // Use registration number as license plate
       capacityKL: 25.0,
@@ -740,6 +632,7 @@ export default function VehiclesContent() {
       }
     };
     setTrucks([...trucks, truck]);
+    // TODO: Trigger a re-fetch of trucks from API to get the real ID and data
   };
 
   const handleAddTrailer = (newTrailer: NewTrailer) => {
@@ -780,7 +673,7 @@ export default function VehiclesContent() {
   const handleAddVehicle = (newVehicle: NewVehicle) => {
     const selectedTruck = trucks.find(truck => truck.id === newVehicle.truckId);
     const selectedTrailer = trailers.find(trailer => trailer.id === newVehicle.trailerId);
-    
+
     if (!selectedTruck || !selectedTrailer) {
       alert('Selected truck or trailer not found');
       return;
@@ -903,12 +796,7 @@ export default function VehiclesContent() {
       flex: 1,
       minWidth: 150,
     },
-    {
-      field: "parkingAssigned",
-      headerName: "Parking Assigned",
-      flex: 1,
-      minWidth: 150,
-    },
+
     {
       field: "haulierCompany",
       headerName: "Haulier",
@@ -1007,7 +895,7 @@ export default function VehiclesContent() {
     const currentData = data as (Vehicle | TruckTractor | Trailer)[];
     const activeCount = currentData.filter(item => item.active).length;
     const inactiveCount = currentData.filter(item => !item.active).length;
-    
+
     return {
       total: currentData.length,
       active: activeCount,
@@ -1020,13 +908,15 @@ export default function VehiclesContent() {
   // Render Add Button based on active tab - Only for Data Managers
   const renderAddButton = () => {
     const getAddDialog = () => {
+      const currentRegionId = selectedRegions.length > 0 ? selectedRegions[0].id : 5;
+
       switch (activeTab) {
         case 'vehicles':
           return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
         case 'trucks':
-          return <AddTruckDialog onSave={handleAddTruck} />;
+          return <AddTruckDialog onSave={handleAddTruck} regionId={currentRegionId} />;
         case 'trailers':
-          return <AddTrailerDialog onSave={handleAddTrailer} />;
+          return <AddTrailerDialog onSave={handleAddTrailer} regionId={currentRegionId} />;
         default:
           return <AddVehicleDialog trucks={trucks} trailers={trailers} onSave={handleAddVehicle} />;
       }
@@ -1061,9 +951,8 @@ export default function VehiclesContent() {
         />
       ) : (
         <main
-          className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
-            sidebarCollapsed ? "ml-16" : "ml-64"
-          }`}
+          className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"
+            }`}
         >
           <div className="p-4 h-full flex flex-col">
             {/* Header with Tabs */}
@@ -1080,19 +969,17 @@ export default function VehiclesContent() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-primary-custom text-white shadow-md'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                      }`}
+                      className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${activeTab === tab.id
+                        ? 'bg-primary-custom text-white shadow-md'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        }`}
                     >
                       <tab.icon size={18} />
                       <span className="font-medium">{tab.label}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        activeTab === tab.id 
-                          ? 'bg-primary-custom/80 text-white' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === tab.id
+                        ? 'bg-primary-custom/80 text-white'
+                        : 'bg-gray-100 text-gray-600'
+                        }`}>
                         {tab.count}
                       </span>
                     </button>

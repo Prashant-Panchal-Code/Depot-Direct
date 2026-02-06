@@ -98,6 +98,23 @@ export interface Site {
   }>;
 }
 
+export interface Haulier {
+  id: number;
+  regionId: number;
+  regionName: string;
+  haulierCode: string;
+  haulierName: string;
+  taxId: string;
+  contractNumber: string;
+  contractExpiry: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SiteSummary {
   id: number;
   siteCode: string;
@@ -238,6 +255,64 @@ export interface Parking {
     createdBy: number;
     lastUpdatedBy: number;
   }>;
+}
+
+export interface Haulier {
+  id: number;
+  regionId: number;
+  regionName: string;
+  haulierCode: string;
+  haulierName: string;
+  taxId: string;
+  contractNumber: string;
+  contractExpiry: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Tractor {
+  id: number;
+  tractorCode: string;
+  tractorName: string;
+  licensePlate: string;
+  haulierId: number;
+  regionId: number;
+  status: string;
+  pumpAvailable: boolean;
+  pumpFlowRateLpm: number;
+  curbWeightKg: number;
+  numberOfAxles: number;
+  axleConfiguration: string;
+  metadata: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string;
+  haulierName?: string;
+  regionName?: string;
+  haulier?: Haulier;
+  region?: {
+    id: number;
+    name: string;
+    regionCode: string;
+    companyId: number;
+    metadata: string;
+    createdAt: string;
+    updatedAt: string;
+    createdBy: number;
+    lastUpdatedBy: number;
+  };
+}
+
+export interface CreateTractorRequest {
+  tractorCode: string;
+  tractorName: string;
+  licensePlate: string;
+  haulierId: number;
+  regionId: number;
 }
 
 export interface CreateParkingRequest {
@@ -558,6 +633,13 @@ export class UserApiService {
     return data!
   }
 
+  // Get hauliers by region
+  static async getHauliersByRegion(regionId: number, token?: string): Promise<Haulier[]> {
+    const { data, error } = await api.get<Haulier[]>('SHARED', `/Hauliers/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
   // Get a single site by ID
   static async getSiteById(siteId: number, token?: string): Promise<Site> {
     const { data, error } = await api.get<Site>('USER', `${API_CONFIG.USER.ENDPOINTS.SITES}/${siteId}`)
@@ -757,6 +839,20 @@ export class UserApiService {
   // Update a depot product
   static async updateDepotProduct(depotId: number, depotProductId: number, productData: UpdateDepotProductRequest, token?: string): Promise<DepotProduct> {
     const { data, error } = await api.put<DepotProduct>('USER', `/Depots/${depotId}/products/${depotProductId}`, productData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Create a new tractor (truck)
+  static async createTractor(tractorData: CreateTractorRequest, token?: string): Promise<Tractor> {
+    const { data, error } = await api.post<Tractor>('USER', '/tractors', tractorData)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get tractors by region
+  static async getTractorsByRegion(regionId: number, token?: string): Promise<Tractor[]> {
+    const { data, error } = await api.get<Tractor[]>('USER', `/tractors/by-region/${regionId}`)
     if (error) throw new Error(error)
     return data!
   }

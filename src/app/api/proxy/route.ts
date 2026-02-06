@@ -12,31 +12,31 @@ async function handleRequest(request: NextRequest, method: string) {
   try {
     // Extract parameters from the request URL
     const { searchParams } = new URL(request.url)
-    const module = searchParams.get('module') as 'ADMIN' | 'USER'
+    const module = searchParams.get('module') as 'ADMIN' | 'USER' | 'SHARED'
     const endpoint = searchParams.get('endpoint')
-    
+
     if (!module || !endpoint) {
-      return NextResponse.json({ 
-        error: 'Module and endpoint parameters are required' 
+      return NextResponse.json({
+        error: 'Module and endpoint parameters are required'
       }, { status: 400 })
     }
 
     // Get JWT token from HTTP-only cookie
     const token = request.cookies.get('token')?.value
-    
+
     if (!token) {
-      return NextResponse.json({ 
-        error: 'Authentication required - no token found' 
+      return NextResponse.json({
+        error: 'Authentication required - no token found'
       }, { status: 401 })
     }
 
     // Build the backend URL
     const moduleConfig = API_CONFIG[module]
     const backendUrl = `${moduleConfig.BASE_URL}${endpoint}`
-    
+
     console.log(`🔍 PROXY: ${method} ${backendUrl}`)
     console.log(`🔍 PROXY: Token present: ${!!token}`)
-    
+
     // Prepare request options
     const requestOptions: RequestInit = {
       method,
@@ -81,9 +81,9 @@ async function handleRequest(request: NextRequest, method: string) {
   } catch (error) {
     console.error('🚫 PROXY: Error:', error)
     return NextResponse.json(
-      { 
-        error: 'Internal server error', 
-        details: error instanceof Error ? error.message : 'Unknown error' 
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     )

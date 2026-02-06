@@ -39,11 +39,20 @@ export const API_CONFIG = {
       SCHEDULE: '/schedule',
       REPORTS: '/reports'
     }
+  },
+  SHARED: {
+    BASE_URL: 'http://localhost:5204/api',
+    PROXY_BASE_URL: '/api/proxy',
+    AUTH: {
+      type: 'Bearer' as const,
+      credentials: ''
+    },
+    ENDPOINTS: {}
   }
 } as const
 
 // Helper function to get auth headers
-export const getAuthHeaders = (module: 'ADMIN' | 'USER', token?: string) => {
+export const getAuthHeaders = (module: 'ADMIN' | 'USER' | 'SHARED', token?: string) => {
   // If using proxy, don't include auth headers (proxy handles auth)
   if (API_CONFIG.USE_PROXY) {
     return {
@@ -66,10 +75,10 @@ export const getAuthHeaders = (module: 'ADMIN' | 'USER', token?: string) => {
 }
 
 // Helper function to build full URL
-export const buildUrl = (module: 'ADMIN' | 'USER', endpoint: string) => {
+export const buildUrl = (module: 'ADMIN' | 'USER' | 'SHARED', endpoint: string) => {
   if (API_CONFIG.USE_PROXY) {
     // Use Next.js API proxy to avoid CORS issues
-    const basePath = module === 'ADMIN' ? '/api/admin' : '/api/user'
+    const basePath = module === 'ADMIN' ? '/api/admin' : (module === 'USER' ? '/api/user' : '/api/shared')
     const fullPath = `${basePath}${endpoint}`
     return `${API_CONFIG[module].PROXY_BASE_URL}?path=${encodeURIComponent(fullPath)}`
   } else {

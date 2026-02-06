@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusSquare } from "@phosphor-icons/react";
+import { UserApiService, Haulier } from "@/lib/api/user";
 
 // Trailer interface for type safety
 export interface Trailer {
@@ -40,11 +41,14 @@ export interface NewTrailer {
 
 interface AddTrailerDialogProps {
   onSave: (trailer: NewTrailer) => void;
+  regionId?: number;
 }
 
-export default function AddTrailerDialog({ onSave }: AddTrailerDialogProps) {
+export default function AddTrailerDialog({ onSave, regionId = 5 }: AddTrailerDialogProps) {
   const [open, setOpen] = useState(false);
-  
+  const [hauliers, setHauliers] = useState<Haulier[]>([]);
+  const [loadingHauliers, setLoadingHauliers] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState<NewTrailer>({
     trailerName: '',
@@ -56,15 +60,24 @@ export default function AddTrailerDialog({ onSave }: AddTrailerDialogProps) {
     haulierCompany: '',
   });
 
-  // Available haulier companies
-  const haulierCompanies = [
-    "Express Logistics",
-    "Fast Transport", 
-    "Mega Freight",
-    "Prime Movers",
-    "Swift Carriers",
-    "Reliable Haulage"
-  ];
+  // Fetch hauliers when dialog opens
+  useEffect(() => {
+    if (open && regionId) {
+      setLoadingHauliers(true);
+      UserApiService.getHauliersByRegion(regionId)
+        .then(data => {
+          setHauliers(data || []);
+        })
+        .catch(err => {
+          console.error("Failed to fetch hauliers:", err);
+          setHauliers([]);
+        })
+        .finally(() => {
+          setLoadingHauliers(false);
+        });
+    }
+  }, [open, regionId]);
+
 
   const handleInputChange = (field: keyof NewTrailer, value: string | number) => {
     setFormData(prev => ({
@@ -75,15 +88,15 @@ export default function AddTrailerDialog({ onSave }: AddTrailerDialogProps) {
 
   const handleSave = () => {
     // Basic validation
-    if (!formData.trailerName || !formData.trailerCode || !formData.registrationNumber || 
-        !formData.volumeCapacity || !formData.weightCapacity || !formData.numberOfCompartments ||
-        !formData.haulierCompany) {
+    if (!formData.trailerName || !formData.trailerCode || !formData.registrationNumber ||
+      !formData.volumeCapacity || !formData.weightCapacity || !formData.numberOfCompartments ||
+      !formData.haulierCompany) {
       alert('Please fill in all required fields');
       return;
     }
 
     onSave(formData);
-    
+
     // Reset form and close dialog
     setFormData({
       trailerName: '',
@@ -112,7 +125,7 @@ export default function AddTrailerDialog({ onSave }: AddTrailerDialogProps) {
             Add a new trailer to your fleet. Fill in the required information below.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-6 py-4">
           {/* Basic Information */}
           <div className="grid grid-cols-2 gap-4">
@@ -184,12 +197,12 @@ export default function AddTrailerDialog({ onSave }: AddTrailerDialogProps) {
               onValueChange={(value) => handleInputChange('haulierCompany', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select haulier company" />
+                <SelectValue placeholder={loadingHauliers ? "Loading hauliers..." : "Select haulier company"} />
               </SelectTrigger>
               <SelectContent>
-                {haulierCompanies.map((company) => (
-                  <SelectItem key={company} value={company}>
-                    {company}
+                {hauliers.map((haulier) => (
+                  <SelectItem key={haulier.id} value={haulier.haulierName}>
+                    {haulier.haulierName}
                   </SelectItem>
                 ))}
               </SelectContent>
