@@ -289,7 +289,7 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
                 ))}
               </div>
               <div className="flex items-center gap-2 mt-4">
-                <Label className="w-20">Group Limit:</Label>
+                <Label className="whitespace-nowrap">Group Limit:</Label>
                 <Input
                   type="number"
                   value={axleConfigData['group_limit'] || 0}

@@ -17,10 +17,6 @@ import { TruckTractor } from "./AddTruckDialog";
 import { useLoader } from "@/contexts/LoaderContext";
 import { useNotification } from "@/hooks/useNotification";
 import BasicInfoTab from "./truck-tabs/BasicInfoTab";
-import ComplianceTab from "./truck-tabs/ComplianceTab";
-import MaintenanceTab from "./truck-tabs/MaintenanceTab";
-import SettingsTab from "./truck-tabs/SettingsTab";
-import WeightDimensionsTab from "./truck-tabs/WeightDimensionsTab";
 
 
 // Extended truck interface for detailed view
@@ -33,36 +29,10 @@ export interface TruckDetails extends TruckTractor {
   metadata: string;
   regionId: number;
   pumpAvailable: boolean;
-  compliance: ComplianceInfo;
-  maintenance: MaintenanceInfo;
 
   // Keep legacy capacityKL for compatibility if needed, but map to new logic
   capacityKL: number;
   parkingAssigned: string; // Deprecated but mapping logic uses it
-}
-
-export interface ComplianceInfo {
-  id: number;
-  adrExpiryDate: string;
-  lastInspectionDate: string;
-  nextInspectionDue: string;
-  certificateNumber: string;
-  inspectionType: "Annual" | "6-Monthly" | "Special";
-  complianceStatus: "Compliant" | "Expired" | "Due Soon";
-  notes?: string;
-}
-
-export interface MaintenanceInfo {
-  id: number;
-  lastServiceDate: string;
-  nextServiceDue: string;
-  serviceType: "Routine" | "Repair" | "Emergency" | "Compliance";
-  mileage?: number;
-  serviceProvider: string;
-  cost?: number;
-  workDescription: string;
-  status: "Completed" | "Scheduled" | "Overdue";
-  notes?: string;
 }
 
 interface TruckDetailsPageProps {
@@ -96,12 +66,9 @@ export default function TruckDetailsPage({
   }, [setSidebarCollapsed]);
 
   // Tab configuration
+  // Tab configuration
   const tabs = [
     { id: "basic-info", label: "Basic Information", count: null },
-    { id: "weight-dimensions", label: "Weight & Dimensions", count: null },
-    { id: "compliance", label: "Compliance", count: null },
-    { id: "maintenance", label: "Maintenance", count: null },
-    { id: "settings", label: "Settings", count: null },
   ];
 
   const handleSave = async (updatedData: Partial<TruckDetails>) => {
@@ -145,15 +112,6 @@ export default function TruckDetailsPage({
   const renderTabContent = () => {
     switch (activeTab) {
       case "basic-info":
-        return <BasicInfoTab truck={localTruck} onSave={handleSave} />;
-      case "weight-dimensions":
-        return <WeightDimensionsTab truck={localTruck} onSave={handleSave} />;
-      case "compliance":
-        return <ComplianceTab truck={localTruck} onSave={handleSave} />;
-      case "maintenance":
-        return <MaintenanceTab truck={localTruck} onSave={handleSave} />;
-      case "settings":
-        return <SettingsTab truck={localTruck} onSave={handleSave} />;
       default:
         return <BasicInfoTab truck={localTruck} onSave={handleSave} />;
     }
