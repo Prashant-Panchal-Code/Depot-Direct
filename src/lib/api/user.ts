@@ -315,6 +315,20 @@ export interface CreateTractorRequest {
   regionId: number;
 }
 
+export interface UpdateTractorRequest {
+  tractorCode: string;
+  tractorName: string;
+  licensePlate: string;
+  regionId: number;
+  status: string;
+  pumpAvailable: boolean;
+  pumpFlowRateLpm: number;
+  curbWeightKg: number;
+  numberOfAxles: number;
+  axleConfiguration: string;
+  metadata: string;
+}
+
 export interface CreateParkingRequest {
   parkingCode: string;
   parkingName: string;
@@ -853,6 +867,20 @@ export class UserApiService {
   // Get tractors by region
   static async getTractorsByRegion(regionId: number, token?: string): Promise<Tractor[]> {
     const { data, error } = await api.get<Tractor[]>('USER', `/tractors/by-region/${regionId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Get tractor by ID
+  static async getTractorById(tractorId: number, token?: string): Promise<Tractor> {
+    const { data, error } = await api.get<Tractor>('USER', `/tractors/${tractorId}`)
+    if (error) throw new Error(error)
+    return data!
+  }
+
+  // Update tractor
+  static async updateTractor(tractorId: number, tractorData: UpdateTractorRequest, token?: string): Promise<Tractor> {
+    const { data, error } = await api.put<Tractor>('USER', `/tractors/${tractorId}`, tractorData)
     if (error) throw new Error(error)
     return data!
   }

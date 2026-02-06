@@ -70,6 +70,7 @@ export default function VehiclesContent() {
             registrationNumber: t.licensePlate,
             haulierCompany: t.haulierName || (t.haulier ? t.haulier.haulierName : 'Unknown'),
             active: t.status === 'Active' ? true : (t.status === 'Inactive' ? false : true), // Default to true if status is string
+            regionId: t.regionId,
             // Default/Fallback values for extended properties not in list API
             licensePlate: t.licensePlate,
             capacityKL: t.pumpFlowRateLpm ? t.pumpFlowRateLpm / 1000 : 0, // Placeholder mapping or 0
@@ -554,11 +555,66 @@ export default function VehiclesContent() {
   };
 
   // Handle truck row double-click
-  const handleTruckDoubleClick = (truckData: TruckTractor) => {
-    const truck = trucks.find(t => t.id === truckData.id);
-    if (truck) {
+  const handleTruckDoubleClick = async (truckData: TruckTractor) => {
+    console.log("Double clicked truck:", truckData);
+    if (!truckData.id) return;
+
+    // Set selected truck immediately with what we have to show the view
+    // Then fetch full details in background
+
+    // We need to fetch full details
+    showLoader("Loading truck details...");
+    try {
+      const fullTractor = await UserApiService.getTractorById(truckData.id);
+
+      const truck: TruckDetails = {
+        ...truckData as any, // Start with grid data
+        // Overwrite and extend with API data
+        id: fullTractor.id,
+        truckName: fullTractor.tractorName,
+        truckCode: fullTractor.tractorCode,
+        registrationNumber: fullTractor.licensePlate,
+        licensePlate: fullTractor.licensePlate,
+        haulierCompany: fullTractor.haulierName || (fullTractor.haulier ? fullTractor.haulier.haulierName : 'Unknown'),
+        active: fullTractor.status === 'Active' ? true : (fullTractor.status === 'Inactive' ? false : true),
+        regionId: fullTractor.regionId,
+        capacityKL: fullTractor.pumpFlowRateLpm ? fullTractor.pumpFlowRateLpm / 1000 : 0,
+        pumpAvailable: fullTractor.pumpAvailable,
+        parkingAssigned: "Not Assigned", // Not in API yet?
+        owner: fullTractor.haulierId ? "Third Party" : "Own", // Logic might need adjustment based on business rules
+        compliance: {
+          id: 0,
+          adrExpiryDate: "",
+          lastInspectionDate: "",
+          nextInspectionDue: "",
+          certificateNumber: "",
+          inspectionType: "Annual",
+          complianceStatus: "Compliant"
+        },
+        maintenance: {
+          id: 0,
+          lastServiceDate: "",
+          nextServiceDue: "",
+          serviceType: "Routine",
+          serviceProvider: "",
+          workDescription: "",
+          status: "Completed"
+        }
+      };
+
       setSelectedTruck(truck);
       setShowTruckDetails(true);
+    } catch (error) {
+      console.error("Failed to fetch truck details:", error);
+      // Fallback: use the data from the grid which is better than nothing, or show error
+      // For now just show existing grid data if fetch fails
+      const gridTruck = trucks.find(t => t.id === truckData.id);
+      if (gridTruck) {
+        setSelectedTruck(gridTruck);
+        setShowTruckDetails(true);
+      }
+    } finally {
+      hideLoader();
     }
   };
 

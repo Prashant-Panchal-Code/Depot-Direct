@@ -25,6 +25,7 @@ export interface TruckTractor {
   registrationNumber: string;
   haulierCompany: string;
   active: boolean;
+  regionId?: number;
 }
 
 // Interface for new trucks being created

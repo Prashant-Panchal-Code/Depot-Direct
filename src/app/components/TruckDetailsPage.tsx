@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { useAppContext } from "../contexts/AppContext";
+import { UserApiService } from "@/lib/api/user";
 import { TruckTractor } from "./AddTruckDialog";
+import { useLoader } from "@/contexts/LoaderContext";
+import { useNotification } from "@/hooks/useNotification";
 import BasicInfoTab from "./truck-tabs/BasicInfoTab";
 import ComplianceTab from "./truck-tabs/ComplianceTab";
 import MaintenanceTab from "./truck-tabs/MaintenanceTab";
@@ -23,12 +26,19 @@ import WeightDimensionsTab from "./truck-tabs/WeightDimensionsTab";
 // Extended truck interface for detailed view
 export interface TruckDetails extends TruckTractor {
   licensePlate: string;
-  capacityKL: number;
-  parkingAssigned: string;
-  owner: "Own" | "Third Party";
+  curbWeightKg: number;
+  pumpFlowRateLpm: number;
+  numberOfAxles: number;
+  axleConfiguration: string; // JSON string
+  metadata: string;
+  regionId: number;
   pumpAvailable: boolean;
   compliance: ComplianceInfo;
   maintenance: MaintenanceInfo;
+
+  // Keep legacy capacityKL for compatibility if needed, but map to new logic
+  capacityKL: number;
+  parkingAssigned: string; // Deprecated but mapping logic uses it
 }
 
 export interface ComplianceInfo {
@@ -67,6 +77,8 @@ export default function TruckDetailsPage({
   onSave,
 }: TruckDetailsPageProps) {
   const { setSidebarCollapsed, sidebarCollapsed } = useAppContext();
+  const { showLoader, hideLoader } = useLoader();
+  const { showSuccess, showError } = useNotification();
   const [activeTab, setActiveTab] = useState("basic-info");
   const [localTruck, setLocalTruck] = useState<TruckDetails>(truck);
 
@@ -77,7 +89,7 @@ export default function TruckDetailsPage({
   // Collapse sidebar when component mounts, restore when unmounting
   useEffect(() => {
     setSidebarCollapsed(true);
-    
+
     return () => {
       setSidebarCollapsed(false);
     };
@@ -92,10 +104,42 @@ export default function TruckDetailsPage({
     { id: "settings", label: "Settings", count: null },
   ];
 
-  const handleSave = (updatedData: Partial<TruckDetails>) => {
-    const updatedTruck = { ...localTruck, ...updatedData };
-    setLocalTruck(updatedTruck);
-    onSave(updatedTruck);
+  const handleSave = async (updatedData: Partial<TruckDetails>) => {
+    try {
+      if (localTruck.id) {
+        showLoader("Updating truck details...");
+
+        // Construct complete API payload from local state + updates
+        // We merge localTruck with updatedData first to get the latest state of all fields
+        const finalState = { ...localTruck, ...updatedData };
+
+        const apiPayload: any = {
+          tractorCode: finalState.truckCode,
+          tractorName: finalState.truckName,
+          licensePlate: finalState.licensePlate,
+          regionId: finalState.regionId || 0,
+          status: finalState.active ? 'Active' : 'Inactive',
+          pumpAvailable: finalState.pumpAvailable,
+          pumpFlowRateLpm: finalState.pumpFlowRateLpm || 0,
+          curbWeightKg: finalState.curbWeightKg || 0,
+          numberOfAxles: finalState.numberOfAxles || 0,
+          axleConfiguration: finalState.axleConfiguration || '{}',
+          metadata: finalState.metadata || ''
+        };
+
+        await UserApiService.updateTractor(localTruck.id, apiPayload);
+
+        // Update local state after successful API call
+        setLocalTruck(finalState);
+        onSave(finalState);
+        showSuccess("Truck updated successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to update truck:", error);
+      showError("Failed to update truck. Please try again.");
+    } finally {
+      hideLoader();
+    }
   };
 
   const renderTabContent = () => {
@@ -117,24 +161,22 @@ export default function TruckDetailsPage({
 
   return (
     <main
-      className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${
-        sidebarCollapsed ? "ml-16" : "ml-64"
-      }`}
+      className={`pt-20 h-screen bg-gray-50 text-gray-900 overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"
+        }`}
     >
       <div className="p-4 h-full flex flex-col">
         {/* Header with Title and Back Button */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">{localTruck.truckName}-<span className="text-2xl text-gray-600">{localTruck.truckCode}</span></h2>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              localTruck.active 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${localTruck.active
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+              }`}>
               {localTruck.active ? 'Active' : 'Inactive'}
             </span>
           </div>
-          <Button 
+          <Button
             onClick={onBack}
             variant="outline"
             size="sm"
@@ -172,11 +214,10 @@ export default function TruckDetailsPage({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? "border-primary-custom text-primary-custom"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? "border-primary-custom text-primary-custom"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 {tab.label}
                 {tab.count !== null && (

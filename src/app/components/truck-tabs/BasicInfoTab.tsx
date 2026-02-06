@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { TruckDetails } from "../TruckDetailsPage";
+import { UserApiService } from "@/lib/api/user";
+import { useRegionContext } from "@/contexts/RoleBasedContext";
+import { useEffect } from "react";
 
 interface BasicInfoTabProps {
   truck: TruckDetails;
@@ -23,13 +26,31 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
   const [formData, setFormData] = useState({
     truckName: truck.truckName,
     licensePlate: truck.licensePlate,
-    capacityKL: truck.capacityKL,
+    curbWeightKg: truck.curbWeightKg,
     haulierCompany: truck.haulierCompany,
-    parkingAssigned: truck.parkingAssigned,
-    owner: truck.owner,
     active: truck.active,
     pumpAvailable: truck.pumpAvailable,
+    pumpFlowRateLpm: truck.pumpFlowRateLpm || 0,
+    numberOfAxles: truck.numberOfAxles || 0,
+    metadata: truck.metadata || '',
+    axleConfiguration: truck.axleConfiguration || '{}'
   });
+
+  // Parse initial axle config
+  const [axleConfigData, setAxleConfigData] = useState<any>(() => {
+    try {
+      return JSON.parse(truck.axleConfiguration || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  const updateAxleConfig = (key: string, value: any) => {
+    const updated = { ...axleConfigData, [key]: value };
+    setAxleConfigData(updated);
+    // Update main form data with stringified version
+    handleInputChange('axleConfiguration', JSON.stringify(updated));
+  };
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
@@ -47,27 +68,49 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
     setFormData({
       truckName: truck.truckName,
       licensePlate: truck.licensePlate,
-      capacityKL: truck.capacityKL,
+      curbWeightKg: truck.curbWeightKg,
       haulierCompany: truck.haulierCompany,
-      parkingAssigned: truck.parkingAssigned,
-      owner: truck.owner,
       active: truck.active,
       pumpAvailable: truck.pumpAvailable,
+      pumpFlowRateLpm: truck.pumpFlowRateLpm,
+      numberOfAxles: truck.numberOfAxles,
+      metadata: truck.metadata,
+      axleConfiguration: truck.axleConfiguration
     });
+
+    // Reset axle config state
+    try {
+      setAxleConfigData(JSON.parse(truck.axleConfiguration || '{}'));
+    } catch {
+      setAxleConfigData({});
+    }
   };
 
-  const haulierCompanies = [
-    "Express Logistics",
-    "Fast Transport", 
-    "Mega Freight",
-    "Prime Movers",
-    "Swift Carriers",
-    "Reliable Haulage"
-  ];
+  // Fetch hauliers from API
+  const [haulierCompanies, setHaulierCompanies] = useState<string[]>([]);
+  const { selectedRegions } = useRegionContext();
+
+  useEffect(() => {
+    const fetchHauliers = async () => {
+      try {
+        // Use region from truck data if available, or default context region
+        const regionId = truck.regionId || (selectedRegions.length > 0 ? selectedRegions[0].id : 5);
+        if (regionId) {
+          const hauliers = await UserApiService.getHauliersByRegion(regionId);
+          setHaulierCompanies(hauliers.map((h) => h.haulierName));
+        }
+      } catch (error) {
+        console.error("Failed to fetch hauliers:", error);
+        // Fallback to empty or predefined list if needed
+        setHaulierCompanies([]);
+      }
+    };
+    fetchHauliers();
+  }, [truck.regionId, selectedRegions]);
 
   const parkingAreas = [
     "Parking Zone A",
-    "Parking Zone B", 
+    "Parking Zone B",
     "Parking Zone C",
     "Main Parking",
     "North Parking",
@@ -116,15 +159,25 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
             </div>
 
             <div>
-              <Label htmlFor="capacityKL">Capacity (KL)</Label>
+              <Label htmlFor="curbWeightKg">Tare Weight (kg)</Label>
               <Input
-                id="capacityKL"
+                id="curbWeightKg"
                 type="number"
-                value={formData.capacityKL}
-                onChange={(e) => handleInputChange('capacityKL', parseFloat(e.target.value) || 0)}
+                value={formData.curbWeightKg}
+                onChange={(e) => handleInputChange('curbWeightKg', parseFloat(e.target.value) || 0)}
                 className="mt-1"
                 step="0.1"
                 min="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="metadata">Metadata</Label>
+              <textarea
+                id="metadata"
+                value={formData.metadata}
+                onChange={(e) => handleInputChange('metadata', e.target.value)}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1 min-h-[80px]"
               />
             </div>
           </div>
@@ -150,40 +203,8 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="parkingAssigned">Parking Assigned</Label>
-              <Select
-                value={formData.parkingAssigned}
-                onValueChange={(value) => handleInputChange('parkingAssigned', value)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select parking" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parkingAreas.map((parking) => (
-                    <SelectItem key={parking} value={parking}>
-                      {parking}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="owner">Owner</Label>
-              <Select
-                value={formData.owner}
-                onValueChange={(value: "Own" | "Third Party") => handleInputChange('owner', value)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select owner type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Own">Own</SelectItem>
-                  <SelectItem value="Third Party">Third Party</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Removed Parking Assigned select */}
+            {/* Removed Owner select */}
 
             <div>
               <Label htmlFor="status">Status</Label>
@@ -211,6 +232,70 @@ export default function BasicInfoTab({ truck, onSave }: BasicInfoTabProps) {
                 <Label htmlFor="pumpAvailable" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Pump Available
                 </Label>
+              </div>
+            </div>
+
+            {formData.pumpAvailable && (
+              <div>
+                <Label htmlFor="pumpFlowRateLpm">Pump Flow Rate (LPM)</Label>
+                <Input
+                  id="pumpFlowRateLpm"
+                  type="number"
+                  value={formData.pumpFlowRateLpm}
+                  onChange={(e) => handleInputChange('pumpFlowRateLpm', parseInt(e.target.value) || 0)}
+                  className="mt-1"
+                />
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="numberOfAxles">Number of Axles</Label>
+              <Input
+                id="numberOfAxles"
+                type="number"
+                value={formData.numberOfAxles}
+                onChange={(e) => handleInputChange('numberOfAxles', parseInt(e.target.value) || 0)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="axleConfiguration">Axle Configuration Description</Label>
+              <Input
+                id="axleConfigurationDescription"
+                value={axleConfigData.description || ''}
+                onChange={(e) => updateAxleConfig('description', e.target.value)}
+                placeholder="e.g. 6x4 Heavy Hauler"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Dynamic Axle Inputs could go here, simplified for now to just description or raw JSON if needed */}
+            {/* For now, let's keep it simple with description and maybe a text area for raw metadata if requested, but prompt implies specific 'axle_1', etc keys. */}
+
+            <div className="space-y-2">
+              <Label>Axle Weights (kg)</Label>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: formData.numberOfAxles || 0 }).map((_, idx) => (
+                  <div key={idx} className="flex flex-col gap-1">
+                    <Label className="text-xs">Axle {idx + 1}</Label>
+                    <Input
+                      type="number"
+                      value={axleConfigData[`axle_${idx + 1}`] || 0}
+                      onChange={(e) => updateAxleConfig(`axle_${idx + 1}`, parseInt(e.target.value) || 0)}
+                      className="w-full"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Label className="w-20">Group Limit:</Label>
+                <Input
+                  type="number"
+                  value={axleConfigData['group_limit'] || 0}
+                  onChange={(e) => updateAxleConfig('group_limit', parseInt(e.target.value) || 0)}
+                  className="w-32"
+                />
               </div>
             </div>
           </div>
